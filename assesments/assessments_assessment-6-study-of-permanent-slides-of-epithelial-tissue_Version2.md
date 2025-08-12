@@ -1,0 +1,63 @@
+# Test: Study of Permanent Slides of Epithelial Tissue
+
+**Total Points: 12**
+
+---
+
+## Multiple Choice Questions (1 point each)
+
+1. Which epithelial tissue lines the kidney tubules?
+    - a) Squamous
+    - b) Cuboidal
+    - c) Columnar
+    - d) Transitional
+    *(1 point)*
+
+2. The tissue lining the respiratory tract is:
+    - a) Simple squamous
+    - b) Stratified squamous
+    - c) Ciliated columnar
+    - d) Cuboidal
+    *(1 point)*
+
+3. Which epithelial tissue is specialized for absorption?
+    - a) Cuboidal
+    - b) Columnar
+    - c) Squamous
+    - d) Transitional
+    *(1 point)*
+
+4. Epithelial tissue with multiple layers is called:
+    - a) Simple
+    - b) Stratified
+    - c) Transitional
+    - d) None of the above
+    *(1 point)*
+
+## One Word/Short Answer Questions (1 point each)
+
+5. Name the tissue lining the alveoli of the lungs.
+   *(1 point)*
+
+6. What is the function of cilia in epithelial tissue?
+   *(1 point)*
+
+7. Where is transitional epithelium found?
+   *(1 point)*
+
+8. Which tissue forms the outer layer of skin?
+   *(1 point)*
+
+## Application/Diagram-Based Questions (2 points each)
+
+9. Draw and label a diagram showing squamous, cuboidal, and columnar epithelial cells.
+   *(2 points)*
+
+10. List two functions of epithelial tissue.
+   *(2 points)*
+
+---
+
+**Instructions:**
+- Answer all questions.
+- For diagram-based questions, you may draw on paper or digitally.

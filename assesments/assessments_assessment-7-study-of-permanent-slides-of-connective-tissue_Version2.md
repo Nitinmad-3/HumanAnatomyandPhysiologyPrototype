@@ -1,0 +1,63 @@
+# Test: Study of Permanent Slides of Connective Tissue
+
+**Total Points: 12**
+
+---
+
+## Multiple Choice Questions (1 point each)
+
+1. Which is the most abundant connective tissue in the human body?
+    - a) Bone
+    - b) Adipose
+    - c) Areolar
+    - d) Blood
+    *(1 point)*
+
+2. The cells in cartilage are called:
+    - a) Osteocytes
+    - b) Chondrocytes
+    - c) Erythrocytes
+    - d) Fibroblasts
+    *(1 point)*
+
+3. The tissue that stores fat is:
+    - a) Adipose
+    - b) Bone
+    - c) Blood
+    - d) Cartilage
+    *(1 point)*
+
+4. Which connective tissue transports oxygen?
+    - a) Blood
+    - b) Bone
+    - c) Cartilage
+    - d) Adipose
+    *(1 point)*
+
+## One Word/Short Answer Questions (1 point each)
+
+5. Name the protein fiber found in tendons.
+   *(1 point)*
+
+6. What is the function of adipose tissue?
+   *(1 point)*
+
+7. Which connective tissue provides rigid support?
+   *(1 point)*
+
+8. Name one type of cartilage.
+   *(1 point)*
+
+## Application/Diagram-Based Questions (2 points each)
+
+9. Draw and label a diagram of bone, cartilage, and blood tissue.
+   *(2 points)*
+
+10. List two differences between areolar and adipose tissue.
+   *(2 points)*
+
+---
+
+**Instructions:**
+- Answer all questions.
+- For diagram-based questions, you may draw on paper or digitally.
