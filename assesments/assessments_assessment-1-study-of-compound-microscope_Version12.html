@@ -159,14 +159,6 @@
 
       // Collect answers
       const form = e.target;
-      const student = {
-        name: form.studentName.value.trim(),
-        school: form.schoolName.value.trim(),
-        prn: form.prnNumber.value.trim(),
-        batch: form.batchNumber.value.trim(),
-        email: form.emailId.value.trim()
-      };
-      const answers = [];
       let allAnswered = true;
       for(let i=0; i<questions.length; i++) {
         let val;
@@ -182,7 +174,6 @@
           val = form[`q${i}`].value.trim();
         }
         if(val === "") allAnswered = false;
-        answers.push(val);
       }
       if(!allAnswered) {
         document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
@@ -193,38 +184,38 @@
         return;
       }
 
-      // Calculate marks (accept any answer for diagram/precautions, teacher to check manually)
+      // Calculate marks
       let marks = 0;
       for(let i=0; i<questions.length; i++) {
+        const ans = form[`q${i}`].value.trim();
         if(questions[i].type === "mcq" || (questions[i].type === "short" && questions[i].answer !== "Diagram" && questions[i].answer !== "Precautions")) {
-          if(answers[i].toLowerCase().trim() === questions[i].answer.toLowerCase().trim()) marks++;
+          if(ans.toLowerCase().trim() === questions[i].answer.toLowerCase().trim()) marks++;
         }
       }
-      // Diagram and precautions questions (give 0 now, teacher will review)
-      // Total for auto questions: 8, teacher needs to check last 2
 
-      // Save to Google Sheet (via Apps Script web app)
-      // --- Replace this URL with your deployed Google Apps Script endpoint ---
-      const scriptURL = "https://script.google.com/macros/s/AKfycbz29tU_7YqIqOLCrcRS-b8k5JEqUJxe99ka1QC8f1QyffhyosEHcwWZGTWvNhj4X_u4GA/exec";
-      const submission = {
-        timestamp: new Date().toISOString(),
-        ...student,
-        experiment: "Study of Compound Microscope",
-        answers: answers,
-        marks: marks
-      };
+      // Prepare FormData for Apps Script (must match sheet headers)
+      const data = new FormData();
+      data.append('timestamp', new Date().toISOString());
+      data.append('studentName', form.studentName.value.trim());
+      data.append('schoolName', form.schoolName.value.trim());
+      data.append('prnNumber', form.prnNumber.value.trim());
+      data.append('batchNumber', form.batchNumber.value.trim());
+      data.append('emailId', form.emailId.value.trim());
+      data.append('experiment', "Study of Compound Microscope");
+      for(let i=0; i<questions.length; i++) {
+        data.append('q'+i, form[`q${i}`].value.trim());
+      }
+      data.append('marks', marks);
+
+      // Your deployed Apps Script endpoint
+      const scriptURL = "https://script.google.com/macros/s/AKfycbxUCZ3_w4QW9oonYVc5O0jb-tzpd_IRKz0KddkWZjpeH_BsDof5KLlBJwUSSmZhCvho/exec";
+
       try {
-        await fetch(scriptURL, {
-          method: "POST",
-          body: JSON.stringify(submission),
-          headers: { "Content-Type": "application/json" }
-        });
+        await fetch(scriptURL, { method: "POST", body: data });
       } catch(e) {
-        // Even if saving fails, show marks
         console.error(e);
       }
 
-      // Show result
       document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 8 on the auto-graded questions. Your teacher will review the final two questions for additional marks.`;
       document.getElementById("submitBtn").disabled = true;
     };
