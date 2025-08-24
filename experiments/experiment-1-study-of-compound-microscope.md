@@ -104,9 +104,9 @@ The compound microscope has four systems:
    - Clean the lenses and stage.
    - Cover the microscope.
 
-</details>
-
 <img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (1).png" alt="Steps to Use a Compound Microscope" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
+
+</details>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -118,9 +118,9 @@ The compound microscope has four systems:
 - Keep both eyes open when observing.
 - Handle slides with care and dispose safely.
 
-</details>
-
 <img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (2).png" alt="Microscope Usage Guidelines" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
+
+</details>
 
 <details>
 <summary><strong>Report</strong></summary>
