@@ -1,6 +1,6 @@
 # Experiment 1: Study of Compound Microscope
 
-<img src="./pexels-background.jpg" alt="Science Lab Background" style="width:100%; border-radius:14px; margin-bottom:16px;"/>
+<img src="../assets/images/experiment-1/pexels-background.jpg" alt="Science Lab Background" style="width:100%; border-radius:14px; margin-bottom:16px;"/>
 
 <details open>
 <summary><strong>AIM</strong></summary>
@@ -29,13 +29,13 @@ To study the compound microscope.
 
 A microscope is an optical instrument used to magnify objects or images for detailed examination. The compound microscope was invented in the 1590s by Hans Janssen and Zacharias Janssen. A compound microscope is a high-magnification instrument that uses two lenses to multiply the level of magnification: the objective lens and the eyepiece lens.
 
-<img src="./Experiment 1_ Study of Compound Microscope - visual selection.jpg" alt="Compound Microscope Visual Selection" style="max-width:90%; margin: 18px auto; display:block; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.08);"/>
+<img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection.jpg" alt="Compound Microscope Visual Selection" style="max-width:90%; margin: 18px auto; display:block; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.08);"/>
 
 ---
 
 ## Parts of Compound Microscope
 
-<img src="./Experiment 1_ Study of Compound Microscope - visual selection (2).png" alt="Compound vs Simple Microscope" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
+<img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (2).png" alt="Compound vs Simple Microscope" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
 
 ### Non-optical Parts
 
@@ -56,7 +56,7 @@ A microscope is an optical instrument used to magnify objects or images for deta
 - **Objective Lenses:** Low power, high power, and oil immersion types.
 - **Ocular Lens:** Eyepiece for viewing; magnifications include 5X, 10X, 15X, 20X.
 
-<img src="./Compound-microscope-1.png" alt="Compound Microscope Labeled Diagram" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
+<img src="../assets/images/experiment-1/Compound-microscope-1.png" alt="Compound Microscope Labeled Diagram" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
 
 The compound microscope has four systems:
 1. **Support System:** Tube, arm, nosepiece, stage, foot.
@@ -64,7 +64,7 @@ The compound microscope has four systems:
 3. **Adjustment System:** Coarse/fine adjustment knobs, condenser adjustment, iris diaphragm lever.
 4. **Illumination System:** Light source, mirror, condenser.
 
-<img src="./Experiment 1_ Study of Compound Microscope - visual selection (3).png" alt="Systems of Compound Microscope" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
+<img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (3).png" alt="Systems of Compound Microscope" style="max-width:90%; margin:18px auto; display:block; border-radius:12px;"/>
 
 </details>
 
@@ -106,7 +106,7 @@ The compound microscope has four systems:
 
 </details>
 
-<img src="./Experiment 1_ Study of Compound Microscope - visual selection (1).png" alt="Steps to Use a Compound Microscope" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
+<img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (1).png" alt="Steps to Use a Compound Microscope" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -120,7 +120,7 @@ The compound microscope has four systems:
 
 </details>
 
-<img src="./Experiment 1_ Study of Compound Microscope - visual selection (2).png" alt="Microscope Usage Guidelines" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
+<img src="../assets/images/experiment-1/Experiment 1_ Study of Compound Microscope - visual selection (2).png" alt="Microscope Usage Guidelines" style="max-width:90%; margin: 24px auto; display:block; border-radius:12px;"/>
 
 <details>
 <summary><strong>Report</strong></summary>
