@@ -8,9 +8,20 @@
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
+      color: #222;
+      position: relative;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
       background: url('wallpaper.jpg') no-repeat center center fixed;
       background-size: cover;
-      color: #222;
+      opacity: 0.5; /* Adjust this value for transparency */
+      pointer-events: none;
     }
     .overlay {
       background: rgba(255,255,255,0.90);
