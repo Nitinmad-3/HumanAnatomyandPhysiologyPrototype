@@ -59,209 +59,212 @@
     </form>
   </div>
   <script>
-    // --------- Assessment Questions Data (customize per assessment) ---------
+    // ---------- Assessment Questions Data ----------
     const questions = [
-  {
-    type: "mcq",
-    text: "1. Which part of the compound microscope connects the base to the body tube?",
-    options: ["Arm", "Stage", "Pillar", "Draw tube"],
-    answer: "Arm"
-  },
-  {
-    type: "mcq",
-    text: "2. The function of the diaphragm in a compound microscope is to:",
-    options: [
-      "Magnify the image",
-      "Adjust the amount of light passing through the specimen",
-      "Hold the slide in place",
-      "Focus the image"
-    ],
-    answer: "Adjust the amount of light passing through the specimen"
-  },
-  {
-    type: "mcq",
-    text: "3. Which lens offers the highest magnification in a compound microscope?",
-    options: [
-      "Low power objective",
-      "High power objective",
-      "Oil immersion objective",
-      "Eyepiece lens"
-    ],
-    answer: "Oil immersion objective"
-  },
-  {
-    type: "mcq",
-    text: "4. Which adjustment knob is used for precise focusing?",
-    options: [
-      "Coarse adjustment",
-      "Fine adjustment",
-      "Stage adjustment",
-      "Condenser adjustment"
-    ],
-    answer: "Fine adjustment"
-  },
-  {
-    type: "dropdown",
-    text: "5. Name the lens through which you observe the specimen in a microscope.",
-    options: [
-      "Eyepiece lens",
-      "Objective lens",
-      "Mirror",
-      "Stage"
-    ],
-    answer: "Eyepiece lens"
-  },
-  {
-    type: "dropdown",
-    text: "6. What is the recommended material for cleaning microscope lenses?",
-    options: [
-      "Lens paper",
-      "Tissue paper",
-      "Cloth",
-      "Hands"
-    ],
-    answer: "Lens paper"
-  },
-  {
-    type: "dropdown",
-    text: "7. Which mirror is used when the light source is weak?",
-    options: [
-      "Concave mirror",
-      "Plane mirror",
-      "Convex mirror",
-      "No mirror"
-    ],
-    answer: "Concave mirror"
-  },
-  {
-    type: "dropdown",
-    text: "8. What is the usual magnification power of a standard eyepiece lens?",
-    options: [
-      "10x",
-      "5x",
-      "40x",
-      "100x"
-    ],
-    answer: "10x"
-  },
-  {
-    type: "image-labels",
-    text: "9. Identify the labelled parts of the microscope in the image below.",
-    image: "label question.jpg",
-    labels: [
       {
-        name: "1",
-        answer: "Eye Piece",
-        options: [
-          "Eye Piece",
-          "Objective Lens",
-          "Fine adjustment Screw",
-          "Condenser",
-          "Stage"
-        ]
+        type: "mcq",
+        text: "1. Which part of the compound microscope connects the base to the body tube?",
+        options: ["Arm", "Stage", "Pillar", "Draw tube"],
+        answer: "Arm"
       },
       {
-        name: "2",
-        answer: "Objective Lens",
+        type: "mcq",
+        text: "2. The function of the diaphragm in a compound microscope is to:",
         options: [
-          "Objective Lens",
-          "Eye Piece",
-          "Mirror",
-          "Condenser",
-          "Base"
-        ]
+          "Magnify the image",
+          "Adjust the amount of light passing through the specimen",
+          "Hold the slide in place",
+          "Focus the image"
+        ],
+        answer: "Adjust the amount of light passing through the specimen"
       },
       {
-        name: "3",
-        answer: "Condenser",
+        type: "mcq",
+        text: "3. Which lens offers the highest magnification in a compound microscope?",
         options: [
-          "Condenser",
-          "Stage",
-          "Objective Lens",
-          "Base",
-          "Fine adjustment Screw"
-        ]
+          "Low power objective",
+          "High power objective",
+          "Oil immersion objective",
+          "Eyepiece lens"
+        ],
+        answer: "Oil immersion objective"
       },
       {
-        name: "4",
-        answer: "Fine adjustment Screw",
+        type: "mcq",
+        text: "4. Which adjustment knob is used for precise focusing?",
         options: [
-          "Fine adjustment Screw",
           "Coarse adjustment",
+          "Fine adjustment",
+          "Stage adjustment",
+          "Condenser adjustment"
+        ],
+        answer: "Fine adjustment"
+      },
+      {
+        type: "dropdown",
+        text: "5. Name the lens through which you observe the specimen in a microscope.",
+        options: [
+          "Eyepiece lens",
+          "Objective lens",
           "Mirror",
-          "Arm",
-          "Condenser"
+          "Stage"
+        ],
+        answer: "Eyepiece lens"
+      },
+      {
+        type: "dropdown",
+        text: "6. What is the recommended material for cleaning microscope lenses?",
+        options: [
+          "Lens paper",
+          "Tissue paper",
+          "Cloth",
+          "Hands"
+        ],
+        answer: "Lens paper"
+      },
+      {
+        type: "dropdown",
+        text: "7. Which mirror is used when the light source is weak?",
+        options: [
+          "Concave mirror",
+          "Plane mirror",
+          "Convex mirror",
+          "No mirror"
+        ],
+        answer: "Concave mirror"
+      },
+      {
+        type: "dropdown",
+        text: "8. What is the usual magnification power of a standard eyepiece lens?",
+        options: [
+          "10x",
+          "5x",
+          "40x",
+          "100x"
+        ],
+        answer: "10x"
+      },
+      {
+        type: "image-labels",
+        text: "9. Identify the labelled parts of the microscope in the image below.",
+        image: "label question.jpg",
+        labels: [
+          {
+            name: "1",
+            answer: "Eye Piece",
+            options: [
+              "Eye Piece",
+              "Objective Lens",
+              "Fine adjustment Screw",
+              "Condenser",
+              "Stage"
+            ]
+          },
+          {
+            name: "2",
+            answer: "Objective Lens",
+            options: [
+              "Objective Lens",
+              "Eye Piece",
+              "Mirror",
+              "Condenser",
+              "Base"
+            ]
+          },
+          {
+            name: "3",
+            answer: "Condenser",
+            options: [
+              "Condenser",
+              "Stage",
+              "Objective Lens",
+              "Base",
+              "Fine adjustment Screw"
+            ]
+          },
+          {
+            name: "4",
+            answer: "Fine adjustment Screw",
+            options: [
+              "Fine adjustment Screw",
+              "Coarse adjustment",
+              "Mirror",
+              "Arm",
+              "Condenser"
+            ]
+          }
         ]
+      },
+      {
+        type: "mcq",
+        text: "10. Which of the following statements is NOT true?",
+        options: [
+          "When focusing the slide, care should be taken not to crack the glass slide",
+          "The slide should be placed on the stage with the cover slip on the upper surface",
+          "When setting up, adjust the eye pieces to the dimension of your eyes",
+          "Always view your specimen using the highest magnification lens first"
+        ],
+        answer: "Always view your specimen using the highest magnification lens first"
       }
-    ]
-  },
-  {
-    type: "mcq",
-    text: "10. Which of the following statements is NOT true?",
-    options: [
-      "When focusing the slide, care should be taken not to crack the glass slide",
-      "The slide should be placed on the stage with the cover slip on the upper surface",
-      "When setting up, adjust the eye pieces to the dimension of your eyes",
-      "Always view your specimen using the highest magnification lens first"
-    ],
-    answer: "Always view your specimen using the highest magnification lens first"
-  }
-];
-    // --------- Render Questions ---------
-function renderQuestions() {
-  const questionsSection = document.getElementById("questionsSection");
-  questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
-  questions.forEach((q, idx) => {
-    let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-    if(q.type === "mcq") {
-      q.options.forEach((opt, oidx) => {
-        html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
-      });
-    } else if(q.type === "dropdown") {
-      html += `<select name="q${idx}" required><option value="">Select...</option>`;
-      q.options.forEach(opt => {
-        html += `<option value="${opt}">${opt}</option>`;
-      });
-      html += `</select>`;
-    } else if(q.type === "image-labels") {
-      html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
-      q.labels.forEach((label, lid) => {
-        html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
-        html += `<option value="">Select...</option>`;
-        label.options.forEach(opt => {
-          html += `<option value="${opt}">${opt}</option>`;
-        });
-        html += `</select><br>`;
+    ];
+
+    // ---------- Render Questions ----------
+    function renderQuestions() {
+      const questionsSection = document.getElementById("questionsSection");
+      questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
+      questions.forEach((q, idx) => {
+        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        if(q.type === "mcq") {
+          q.options.forEach((opt, oidx) => {
+            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+          });
+        } else if(q.type === "dropdown") {
+          html += `<select name="q${idx}" required><option value="">Select...</option>`;
+          q.options.forEach(opt => {
+            html += `<option value="${opt}">${opt}</option>`;
+          });
+          html += `</select>`;
+        } else if(q.type === "image-labels") {
+          html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
+          q.labels.forEach((label, lid) => {
+            html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+            html += `<option value="">Select...</option>`;
+            label.options.forEach(opt => {
+              html += `<option value="${opt}">${opt}</option>`;
+            });
+            html += `</select><br>`;
+          });
+        }
+        html += `</div>`;
+        questionsSection.innerHTML += html;
       });
     }
-    html += `</div>`;
-    questionsSection.innerHTML += html;
-  });
-}
+    renderQuestions();
 
-    // --------- Submission Handler ---------
+    // ---------- Submission Handler ----------
     document.getElementById("assessmentForm").onsubmit = async function(e) {
       e.preventDefault();
       document.getElementById("errorMsg").textContent = "";
       document.getElementById("resultMsg").textContent = "";
 
-      // Collect answers
       const form = e.target;
       let allAnswered = true;
+      let answers = [];
       for(let i=0; i<questions.length; i++) {
         let val;
-        if(questions[i].type === "mcq") {
-          const radios = form[`q${i}`];
-          if (!radios) { allAnswered = false; break; }
-          if (radios.length) {
-            val = Array.from(radios).find(r=>r.checked)?.value || "";
-          } else {
-            val = radios.checked ? radios.value : "";
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
+          val = form[`q${i}`]?.value?.trim() || "";
+          if(val === "") allAnswered = false;
+          answers.push(val);
+        } else if(questions[i].type === "image-labels") {
+          let labelAnswers = [];
+          for(let lid=0; lid<questions[i].labels.length; lid++) {
+            let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
+            if(v === "") allAnswered = false;
+            labelAnswers.push(v);
           }
-        } else {
-          val = form[`q${i}`].value.trim();
+          answers.push(labelAnswers.join("; ")); // Store as joined string for Google Sheet
         }
-        if(val === "") allAnswered = false;
       }
       if(!allAnswered) {
         document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
@@ -272,12 +275,18 @@ function renderQuestions() {
         return;
       }
 
-      // Calculate marks
+      // Calculate marks (auto-graded for 1-8 + 4 sublabels in Q9 + Q10)
       let marks = 0;
       for(let i=0; i<questions.length; i++) {
-        const ans = form[`q${i}`].value.trim();
-        if(questions[i].type === "mcq" || (questions[i].type === "short" && questions[i].answer !== "Diagram" && questions[i].answer !== "Precautions")) {
-          if(ans.toLowerCase().trim() === questions[i].answer.toLowerCase().trim()) marks++;
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
+          if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
+        }
+        else if(questions[i].type === "image-labels") {
+          // each sublabel
+          const input = answers[i].split(";").map(s => s.trim());
+          questions[i].labels.forEach((label, lid) => {
+            if(input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
+          });
         }
       }
 
@@ -290,9 +299,7 @@ function renderQuestions() {
       data.append('batchNumber', form.batchNumber.value.trim());
       data.append('emailId', form.emailId.value.trim());
       data.append('experiment', "Study of Compound Microscope");
-      for(let i=0; i<questions.length; i++) {
-        data.append('q'+i, form[`q${i}`].value.trim());
-      }
+      answers.forEach((ans,i) => data.append('q'+i, ans));
       data.append('marks', marks);
 
       // Your deployed Apps Script endpoint
@@ -304,7 +311,7 @@ function renderQuestions() {
         console.error(e);
       }
 
-      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 8 on the auto-graded questions. Your teacher will review the final two questions for additional marks.`;
+      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 13 on the auto-graded questions.`;
       document.getElementById("submitBtn").disabled = true;
     };
   </script>
