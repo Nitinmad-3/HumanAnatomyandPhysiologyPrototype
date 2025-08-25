@@ -101,110 +101,34 @@
         answer: "Fine adjustment"
       },
       {
-        type: "dropdown",
+        type: "short",
         text: "5. Name the lens through which you observe the specimen in a microscope.",
-        options: [
-          "Eyepiece lens",
-          "Objective lens",
-          "Mirror",
-          "Stage"
-        ],
         answer: "Eyepiece lens"
       },
       {
-        type: "dropdown",
+        type: "short",
         text: "6. What is the recommended material for cleaning microscope lenses?",
-        options: [
-          "Lens paper",
-          "Tissue paper",
-          "Cloth",
-          "Hands"
-        ],
         answer: "Lens paper"
       },
       {
-        type: "dropdown",
+        type: "short",
         text: "7. Which mirror is used when the light source is weak?",
-        options: [
-          "Concave mirror",
-          "Plane mirror",
-          "Convex mirror",
-          "No mirror"
-        ],
         answer: "Concave mirror"
       },
       {
-        type: "dropdown",
+        type: "short",
         text: "8. What is the usual magnification power of a standard eyepiece lens?",
-        options: [
-          "10x",
-          "5x",
-          "40x",
-          "100x"
-        ],
         answer: "10x"
       },
       {
-        type: "image-labels",
-        text: "9. Identify the labelled parts of the microscope in the image below.",
-        image: "label question.jpg",
-        labels: [
-          {
-            name: "1",
-            answer: "Eye Piece",
-            options: [
-              "Eye Piece",
-              "Objective Lens",
-              "Fine adjustment Screw",
-              "Condenser",
-              "Stage"
-            ]
-          },
-          {
-            name: "2",
-            answer: "Objective Lens",
-            options: [
-              "Objective Lens",
-              "Eye Piece",
-              "Mirror",
-              "Condenser",
-              "Base"
-            ]
-          },
-          {
-            name: "3",
-            answer: "Condenser",
-            options: [
-              "Condenser",
-              "Stage",
-              "Objective Lens",
-              "Base",
-              "Fine adjustment Screw"
-            ]
-          },
-          {
-            name: "4",
-            answer: "Fine adjustment Screw",
-            options: [
-              "Fine adjustment Screw",
-              "Coarse adjustment",
-              "Mirror",
-              "Arm",
-              "Condenser"
-            ]
-          }
-        ]
+        type: "short",
+        text: "9. Draw and label a simple diagram of a compound microscope, marking at least five key parts.",
+        answer: "Diagram" // Accept any text, teacher checks later
       },
       {
-        type: "mcq",
-        text: "10. Which of the following statements is NOT true?",
-        options: [
-          "When focusing the slide, care should be taken not to crack the glass slide",
-          "The slide should be placed on the stage with the cover slip on the upper surface",
-          "When setting up, adjust the eye pieces to the dimension of your eyes",
-          "Always view your specimen using the highest magnification lens first"
-        ],
-        answer: "Always view your specimen using the highest magnification lens first"
+        type: "short",
+        text: "10. List two safety precautions to follow when using a compound microscope in the laboratory.",
+        answer: "Precautions" // Accept any text, teacher checks later
       }
     ];
 
@@ -218,22 +142,8 @@
           q.options.forEach((opt, oidx) => {
             html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
           });
-        } else if(q.type === "dropdown") {
-          html += `<select name="q${idx}" required><option value="">Select...</option>`;
-          q.options.forEach(opt => {
-            html += `<option value="${opt}">${opt}</option>`;
-          });
-          html += `</select>`;
-        } else if(q.type === "image-labels") {
-          html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
-          q.labels.forEach((label, lid) => {
-            html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
-            html += `<option value="">Select...</option>`;
-            label.options.forEach(opt => {
-              html += `<option value="${opt}">${opt}</option>`;
-            });
-            html += `</select><br>`;
-          });
+        } else if(q.type === "short") {
+          html += `<input type="text" name="q${idx}" required style="width:90%;">`;
         }
         html += `</div>`;
         questionsSection.innerHTML += html;
@@ -241,30 +151,29 @@
     }
     renderQuestions();
 
-    // --------- Submission Handler (updated for new structure) ---------
+    // --------- Submission Handler ---------
     document.getElementById("assessmentForm").onsubmit = async function(e) {
       e.preventDefault();
       document.getElementById("errorMsg").textContent = "";
       document.getElementById("resultMsg").textContent = "";
 
+      // Collect answers
       const form = e.target;
       let allAnswered = true;
-      let answers = [];
       for(let i=0; i<questions.length; i++) {
         let val;
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          val = form[`q${i}`]?.value?.trim() || "";
-          if(val === "") allAnswered = false;
-          answers.push(val);
-        } else if(questions[i].type === "image-labels") {
-          let labelAnswers = [];
-          for(let lid=0; lid<questions[i].labels.length; lid++) {
-            let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
-            if(v === "") allAnswered = false;
-            labelAnswers.push(v);
+        if(questions[i].type === "mcq") {
+          const radios = form[`q${i}`];
+          if (!radios) { allAnswered = false; break; }
+          if (radios.length) {
+            val = Array.from(radios).find(r=>r.checked)?.value || "";
+          } else {
+            val = radios.checked ? radios.value : "";
           }
-          answers.push(labelAnswers.join("; ")); // Store as joined string for Google Sheet
+        } else {
+          val = form[`q${i}`].value.trim();
         }
+        if(val === "") allAnswered = false;
       }
       if(!allAnswered) {
         document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
@@ -275,18 +184,12 @@
         return;
       }
 
-      // Calculate marks (auto-graded for 1-8 + 4 sublabels in Q9 + Q10)
+      // Calculate marks
       let marks = 0;
       for(let i=0; i<questions.length; i++) {
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
-        }
-        else if(questions[i].type === "image-labels") {
-          // each sublabel
-          const input = answers[i].split(";").map(s => s.trim());
-          questions[i].labels.forEach((label, lid) => {
-            if(input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
-          });
+        const ans = form[`q${i}`].value.trim();
+        if(questions[i].type === "mcq" || (questions[i].type === "short" && questions[i].answer !== "Diagram" && questions[i].answer !== "Precautions")) {
+          if(ans.toLowerCase().trim() === questions[i].answer.toLowerCase().trim()) marks++;
         }
       }
 
@@ -299,18 +202,21 @@
       data.append('batchNumber', form.batchNumber.value.trim());
       data.append('emailId', form.emailId.value.trim());
       data.append('experiment', "Study of Compound Microscope");
-      // For questions, flatten any arrays as string
-      answers.forEach((ans,i) => data.append('q'+i, ans));
+      for(let i=0; i<questions.length; i++) {
+        data.append('q'+i, form[`q${i}`].value.trim());
+      }
       data.append('marks', marks);
 
+      // Your deployed Apps Script endpoint
       const scriptURL = "https://script.google.com/macros/s/AKfycbxUCZ3_w4QW9oonYVc5O0jb-tzpd_IRKz0KddkWZjpeH_BsDof5KLlBJwUSSmZhCvho/exec";
+
       try {
         await fetch(scriptURL, { method: "POST", body: data });
       } catch(e) {
         console.error(e);
       }
 
-      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 13 on the auto-graded questions.`;
+      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 8 on the auto-graded questions. Your teacher will review the final two questions for additional marks.`;
       document.getElementById("submitBtn").disabled = true;
     };
   </script>
