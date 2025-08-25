@@ -208,23 +208,36 @@
   }
 ];
     // --------- Render Questions ---------
-    function renderQuestions() {
-      const questionsSection = document.getElementById("questionsSection");
-      questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
-      questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-        if(q.type === "mcq") {
-          q.options.forEach((opt, oidx) => {
-            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
-          });
-        } else if(q.type === "short") {
-          html += `<input type="text" name="q${idx}" required style="width:90%;">`;
-        }
-        html += `</div>`;
-        questionsSection.innerHTML += html;
+function renderQuestions() {
+  const questionsSection = document.getElementById("questionsSection");
+  questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
+  questions.forEach((q, idx) => {
+    let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+    if(q.type === "mcq") {
+      q.options.forEach((opt, oidx) => {
+        html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+      });
+    } else if(q.type === "dropdown") {
+      html += `<select name="q${idx}" required><option value="">Select...</option>`;
+      q.options.forEach(opt => {
+        html += `<option value="${opt}">${opt}</option>`;
+      });
+      html += `</select>`;
+    } else if(q.type === "image-labels") {
+      html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
+      q.labels.forEach((label, lid) => {
+        html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+        html += `<option value="">Select...</option>`;
+        label.options.forEach(opt => {
+          html += `<option value="${opt}">${opt}</option>`;
+        });
+        html += `</select><br>`;
       });
     }
-    renderQuestions();
+    html += `</div>`;
+    questionsSection.innerHTML += html;
+  });
+}
 
     // --------- Submission Handler ---------
     document.getElementById("assessmentForm").onsubmit = async function(e) {
