@@ -61,77 +61,152 @@
   <script>
     // --------- Assessment Questions Data (customize per assessment) ---------
     const questions = [
+  {
+    type: "mcq",
+    text: "1. Which part of the compound microscope connects the base to the body tube?",
+    options: ["Arm", "Stage", "Pillar", "Draw tube"],
+    answer: "Arm"
+  },
+  {
+    type: "mcq",
+    text: "2. The function of the diaphragm in a compound microscope is to:",
+    options: [
+      "Magnify the image",
+      "Adjust the amount of light passing through the specimen",
+      "Hold the slide in place",
+      "Focus the image"
+    ],
+    answer: "Adjust the amount of light passing through the specimen"
+  },
+  {
+    type: "mcq",
+    text: "3. Which lens offers the highest magnification in a compound microscope?",
+    options: [
+      "Low power objective",
+      "High power objective",
+      "Oil immersion objective",
+      "Eyepiece lens"
+    ],
+    answer: "Oil immersion objective"
+  },
+  {
+    type: "mcq",
+    text: "4. Which adjustment knob is used for precise focusing?",
+    options: [
+      "Coarse adjustment",
+      "Fine adjustment",
+      "Stage adjustment",
+      "Condenser adjustment"
+    ],
+    answer: "Fine adjustment"
+  },
+  {
+    type: "dropdown",
+    text: "5. Name the lens through which you observe the specimen in a microscope.",
+    options: [
+      "Eyepiece lens",
+      "Objective lens",
+      "Mirror",
+      "Stage"
+    ],
+    answer: "Eyepiece lens"
+  },
+  {
+    type: "dropdown",
+    text: "6. What is the recommended material for cleaning microscope lenses?",
+    options: [
+      "Lens paper",
+      "Tissue paper",
+      "Cloth",
+      "Hands"
+    ],
+    answer: "Lens paper"
+  },
+  {
+    type: "dropdown",
+    text: "7. Which mirror is used when the light source is weak?",
+    options: [
+      "Concave mirror",
+      "Plane mirror",
+      "Convex mirror",
+      "No mirror"
+    ],
+    answer: "Concave mirror"
+  },
+  {
+    type: "dropdown",
+    text: "8. What is the usual magnification power of a standard eyepiece lens?",
+    options: [
+      "10x",
+      "5x",
+      "40x",
+      "100x"
+    ],
+    answer: "10x"
+  },
+  {
+    type: "image-labels",
+    text: "9. Identify the labelled parts of the microscope in the image below.",
+    image: "label question.jpg",
+    labels: [
       {
-        type: "mcq",
-        text: "1. Which part of the compound microscope connects the base to the body tube?",
-        options: ["Arm", "Stage", "Pillar", "Draw tube"],
-        answer: "Arm"
+        name: "1",
+        answer: "Eye Piece",
+        options: [
+          "Eye Piece",
+          "Objective Lens",
+          "Fine adjustment Screw",
+          "Condenser",
+          "Stage"
+        ]
       },
       {
-        type: "mcq",
-        text: "2. The function of the diaphragm in a compound microscope is to:",
+        name: "2",
+        answer: "Objective Lens",
         options: [
-          "Magnify the image",
-          "Adjust the amount of light passing through the specimen",
-          "Hold the slide in place",
-          "Focus the image"
-        ],
-        answer: "Adjust the amount of light passing through the specimen"
+          "Objective Lens",
+          "Eye Piece",
+          "Mirror",
+          "Condenser",
+          "Base"
+        ]
       },
       {
-        type: "mcq",
-        text: "3. Which lens offers the highest magnification in a compound microscope?",
+        name: "3",
+        answer: "Condenser",
         options: [
-          "Low power objective",
-          "High power objective",
-          "Oil immersion objective",
-          "Eyepiece lens"
-        ],
-        answer: "Oil immersion objective"
+          "Condenser",
+          "Stage",
+          "Objective Lens",
+          "Base",
+          "Fine adjustment Screw"
+        ]
       },
       {
-        type: "mcq",
-        text: "4. Which adjustment knob is used for precise focusing?",
+        name: "4",
+        answer: "Fine adjustment Screw",
         options: [
+          "Fine adjustment Screw",
           "Coarse adjustment",
-          "Fine adjustment",
-          "Stage adjustment",
-          "Condenser adjustment"
-        ],
-        answer: "Fine adjustment"
-      },
-      {
-        type: "short",
-        text: "5. Name the lens through which you observe the specimen in a microscope.",
-        answer: "Eyepiece lens"
-      },
-      {
-        type: "short",
-        text: "6. What is the recommended material for cleaning microscope lenses?",
-        answer: "Lens paper"
-      },
-      {
-        type: "short",
-        text: "7. Which mirror is used when the light source is weak?",
-        answer: "Concave mirror"
-      },
-      {
-        type: "short",
-        text: "8. What is the usual magnification power of a standard eyepiece lens?",
-        answer: "10x"
-      },
-      {
-        type: "short",
-        text: "9. Draw and label a simple diagram of a compound microscope, marking at least five key parts.",
-        answer: "Diagram" // Accept any text, teacher checks later
-      },
-      {
-        type: "short",
-        text: "10. List two safety precautions to follow when using a compound microscope in the laboratory.",
-        answer: "Precautions" // Accept any text, teacher checks later
+          "Mirror",
+          "Arm",
+          "Condenser"
+        ]
       }
-    ];
-
+    ]
+  },
+  {
+    type: "mcq",
+    text: "10. Which of the following statements is NOT true?",
+    options: [
+      "When focusing the slide, care should be taken not to crack the glass slide",
+      "The slide should be placed on the stage with the cover slip on the upper surface",
+      "When setting up, adjust the eye pieces to the dimension of your eyes",
+      "Always view your specimen using the highest magnification lens first"
+    ],
+    answer: "Always view your specimen using the highest magnification lens first"
+  }
+];
     // --------- Render Questions ---------
     function renderQuestions() {
       const questionsSection = document.getElementById("questionsSection");
