@@ -11,7 +11,7 @@
     .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #ce93d8;}
     .question { margin-bottom: 1.5em;}
     .student-info label { display: block; margin: 0.5em 0 0.2em;}
-    .student-info input { width: 100%; padding: 0.5em; margin-bottom: 1em;}
+    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
     .declaration { margin: 2em 0 1em 0; }
     .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #6a1b9a; color: #fff; border-radius: 5px;}
     .submit-btn:disabled { background: #b39ddb; }
@@ -36,14 +36,18 @@
         <h2>Student Information</h2>
         <label for="studentName">Student Name*</label>
         <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name*</label>
-        <input type="text" id="schoolName" name="schoolName" required>
-        <label for="prnNumber">PRN Number*</label>
-        <input type="text" id="prnNumber" name="prnNumber" required>
+        <label for="schoolName">School Name</label>
+        <input type="text" id="schoolName" name="schoolName">
+        <label for="prnNumber">PRN Number</label>
+        <input type="text" id="prnNumber" name="prnNumber">
         <label for="batchNumber">Batch Number*</label>
-        <input type="text" id="batchNumber" name="batchNumber" required>
-        <label for="emailId">Email ID* (add your institutional email id)</label>
-        <input type="email" id="emailId" name="emailId" required>
+        <select id="batchNumber" name="batchNumber" required>
+          <option value="">Select Batch</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+        <label for="emailId">Email ID (add your institutional email id)</label>
+        <input type="email" id="emailId" name="emailId">
       </div>
       <hr>
       <div id="questionsSection"></div>
