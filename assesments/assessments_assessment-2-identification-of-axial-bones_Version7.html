@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Assessment: Experiment No. 2 (Axial Skeleton)</title>
+  <link rel="stylesheet" href="../style.css">
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3e5f5; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
@@ -16,8 +17,6 @@
     .submit-btn:disabled { background: #b39ddb; }
     .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
     .error { color: #d32f2f; margin-bottom: 1em;}
-    .feedback-wrong { color: #d32f2f; }
-    .feedback-correct { color: #388e3c; }
     @media (max-width: 600px) { .container { padding: 1rem; } }
     img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
     label.dropdown-label { display: inline-block; min-width: 80px; }
@@ -85,7 +84,7 @@
           "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck",
           "Coccyx - Neck, Frontal - Tailbone, Cervical - Skull",
           "Coccyx - Skull, Frontal - Neck, Cervical - Tailbone",
-          "Coccyx - Tailbone, Frontal - Skull, Cervical - Thorax"
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
         ],
         answer: "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
       },
@@ -408,11 +407,11 @@
       let marks = 0;
       for(let i=0; i<questions.length; i++) {
         if(questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
-          if(answers[i] === questions[i].answer) marks++;
+          if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
         } else if(questions[i].type === "image-labels") {
           const input = answers[i].split(";").map(s => s.trim());
           questions[i].labels.forEach((label, lid) => {
-            if(input[lid] && input[lid] === label.answer) marks++;
+            if(input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
           });
         }
       }
@@ -438,45 +437,7 @@
         console.error(e);
       }
 
-      document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of 21 on the auto-graded questions.`;
-
-      // --- Feedback for all answers (correct and wrong) ---
-      let feedbackHtml = "<hr><b>Review your answers:</b><br>";
-      for (let i = 0; i < questions.length; i++) {
-        let userAns = answers[i];
-        let correctAns = null;
-        let isCorrect = false;
-
-        if (questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
-          correctAns = questions[i].answer;
-          isCorrect = (userAns === correctAns);
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text}<br>
-            <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-              Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-            </span><br>
-            ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
-          </div>`;
-        } else if (questions[i].type === "image-labels") {
-          let userLabels = userAns.split(";").map(s => s.trim());
-          let subFeedback = "";
-          questions[i].labels.forEach((label, lid) => {
-            let labelAns = userLabels[lid] || "";
-            let labelCorrect = labelAns === label.answer;
-            subFeedback += `<br>
-              <span class="${labelCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-                <b>Label ${label.name}:</b> Your answer: <i>${labelAns || "(blank)"}</i> – <b>${labelCorrect ? "Correct" : "Wrong"}</b>
-              </span>
-              ${!labelCorrect ? `<span class="feedback-correct"> Correct: ${label.answer}</span>` : ""}
-            `;
-          });
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text} ${subFeedback}
-          </div>`;
-        }
-      }
-      document.getElementById("resultMsg").innerHTML += feedbackHtml;
-
+      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 21 on the auto-graded questions.`;
       document.getElementById("submitBtn").disabled = true;
     };
   </script>
