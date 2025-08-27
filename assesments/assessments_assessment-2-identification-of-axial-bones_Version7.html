@@ -427,6 +427,8 @@
         }
       }
 
+      let scoreSummary = `${marks}/${maxMarks}`;
+
       // Prepare FormData for Apps Script (must match sheet headers)
       const data = new FormData();
       data.append('timestamp', new Date().toISOString());
@@ -438,6 +440,7 @@
       data.append('experiment', "Experiment No. 2 (Axial Skeleton)");
       answers.forEach((ans,i) => data.append('q'+i, ans));
       data.append('marks', marks);
+      data.append('scoreSummary', scoreSummary);
 
       // Your deployed Apps Script endpoint (provided by you)
       const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
