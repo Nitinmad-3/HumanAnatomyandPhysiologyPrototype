@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assessment: Study of Compound Microscope</title>
+  <title>Assessment: Experiment No. 2 (Axial Skeleton)</title>
   <link rel="stylesheet" href="../style.css">
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3e5f5; margin: 0;}
@@ -18,11 +18,13 @@
     .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
     .error { color: #d32f2f; margin-bottom: 1em;}
     @media (max-width: 600px) { .container { padding: 1rem; } }
+    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
+    label.dropdown-label { display: inline-block; min-width: 80px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Assessment: Study of Compound Microscope</h1>
+    <h1>Assessment: Experiment No. 2 (Axial Skeleton)</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
@@ -66,149 +68,234 @@
     // ---------- Assessment Questions Data ----------
     const questions = [
       {
-        type: "mcq",
-        text: "1. Which part of the compound microscope connects the base to the body tube?",
-        options: ["Arm", "Stage", "Pillar", "Draw tube"],
-        answer: "Arm"
+        type: "mcq-image",
+        text: "1. Match the bones with their correct anatomical locations.",
+        image: "assets/images/experiment-2/EXPERIMENT/Q1.png",
+        options: [
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck",
+          "Coccyx - Neck, Frontal - Tailbone, Cervical - Skull",
+          "Coccyx - Skull, Frontal - Neck, Cervical - Tailbone",
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
+        ],
+        answer: "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
       },
       {
         type: "mcq",
-        text: "2. The function of the diaphragm in a compound microscope is to:",
+        text: "2. Which bone forms the posterior part of the cranium?",
         options: [
-          "Magnify the image",
-          "Adjust the amount of light passing through the specimen",
-          "Hold the slide in place",
-          "Focus the image"
+          "Frontal",
+          "Parietal",
+          "Occipital",
+          "Temporal"
         ],
-        answer: "Adjust the amount of light passing through the specimen"
+        answer: "Occipital"
       },
       {
         type: "mcq",
-        text: "3. Which lens offers the highest magnification in a compound microscope?",
+        text: "3. Assertion–Reason: <br>Assertion (A): The cervical vertebrae allow for a wide range of head movements.<br>Reason (R): Cervical vertebrae include the atlas and axis, which support rotation and nodding.<br>Choose the correct option:",
         options: [
-          "Low power objective",
-          "High power objective",
-          "Oil immersion objective",
-          "Eyepiece lens"
+          "Both A and R are true, and R is the correct explanation of A",
+          "Both A and R are true, but R is not the correct explanation of A",
+          "A is true, R is false",
+          "A is false, R is true"
         ],
-        answer: "Oil immersion objective"
+        answer: "Both A and R are true, and R is the correct explanation of A"
       },
       {
         type: "mcq",
-        text: "4. Which adjustment knob is used for precise focusing?",
+        text: "4. A patient presents with difficulty in neck movement and pain in the upper spine. Which vertebrae are most likely affected?",
         options: [
-          "Coarse adjustment",
-          "Fine adjustment",
-          "Stage adjustment",
-          "Condenser adjustment"
+          "Lumbar",
+          "Thoracic",
+          "Cervical",
+          "Sacral"
         ],
-        answer: "Fine adjustment"
+        answer: "Cervical"
       },
       {
-        type: "dropdown",
-        text: "5. Name the lens through which you observe the specimen in a microscope.",
+        type: "mcq",
+        text: "5. Which part of the sternum is located at the superior end?",
         options: [
-          "Eyepiece lens",
-          "Objective lens",
-          "Mirror",
-          "Stage"
+          "Body",
+          "Manubrium",
+          "Xiphoid",
+          "Clavicle"
         ],
-        answer: "Eyepiece lens"
+        answer: "Manubrium"
       },
       {
-        type: "dropdown",
-        text: "6. What is the recommended material for cleaning microscope lenses?",
+        type: "mcq",
+        text: "6. Which bone supports the tongue and is involved in speech and swallowing?",
         options: [
-          "Lens paper",
-          "Tissue paper",
-          "Cloth",
-          "Hands"
+          "Mandible",
+          "Maxilla",
+          "Hyoid",
+          "Zygomatic"
         ],
-        answer: "Lens paper"
+        answer: "Hyoid"
       },
       {
-        type: "dropdown",
-        text: "7. Which mirror is used when the light source is weak?",
+        type: "mcq",
+        text: "7. Identify the bone that is not part of the axial skeleton:",
         options: [
-          "Concave mirror",
-          "Plane mirror",
-          "Convex mirror",
-          "No mirror"
+          "Sacrum",
+          "Mandible",
+          "Femur",
+          "Sternum"
         ],
-        answer: "Concave mirror"
+        answer: "Femur"
       },
       {
-        type: "dropdown",
-        text: "8. What is the usual magnification power of a standard eyepiece lens?",
+        type: "mcq",
+        text: "8. Arrange the vertebrae in correct anatomical order from top to bottom:",
         options: [
-          "10x",
-          "5x",
-          "40x",
-          "100x"
+          "Lumbar → Thoracic → Cervical",
+          "Cervical → Thoracic → Lumbar",
+          "Thoracic → Cervical → Lumbar",
+          "Cervical → Lumbar → Thoracic"
         ],
-        answer: "10x"
+        answer: "Cervical → Thoracic → Lumbar"
       },
       {
         type: "image-labels",
-        text: "9. Identify the labelled parts of the microscope in the image below.",
-        image: "/HAP/assets/images/experiment-1/Assessment/labelquestion.jpg",
+        text: "9. Identify the labelled bones in the diagram below:",
+        image: "assets/images/experiment-2/EXPERIMENT/Q9.png",
         labels: [
           {
             name: "1",
-            answer: "Eye Piece",
+            answer: "Frontal bone",
             options: [
-              "Eye Piece",
-              "Objective Lens",
-              "Fine adjustment Screw",
-              "Condenser",
-              "Stage"
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
             ]
           },
           {
             name: "2",
-            answer: "Objective Lens",
+            answer: "Parietal bone",
             options: [
-              "Objective Lens",
-              "Eye Piece",
-              "Mirror",
-              "Condenser",
-              "Base"
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
             ]
           },
           {
             name: "3",
-            answer: "Condenser",
+            answer: "Sphenoid bone",
             options: [
-              "Condenser",
-              "Stage",
-              "Objective Lens",
-              "Base",
-              "Fine adjustment Screw"
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
             ]
           },
           {
             name: "4",
-            answer: "Fine adjustment Screw",
+            answer: "Temporal bone",
             options: [
-              "Fine adjustment Screw",
-              "Coarse adjustment",
-              "Mirror",
-              "Arm",
-              "Condenser"
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "5",
+            answer: "Occipital bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "6",
+            answer: "Ethmoid bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
             ]
           }
         ]
       },
       {
-        type: "mcq",
-        text: "10. Which of the following statements is NOT true?",
-        options: [
-          "When focusing the slide, care should be taken not to crack the glass slide",
-          "The slide should be placed on the stage with the cover slip on the upper surface",
-          "When setting up, adjust the eye pieces to the dimension of your eyes",
-          "Always view your specimen using the highest magnification lens first"
-        ],
-        answer: "Always view your specimen using the highest magnification lens first"
+        type: "image-labels",
+        text: "10. Identify the labelled parts of the rib and sternum diagram below:",
+        image: "assets/images/experiment-2/EXPERIMENT/Q10.png",
+        labels: [
+          {
+            name: "1",
+            answer: "True ribs",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "2",
+            answer: "False ribs",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "3",
+            answer: "Manubrium",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "4",
+            answer: "Body",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "5",
+            answer: "Xiphoid Process",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          }
+        ]
       }
     ];
 
@@ -228,10 +315,15 @@
             html += `<option value="${opt}">${opt}</option>`;
           });
           html += `</select>`;
+        } else if(q.type === "mcq-image") {
+          html += `<img src="${q.image}" alt="Question Diagram" class="question-img"><br>`;
+          q.options.forEach((opt, oidx) => {
+            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+          });
         } else if(q.type === "image-labels") {
-          html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
+          html += `<img src="${q.image}" alt="Labelled diagram for question" class="question-img"><br>`;
           q.labels.forEach((label, lid) => {
-            html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+            html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
             html += `<option value="">Select...</option>`;
             label.options.forEach(opt => {
               html += `<option value="${opt}">${opt}</option>`;
@@ -256,7 +348,7 @@
       let answers = [];
       for(let i=0; i<questions.length; i++) {
         let val;
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
           val = form[`q${i}`]?.value?.trim() || "";
           if(val === "") allAnswered = false;
           answers.push(val);
@@ -279,13 +371,12 @@
         return;
       }
 
-      // Calculate marks (auto-graded for 1-8 + 4 sublabels in Q9 + Q10)
+      // Calculate marks (auto-graded)
       let marks = 0;
       for(let i=0; i<questions.length; i++) {
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
           if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
-        }
-        else if(questions[i].type === "image-labels") {
+        } else if(questions[i].type === "image-labels") {
           // each sublabel
           const input = answers[i].split(";").map(s => s.trim());
           questions[i].labels.forEach((label, lid) => {
@@ -302,12 +393,12 @@
       data.append('prnNumber', form.prnNumber.value.trim());
       data.append('batchNumber', form.batchNumber.value.trim());
       data.append('emailId', form.emailId.value.trim());
-      data.append('experiment', "Study of Compound Microscope");
+      data.append('experiment', "Experiment No. 2 (Axial Skeleton)");
       answers.forEach((ans,i) => data.append('q'+i, ans));
       data.append('marks', marks);
 
-      // Your deployed Apps Script endpoint
-      const scriptURL = "https://script.google.com/macros/s/AKfycbxUCZ3_w4QW9oonYVc5O0jb-tzpd_IRKz0KddkWZjpeH_BsDof5KLlBJwUSSmZhCvho/exec";
+      // Your deployed Apps Script endpoint (provided by you)
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
 
       try {
         await fetch(scriptURL, { method: "POST", body: data });
@@ -315,7 +406,7 @@
         console.error(e);
       }
 
-      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 13 on the auto-graded questions.`;
+      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 21 on the auto-graded questions.`;
       document.getElementById("submitBtn").disabled = true;
     };
   </script>
