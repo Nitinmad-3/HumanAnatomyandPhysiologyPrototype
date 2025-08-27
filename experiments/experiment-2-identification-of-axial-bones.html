@@ -2,168 +2,413 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Experiment 2: Identification of Axial Bones</title>
+  <title>Assessment: Experiment No. 2 (Axial Skeleton)</title>
   <link rel="stylesheet" href="../style.css">
   <style>
-    body {
-      background:
-        linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
-        url('../assets/images/experiment-2/background.jpg') no-repeat center center fixed;
-      background-size: cover;
-      min-height: 100vh;
-      margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-    }
-    .exp-container {
-      max-width: 800px;
-      margin: 3rem auto 2rem auto;
-      background: rgba(255,255,255,0.96);
-      border-radius: 16px;
-      box-shadow: 0 2px 12px #90caf9;
-      padding: 2rem 2.5rem;
-    }
-    h1, h2, h3 {
-      color: #1a237e;
-      text-align: center;
-    }
-    nav {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    nav a {
-      color: #1565c0;
-      text-decoration: none;
-      margin: 0 1.1em;
-      font-weight: 500;
-      font-size: 1.08em;
-      transition: color 0.17s;
-    }
-    nav a:hover {
-      color: #512da8;
-      text-decoration: underline;
-    }
-    details {
-      margin-bottom: 1.5rem;
-      background: rgba(187, 222, 251, 0.35);
-      border-radius: 8px;
-      padding: 1em;
-    }
-    img {
-      display: block;
-      max-width: 90%;
-      margin: 18px auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-    @media (max-width: 600px) {
-      .exp-container { padding: 1rem; }
-      h1 { font-size: 1.4rem; }
-      nav a { font-size: 1em; margin: 0 0.6em; }
-    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3e5f5; margin: 0;}
+    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
+    h1 { color: #6a1b9a; }
+    .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #ce93d8;}
+    .question { margin-bottom: 1.5em;}
+    .student-info label { display: block; margin: 0.5em 0 0.2em;}
+    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
+    .declaration { margin: 2em 0 1em 0; }
+    .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #6a1b9a; color: #fff; border-radius: 5px;}
+    .submit-btn:disabled { background: #b39ddb; }
+    .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
+    .error { color: #d32f2f; margin-bottom: 1em;}
+    @media (max-width: 600px) { .container { padding: 1rem; } }
+    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
+    label.dropdown-label { display: inline-block; min-width: 80px; }
   </style>
 </head>
 <body>
-  <div class="exp-container">
-    <h1 id="experiment-2-identification-of-axial-bones">Experiment 2: Identification of Axial Bones</h1>
+  <header>
+    <h1>Assessment: Experiment No. 2 (Axial Skeleton)</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
       <a href="../assessments.html">Assessments</a>
       <a href="../references.html">References</a>
     </nav>
-
-    <details open>
-      <summary><strong>AIM</strong></summary>
-      Identification of axial bones.
-    </details>
-
-    <details>
-      <summary><strong>Requirements</strong></summary>
-      - Human skeleton model<br>
-      - Bones of axial skeleton
-    </details>
-
-    <details>
-      <summary><strong>References</strong></summary>
-      Goyal RK, Patel NM. Practical Anatomy, Physiology, and Biochemistry. 11th ed. Ahmedabad: B.S. Shah Publishers; 1991.
-    </details>
-
-    <details>
-      <summary><strong>Introduction</strong></summary>
-      The skeleton is the internal framework of bones and cartilage that supports and protects the body, enables movement, and stores minerals.
-      <img src="../assets/images/experiment-2/human-skeleton-diagram1.png" alt="Skeleton"/>
-
-      <h2>Parts of the Skeleton</h2>
-      <ul>
-        <li><strong>Bones:</strong> Skull, spine, ribs, shoulder blades, collar bones, etc.</li>
-        <li><strong>Cartilage:</strong> Flexible connective tissue.</li>
-        <li><strong>Ligaments and Tendons:</strong> Connect bones and muscles.</li>
-        <li><strong>Joints:</strong> Allow bone movement.</li>
-      </ul>
-      <img src="../assets/images/experiment-2/Structural component of the skeleton.png" alt="Parts of the Skeleton"/>
-
-      <h3>Functions</h3>
-      <ul>
-        <li>Support soft tissues and organs.</li>
-        <li>Protect vital organs.</li>
-        <li>Enable movement.</li>
-        <li>Store minerals (calcium, phosphate).</li>
-        <li>Produce blood cells in bone marrow.</li>
-      </ul>
-      <img src="../assets/images/experiment-2/Function of Skeletal system.png" alt="Functions of Skeleton"/>
-    </details>
-
-    <details>
-      <summary><strong>Axial Skeleton</strong></summary>
-      <p>The endoskeleton is divided into:</p>
-      <ul>
-        <li><strong>Axial Skeleton (80 bones):</strong> Skull, vertebral column, rib cage, sternum.</li>
-        <li><strong>Appendicular Skeleton.</strong></li>
-      </ul>
-      <p>The axial skeleton maintains upright posture and transmits body weight.</p>
-      <img src="../assets/images/experiment-2/Axial_skeleton_diagram.svg.png" alt="Axial Skeleton Overview"/>
-
-      <h3>Skull</h3>
-      <ul>
-        <li><strong>Cranium (8 bones):</strong> Frontal, parietal (2), temporal (2), occipital, sphenoid, ethmoid.</li>
-        <li><strong>Ear Ossicles (3):</strong> Malleus, incus, stapes.</li>
-        <li><strong>Hyoid Bone (1):</strong> Supports the throat.</li>
-        <li><strong>Facial Bones:</strong> Maxilla (2), mandible (1), lacrimal (2), inferior nasal conchae (2), vomer (1), zygomatic (2), nasal bones (2), palatine (2).</li>
-      </ul>
-      <img src="../assets/images/experiment-2/skull-side-view1.png" alt="Skull Bones"/>
-
-      <h3>Vertebral Column</h3>
-      <ul>
-        <li><strong>Cervical Vertebrae (7):</strong> Neck region.</li>
-        <li><strong>Thoracic Vertebrae (12):</strong> Attach to ribs.</li>
-        <li><strong>Lumbar Vertebrae (5):</strong> Lower back.</li>
-        <li><strong>Sacrum (1):</strong> Connects spine to pelvis.</li>
-        <li><strong>Coccyx (1):</strong> Tailbone.</li>
-      </ul>
-      <img src="../assets/images/experiment-2/Spinal Chord.jpg" alt="Vertebral Column"/>
-
-      <h3>Sternum</h3>
-      <ul>
-        <li>Flat bone in the chest (manubrium, body, xiphoid process).</li>
-      </ul>
-
-      <h3>Ribs</h3>
-      <ul>
-        <li><strong>12 pairs:</strong>
-          <ul>
-            <li><strong>True ribs (1–7):</strong> Directly attached to sternum.</li>
-            <li><strong>False ribs (8–10):</strong> Indirectly attached.</li>
-            <li><strong>Floating ribs (11–12):</strong> Not attached to sternum.</li>
-          </ul>
-        </li>
-      </ul>
-      <img src="../assets/images/experiment-2/ribcage.png" alt="Ribs"/>
-    </details>
-
-    <details>
-      <summary><strong>Report</strong></summary>
-      The bones of the axial skeleton were studied.
-    </details>
+  </header>
+  <div class="container">
+    <form id="assessmentForm" autocomplete="off">
+      <div class="student-info">
+        <h2>Student Information</h2>
+        <label for="studentName">Student Name*</label>
+        <input type="text" id="studentName" name="studentName" required>
+        <label for="schoolName">School Name</label>
+        <input type="text" id="schoolName" name="schoolName">
+        <label for="prnNumber">PRN Number</label>
+        <input type="text" id="prnNumber" name="prnNumber">
+        <label for="batchNumber">Batch Number*</label>
+        <select id="batchNumber" name="batchNumber" required>
+          <option value="">Select Batch</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+        <label for="emailId">Email ID (add your institutional email id)</label>
+        <input type="email" id="emailId" name="emailId">
+      </div>
+      <hr>
+      <div id="questionsSection"></div>
+      <div class="declaration">
+        <input type="checkbox" id="declaration" required>
+        <label for="declaration">
+          I hereby declare that this assessment is for my own progress and benefit. All answers submitted are my own and not generated by AI or provided by friends.
+        </label>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+      <div class="error" id="errorMsg"></div>
+      <div class="result" id="resultMsg"></div>
+    </form>
   </div>
+  <script>
+    // ---------- Assessment Questions Data ----------
+    const questions = [
+      {
+        type: "mcq-image",
+        text: "1. Match the bones with their correct anatomical locations.",
+        image: "assets/images/experiment-2/EXPERIMENT/Q1.png",
+        options: [
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck",
+          "Coccyx - Neck, Frontal - Tailbone, Cervical - Skull",
+          "Coccyx - Skull, Frontal - Neck, Cervical - Tailbone",
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
+        ],
+        answer: "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
+      },
+      {
+        type: "mcq",
+        text: "2. Which bone forms the posterior part of the cranium?",
+        options: [
+          "Frontal",
+          "Parietal",
+          "Occipital",
+          "Temporal"
+        ],
+        answer: "Occipital"
+      },
+      {
+        type: "mcq",
+        text: "3. Assertion–Reason: <br>Assertion (A): The cervical vertebrae allow for a wide range of head movements.<br>Reason (R): Cervical vertebrae include the atlas and axis, which support rotation and nodding.<br>Choose the correct option:",
+        options: [
+          "Both A and R are true, and R is the correct explanation of A",
+          "Both A and R are true, but R is not the correct explanation of A",
+          "A is true, R is false",
+          "A is false, R is true"
+        ],
+        answer: "Both A and R are true, and R is the correct explanation of A"
+      },
+      {
+        type: "mcq",
+        text: "4. A patient presents with difficulty in neck movement and pain in the upper spine. Which vertebrae are most likely affected?",
+        options: [
+          "Lumbar",
+          "Thoracic",
+          "Cervical",
+          "Sacral"
+        ],
+        answer: "Cervical"
+      },
+      {
+        type: "mcq",
+        text: "5. Which part of the sternum is located at the superior end?",
+        options: [
+          "Body",
+          "Manubrium",
+          "Xiphoid",
+          "Clavicle"
+        ],
+        answer: "Manubrium"
+      },
+      {
+        type: "mcq",
+        text: "6. Which bone supports the tongue and is involved in speech and swallowing?",
+        options: [
+          "Mandible",
+          "Maxilla",
+          "Hyoid",
+          "Zygomatic"
+        ],
+        answer: "Hyoid"
+      },
+      {
+        type: "mcq",
+        text: "7. Identify the bone that is not part of the axial skeleton:",
+        options: [
+          "Sacrum",
+          "Mandible",
+          "Femur",
+          "Sternum"
+        ],
+        answer: "Femur"
+      },
+      {
+        type: "mcq",
+        text: "8. Arrange the vertebrae in correct anatomical order from top to bottom:",
+        options: [
+          "Lumbar → Thoracic → Cervical",
+          "Cervical → Thoracic → Lumbar",
+          "Thoracic → Cervical → Lumbar",
+          "Cervical → Lumbar → Thoracic"
+        ],
+        answer: "Cervical → Thoracic → Lumbar"
+      },
+      {
+        type: "image-labels",
+        text: "9. Identify the labelled bones in the diagram below:",
+        image: "assets/images/experiment-2/EXPERIMENT/Q9.png",
+        labels: [
+          {
+            name: "1",
+            answer: "Frontal bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "2",
+            answer: "Parietal bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "3",
+            answer: "Sphenoid bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "4",
+            answer: "Temporal bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "5",
+            answer: "Occipital bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          },
+          {
+            name: "6",
+            answer: "Ethmoid bone",
+            options: [
+              "Frontal bone",
+              "Parietal bone",
+              "Sphenoid bone",
+              "Temporal bone",
+              "Occipital bone",
+              "Ethmoid bone"
+            ]
+          }
+        ]
+      },
+      {
+        type: "image-labels",
+        text: "10. Identify the labelled parts of the rib and sternum diagram below:",
+        image: "assets/images/experiment-2/EXPERIMENT/Q10.png",
+        labels: [
+          {
+            name: "1",
+            answer: "True ribs",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "2",
+            answer: "False ribs",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "3",
+            answer: "Manubrium",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "4",
+            answer: "Body",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          },
+          {
+            name: "5",
+            answer: "Xiphoid Process",
+            options: [
+              "True ribs",
+              "False ribs",
+              "Manubrium",
+              "Body",
+              "Xiphoid Process"
+            ]
+          }
+        ]
+      }
+    ];
+
+    // ---------- Render Questions ----------
+    function renderQuestions() {
+      const questionsSection = document.getElementById("questionsSection");
+      questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
+      questions.forEach((q, idx) => {
+        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        if(q.type === "mcq") {
+          q.options.forEach((opt, oidx) => {
+            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+          });
+        } else if(q.type === "dropdown") {
+          html += `<select name="q${idx}" required><option value="">Select...</option>`;
+          q.options.forEach(opt => {
+            html += `<option value="${opt}">${opt}</option>`;
+          });
+          html += `</select>`;
+        } else if(q.type === "mcq-image") {
+          html += `<img src="${q.image}" alt="Question Diagram" class="question-img"><br>`;
+          q.options.forEach((opt, oidx) => {
+            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+          });
+        } else if(q.type === "image-labels") {
+          html += `<img src="${q.image}" alt="Labelled diagram for question" class="question-img"><br>`;
+          q.labels.forEach((label, lid) => {
+            html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+            html += `<option value="">Select...</option>`;
+            label.options.forEach(opt => {
+              html += `<option value="${opt}">${opt}</option>`;
+            });
+            html += `</select><br>`;
+          });
+        }
+        html += `</div>`;
+        questionsSection.innerHTML += html;
+      });
+    }
+    renderQuestions();
+
+    // ---------- Submission Handler ----------
+    document.getElementById("assessmentForm").onsubmit = async function(e) {
+      e.preventDefault();
+      document.getElementById("errorMsg").textContent = "";
+      document.getElementById("resultMsg").textContent = "";
+
+      const form = e.target;
+      let allAnswered = true;
+      let answers = [];
+      for(let i=0; i<questions.length; i++) {
+        let val;
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
+          val = form[`q${i}`]?.value?.trim() || "";
+          if(val === "") allAnswered = false;
+          answers.push(val);
+        } else if(questions[i].type === "image-labels") {
+          let labelAnswers = [];
+          for(let lid=0; lid<questions[i].labels.length; lid++) {
+            let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
+            if(v === "") allAnswered = false;
+            labelAnswers.push(v);
+          }
+          answers.push(labelAnswers.join("; ")); // Store as joined string for Google Sheet
+        }
+      }
+      if(!allAnswered) {
+        document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
+        return;
+      }
+      if(!form.declaration.checked) {
+        document.getElementById("errorMsg").textContent = "You must agree to the declaration to submit.";
+        return;
+      }
+
+      // Calculate marks (auto-graded)
+      let marks = 0;
+      for(let i=0; i<questions.length; i++) {
+        if(questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
+          if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
+        } else if(questions[i].type === "image-labels") {
+          // each sublabel
+          const input = answers[i].split(";").map(s => s.trim());
+          questions[i].labels.forEach((label, lid) => {
+            if(input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
+          });
+        }
+      }
+
+      // Prepare FormData for Apps Script (must match sheet headers)
+      const data = new FormData();
+      data.append('timestamp', new Date().toISOString());
+      data.append('studentName', form.studentName.value.trim());
+      data.append('schoolName', form.schoolName.value.trim());
+      data.append('prnNumber', form.prnNumber.value.trim());
+      data.append('batchNumber', form.batchNumber.value.trim());
+      data.append('emailId', form.emailId.value.trim());
+      data.append('experiment', "Experiment No. 2 (Axial Skeleton)");
+      answers.forEach((ans,i) => data.append('q'+i, ans));
+      data.append('marks', marks);
+
+      // Your deployed Apps Script endpoint (provided by you)
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
+
+      try {
+        await fetch(scriptURL, { method: "POST", body: data });
+      } catch(e) {
+        console.error(e);
+      }
+
+      document.getElementById("resultMsg").textContent = `Quiz submitted! You scored ${marks} out of 21 on the auto-graded questions.`;
+      document.getElementById("submitBtn").disabled = true;
+    };
+  </script>
 </body>
 </html>
