@@ -417,6 +417,16 @@
         }
       }
 
+      // Calculate total auto-graded parts
+      let maxMarks = 0;
+      for (let i = 0; i < questions.length; i++) {
+        if (questions[i].type === "mcq" || questions[i].type === "dropdown" || questions[i].type === "mcq-image") {
+          maxMarks += 1;
+        } else if (questions[i].type === "image-labels") {
+          maxMarks += questions[i].labels.length;
+        }
+      }
+
       // Prepare FormData for Apps Script (must match sheet headers)
       const data = new FormData();
       data.append('timestamp', new Date().toISOString());
@@ -438,7 +448,7 @@
         console.error(e);
       }
 
-      document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of 21 on the auto-graded questions.`;
+      document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of ${maxMarks} on the auto-graded questions.`;
 
       // --- Feedback for all answers (correct and wrong) ---
       let feedbackHtml = "<hr><b>Review your answers:</b><br>";
