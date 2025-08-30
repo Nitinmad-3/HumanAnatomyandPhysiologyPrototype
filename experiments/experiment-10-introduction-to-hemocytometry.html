@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Experiment 5: Microscopic Study of Muscular and Nervous Tissue</title>
+  <title>Experiment 10: Introduction to Hemocytometry</title>
   <link rel="stylesheet" href="../style.css">
   <style>
     body {
-      background:
+      background: 
         linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
-        url('../assets/images/experiment-5/background.jpg') no-repeat center center fixed;
+        url('../assets/images/experiment-10/hemocytometer-bg.jpg') no-repeat center center fixed;
       background-size: cover;
       min-height: 100vh;
       margin: 0;
@@ -55,6 +55,21 @@
       border-radius: 12px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.08);
     }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 14px 0;
+    }
+    table, th, td {
+      border: 1px solid #b3c2e0;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background: #e3ecfc;
+    }
     @media (max-width: 600px) {
       .exp-container { padding: 1rem; }
       h1 { font-size: 1.4rem; }
@@ -64,7 +79,7 @@
 </head>
 <body>
   <div class="exp-container">
-    <h1 id="experiment-5-microscopic-study-of-muscular-and-nervous-tissue">Experiment 5: Microscopic Study of Muscular and Nervous Tissue</h1>
+    <h1 id="experiment-10-hemocytometry">Experiment 10: Introduction to Hemocytometry</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
@@ -73,113 +88,128 @@
     </nav>
 
     <details open>
-      <summary><strong>AIM</strong></summary>
-      Microscopic study of muscular and nervous tissue.
+      <summary><strong>Aim</strong></summary>
+      Introduction to hemocytometry.
     </details>
 
     <details>
       <summary><strong>Requirements</strong></summary>
-      - Permanent slides<br>
-      - Compound microscope
+      <ul>
+        <li>Hemocytometer (Neubauer’s counting chamber)</li>
+        <li>RBC diluting pipette</li>
+        <li>WBC diluting pipette</li>
+        <li>RBC diluting fluid</li>
+        <li>WBC diluting fluid</li>
+      </ul>
     </details>
 
     <details>
       <summary><strong>References</strong></summary>
-      Inderbir S. Textbook of Human Histology with Colour Atlas. 6th edition. New Delhi: Jaypee Brothers Medical Publishers; 2011
+      Practical Handbook of Human Anatomy and Physiology by S.R. Kale. Nirali Prakashan, Eighth Edition, 2002, Page 11-12.
     </details>
 
     <details>
       <summary><strong>Introduction</strong></summary>
-      Muscle tissue is one of the four fundamental tissue types of the human body. It is associated with nerves, blood vessels, and various connective tissues. Muscles are complex structures and are a marvel of both biology and physics.
-      <img src="../assets/images/experiment-5/Muscle.png" alt="Muscle Tissue (Microscopic)" />
+      <p>Hemo for blood, cyto for cell; meter for measuring or counting. So, altogether it is for counting or measuring the blood cells.</p>
+      <p>It is a device used for determining the number of cells per unit volume of suspension is called a counting chamber. It is the most widely used type of chamber which is used for performing blood cell counts.</p>
+      <p>Haemocytometers set consist of:</p>
+      <ul>
+        <li>Neubauer’s Counting chamber</li>
+        <li>Diluting pipetter (RBC and WBC)</li>
+      </ul>
+      <img src="../assets/images/experiment-10/newbars chamber.png" alt="Neubauer's Chamber Diagram"/>
     </details>
 
     <details>
-      <summary><strong>General Characteristics of Muscle Tissue</strong></summary>
-      <ul>
-        <li><strong>Excitability</strong> – Ability to receive and respond to stimuli.
-          <ul>
-            <li><strong>Skeletal muscle:</strong> Stimulus is a neurotransmitter from a neuron.</li>
-            <li><strong>Smooth muscle:</strong> Stimulus can be a neurotransmitter, hormone, or stretch.</li>
-            <li><strong>Cardiac muscle:</strong> Stimulus may be a neurotransmitter, hormone, or stretch.</li>
-            <li><strong>Response:</strong> Generation of an electrical impulse along the plasma membrane.</li>
-          </ul>
-        </li>
-        <li><strong>Contractility</strong> – Ability to contract forcibly when stimulated. This is the defining property of muscle tissue.</li>
-        <li><strong>Extensibility</strong> – Ability to be stretched or extended.</li>
-        <li><strong>Elasticity</strong> – Ability to recoil and return to original length after stretching.</li>
-      </ul>
-      <img src="../assets/images/experiment-5/Characteristics of  Muscle Tissue.png" alt="Characteristics of Muscle Tissue" />
+      <summary><strong>Neubauer’s Counting Chamber</strong></summary>
+      <p>
+        It is a thick glass slide with two identical ruled areas separated by empty space and having two elevated ridges on their both sides. Either of the ruled areas is used for counting the cells. The counting square is of 9 sq.mm area (3mm × 3mm). The four corner squares of area 1 sq.mm. each (1mm × 1mm) are used for white blood cell count. In this the triple lines which dividing the central large square are very much closer to each other. The central ruled area is divided into 25 large squares. These squares are subdivided to form 16 smaller squares each with an area of 1/400 of 1 sq.mm. The four corners and one middle subsquares are used for red blood cell count. The depth of improved neubauer chamber is same that is 0.1mm.
+      </p>
+      <img src="../assets/images/experiment-10/counting-cell.webp" alt="Counting Cell Grid"/>
     </details>
 
     <details>
-      <summary><strong>Functions of Muscle Tissue</strong></summary>
-      <ul>
-        <li>Movement</li>
-        <li>Locomotion</li>
-        <li>Maintenance of posture</li>
-        <li>Heat production</li>
-        <li>Facial expressions</li>
-        <li>Pumping blood</li>
-        <li>Peristalsis (movement of substances through internal organs)</li>
-      </ul>
-      <img src="../assets/images/experiment-5/Functions of Muscle Tissue - visual selection.png" alt="Functions of Muscle Tissue" />
+      <summary><strong>Diluting Pipette</strong></summary>
+      <p>
+        It is a glass tube pipette with rubber sucking arrangement. The tubular part of the pipette is graduated from 0 to 1 with the division of 0.1 units. The bulb portion can accommodate 100 units of volume graduated from 1 to 101 on both sides of the bulb. Bulb serves as diluting and mixing chamber for blood.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>RBC Pipette</th>
+            <th>WBC Pipette</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bead Colour</td>
+            <td>Red</td>
+            <td>White</td>
+          </tr>
+          <tr>
+            <td>Markings</td>
+            <td>0.5, 1, 101</td>
+            <td>0.5, 1, 11</td>
+          </tr>
+          <tr>
+            <td>Dilution Ratio</td>
+            <td>4:20</td>
+            <td>1:20</td>
+          </tr>
+        </tbody>
+      </table>
     </details>
 
     <details>
-      <summary><strong>Types of Muscle Tissue</strong></summary>
-      <h3>Skeletal Muscle</h3>
+      <summary><strong>Diluting Fluids</strong></summary>
+      <h3>RBC Diluting fluids</h3>
       <ul>
-        <li><strong>Description:</strong> Long, striated cells with multiple nuclei</li>
-        <li><strong>Function:</strong> Voluntary movement</li>
-        <li><strong>Location:</strong> Attached to bones</li>
+        <li><strong>Sodium chloride:</strong> Maintains osmolarity and isotonicity</li>
+        <li><strong>Sodium sulfate:</strong> Prevents RBC aggregation, acts as an anticoagulant, and acts as a fixative</li>
+        <li><strong>Mercuric chloride:</strong> Acts as a preservative, is antifungal and antibacterial, and prevents contamination by microorganisms</li>
+        <li><strong>Glacial acetic acid:</strong> Used in some RBC diluting fluids</li>
       </ul>
-
-      <h3>Smooth Muscle</h3>
+      <p>RBC diluting fluids are used to dilute blood prior to counting red blood cells with a hemocytometer.</p>
+      <br>
+      <h3>WBC Diluting fluids</h3>
       <ul>
-        <li><strong>Description:</strong> Long, spindle-shaped cells with a single nucleus</li>
-        <li><strong>Function:</strong> Propels substances along internal passageways</li>
-        <li><strong>Location:</strong> Walls of hollow organs (e.g., stomach, intestines, blood vessels)</li>
+        <li><strong>Glacial acetic acid:</strong> 2.0 milliliters</li>
+        <li><strong>Distilled water:</strong> 97.0 milliliters</li>
+        <li><strong>Gentian violet:</strong> 1.0 gram (1% w/v)</li>
       </ul>
-
-      <h3>Cardiac Muscle</h3>
-      <ul>
-        <li><strong>Description:</strong> Branching, striated cells fused at plasma membrane</li>
-        <li><strong>Function:</strong> Pumps blood</li>
-        <li><strong>Location:</strong> Wall of the heart</li>
-      </ul>
-      <img src="../assets/images/experiment-5/muscles.png" alt="Muscle Types Overview" />
+      <p>WBC diluting fluid is used to perform a WBC count. The glacial acetic acid in the solution lyses red blood cells, while the gentian violet stains the nuclei of white blood cells.</p>
     </details>
 
     <details>
-      <summary><strong>Nervous Tissue</strong></summary>
-      <p>Nervous tissue is the most complex tissue in the human body. It consists of over 100 million nerve cells supported by glial cells. Each neuron connects with thousands of others, forming a highly intricate system.</p>
-      <img src="../assets/images/experiment-5/nervous cell.png" alt="Nervous Cell" />
+      <summary><strong>Procedure</strong></summary>
+      <ol>
+        <li>Clean the hemocytometer and the cover glass with ethanol. Ensure the ethanol evaporates completely, so it does not affect your cells.</li>
+        <li>Place the cover glass on top of the hemocytometer’s chambers to stop your sample from evaporating.</li>
+        <li>Load 10 µl of your stained sample into one or both counting chambers with a micropipette. Capillary action ensures even distribution of the suspension within the chamber.</li>
+        <li>Place the hemocytometer under the microscope.</li>
+        <li>Adjust the microscope’s focus until you can clearly see the cells.</li>
+        <li>Count the cells using a tally counter (see below for details about the rules of cell counting using a hemocytometer). Keep track of the total number of cells and the number of dead cells.</li>
+        <li>When you are finished, clean the hemocytometer and the cover glass with ethanol.</li>
+      </ol>
+      <img src="../assets/images/experiment-10/Procedure.png" alt="Hemocytometer Procedure Diagram"/>
+      <img src="../assets/images/experiment-10/cell counting.jpg" alt="Cell Counting Example"/>
+    </details>
 
-      <h3>Functions of Nervous Tissue</h3>
-      <ul>
-        <li>Regulates and controls body functions</li>
-        <li>Generates and transmits nerve impulses</li>
-        <li>Supports, insulates, and protects neurons</li>
-      </ul>
-
-      <h3>Composition of Nervous Tissue</h3>
-      <ul>
-        <li><strong>Neurons</strong>
-          <ul>
-            <li><strong>Description:</strong> Branching cells with long processes extending from the cell body</li>
-            <li><strong>Function:</strong> Transmit electrical signals from sensory receptors to effectors</li>
-            <li><strong>Location:</strong> Brain, spinal cord, and nerves</li>
-          </ul>
-        </li>
-        <li><strong>Neuroglia</strong> – Support cells that assist neurons</li>
-      </ul>
-      <img src="../assets/images/experiment-5/nervous tissur.png" alt="Nervous Tissue" />
+    <details>
+      <summary><strong>Precautions</strong></summary>
+      <p>
+        Cell counting with a hemocytometer is typically error-prone, with errors often as high as 20-30%. Common sources of error range from human error with procedures and calculations, to errors caused by non-uniform cell staining and cell debris.
+      </p>
+      <p>
+        You can minimize errors by ensuring you work as consistently and precisely as possible. Take care to prepare dilutions correctly, pipette carefully, set clear counting guidelines, and be diligent about what you count as a cell. Remember, consistency is king! Performing additional counts can also ensure that your results are reliable and may help you catch errors before it’s too late. Typically, we repeat all cell counts three times, but “when in doubt, do another count!”
+      </p>
+      <img src="../assets/images/experiment-10/tips.png" alt="Hemocytometer Tips & Precautions"/>
     </details>
 
     <details>
       <summary><strong>Report</strong></summary>
-      The microscopic study of muscular and nervous tissues was completed.
+      The introduction to hemocytometry was studied.
     </details>
   </div>
 </body>
