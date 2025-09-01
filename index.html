@@ -111,7 +111,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script>
-    // Correct Firebase config block
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCiz-uKzGPykJVIxvIpXC_kTJOKh89Hk0A",
       authDomain: "hap-prototype-a99ef.firebaseapp.com",
@@ -123,26 +123,24 @@
     };
     firebase.initializeApp(firebaseConfig);
 
+    // Show/hide login/logout buttons based on auth state
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
-        // Logged in: show Logout button
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
       } else {
-        // Not logged in: redirect to login page
-        window.location.href = "login_Version4.html";
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'inline';
       }
-      // Assessment tab is always visible
     });
 
-    // Protect Assessments tab: redirect to login if not logged in
+    // Only protect Assessments tab, NOT the whole page
     document.getElementById('assessment-tab').onclick = function(e) {
       var user = firebase.auth().currentUser;
       if (!user) {
         e.preventDefault();
         window.location.href = "login_Version4.html";
       }
-      // If user is logged in, allow normal navigation
     };
 
     // Logout logic
