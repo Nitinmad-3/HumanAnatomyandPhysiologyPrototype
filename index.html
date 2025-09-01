@@ -129,12 +129,21 @@
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
       } else {
-        // Not logged in: show Login button
-        document.getElementById('logout-btn').style.display = 'none';
-        document.getElementById('login-btn').style.display = 'inline';
+        // Not logged in: redirect to login page
+        window.location.href = "login_Version4.html";
       }
       // Assessment tab is always visible
     });
+
+    // Protect Assessments tab: redirect to login if not logged in
+    document.getElementById('assessment-tab').onclick = function(e) {
+      var user = firebase.auth().currentUser;
+      if (!user) {
+        e.preventDefault();
+        window.location.href = "login_Version4.html";
+      }
+      // If user is logged in, allow normal navigation
+    };
 
     // Logout logic
     document.getElementById('logout-btn').onclick = function(e) {
