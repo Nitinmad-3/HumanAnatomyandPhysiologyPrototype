@@ -16,6 +16,7 @@
     .assess-list li { margin-bottom: 1.25em; }
     .assess-list a { color: #33691e; text-decoration: none; font-size: 1.08em; font-weight: bold;}
     .assess-list a:hover { text-decoration: underline; }
+    #not-logged-in-message { color: #c62828; font-weight: bold; text-align: center; margin-top: 2rem; }
     @media (max-width: 600px) { .assess-list { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
   </style>
 </head>
@@ -25,11 +26,13 @@
     <nav>
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
-      <a href="assessments.html">Assessments</a>
+      <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
+      <a id="login-btn" href="login.html">Login</a>
+      <a id="logout-btn" href="#" style="display:none;">Logout</a>
     </nav>
   </header>
-  <div class="assess-list">
+  <div class="assess-list" id="assess-list" style="display:none;">
     <ul>
       <li><a href="assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html">1. Study of Compound Microscope</a></li>
       <li><a href="assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html">2. Identification of Axial Bones</a></li>
@@ -48,5 +51,45 @@
       <li><a href="assesments/assessments_assessment-15-study-of-human-skin-model_Version2.md">15. Study of Human Skin Model</a></li>
     </ul>
   </div>
+  <div id="not-logged-in-message" style="display:none;">
+    You must be logged in to view assessment questions. Redirecting to login...
+  </div>
+  <!-- Firebase SDKs and authentication logic -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    // Add your Firebase config here (replace ... with your actual config)
+    const firebaseConfig = {
+      // ...your firebase config
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // Show assessment list, hide login message
+        document.getElementById('assess-list').style.display = 'block';
+        document.getElementById('not-logged-in-message').style.display = 'none';
+        document.getElementById('logout-btn').style.display = 'inline';
+        document.getElementById('login-btn').style.display = 'none';
+      } else {
+        // Hide assessment list, show login message, redirect after short delay
+        document.getElementById('assess-list').style.display = 'none';
+        document.getElementById('not-logged-in-message').style.display = 'block';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'inline';
+        setTimeout(function() {
+          window.location.href = "login.html";
+        }, 2000);
+      }
+    });
+
+    // Logout logic
+    document.getElementById('logout-btn').onclick = function(e) {
+      e.preventDefault();
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    };
+  </script>
 </body>
 </html>
