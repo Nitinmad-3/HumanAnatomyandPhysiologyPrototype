@@ -9,14 +9,16 @@
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
     h1 { color: #33691e; }
     nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
-    nav a { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px;}
-    nav a:hover { background: #aed581; }
+    nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer;}
+    nav a:hover, nav button:hover { background: #aed581; }
     .assess-list { max-width: 700px; margin: auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #c5e1a5; }
     .assess-list ul { list-style: none; padding: 0; }
     .assess-list li { margin-bottom: 1.25em; }
     .assess-list a { color: #33691e; text-decoration: none; font-size: 1.08em; font-weight: bold;}
     .assess-list a:hover { text-decoration: underline; }
     #not-logged-in-message { color: #c62828; font-weight: bold; text-align: center; margin-top: 2rem; }
+    #login-direct { display: inline-block; margin: 1.5rem auto 0 auto; background: #33691e; color: #fff; padding: 0.65em 1.3em; border-radius: 4px; text-decoration: none; }
+    #login-direct:hover { background: #558b2f; }
     @media (max-width: 600px) { .assess-list { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
   </style>
 </head>
@@ -28,8 +30,8 @@
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
-      <a id="login-btn" href="login.html">Login</a>
-      <a id="logout-btn" href="#" style="display:none;">Logout</a>
+      <a id="login-btn" href="login.html" style="display:inline;">Login</a>
+      <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
   <div class="assess-list" id="assess-list" style="display:none;">
@@ -52,7 +54,9 @@
     </ul>
   </div>
   <div id="not-logged-in-message" style="display:none;">
-    You must be logged in to view assessment questions. Redirecting to login...
+    You must be logged in to view assessment questions.
+    <br>
+    <a id="login-direct" href="login.html">Go to Login Page</a>
   </div>
   <!-- Firebase SDKs and authentication logic -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -72,14 +76,15 @@
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
       } else {
-        // Hide assessment list, show login message, redirect after short delay
+        // Hide assessment list, show login message (with direct login link)
         document.getElementById('assess-list').style.display = 'none';
         document.getElementById('not-logged-in-message').style.display = 'block';
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
+        // Optional: Remove auto-redirect for better UX, or keep with longer delay
         setTimeout(function() {
           window.location.href = "login.html";
-        }, 2000);
+        }, 5000); // Give user time to read/click
       }
     });
 
