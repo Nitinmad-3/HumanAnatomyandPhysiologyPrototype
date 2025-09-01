@@ -30,7 +30,7 @@
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
-      <a id="login-btn" href="login.html" style="display:inline;">Login</a>
+      <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
       <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
@@ -56,35 +56,36 @@
   <div id="not-logged-in-message" style="display:none;">
     You must be logged in to view assessment questions.
     <br>
-    <a id="login-direct" href="login.html">Go to Login Page</a>
+    <a id="login-direct" href="login_Version4.html">Go to Login Page</a>
   </div>
   <!-- Firebase SDKs and authentication logic -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script>
-    // Add your Firebase config here (replace ... with your actual config)
+    // Firebase config (use your actual config here!)
     const firebaseConfig = {
-      // ...your firebase config
+      apiKey: "AIzaSyCiz-uKzGPykJVIxvIpXC_kTJOKh89Hk0A",
+      authDomain: "hap-prototype-a99ef.firebaseapp.com",
+      projectId: "hap-prototype-a99ef",
+      storageBucket: "hap-prototype-a99ef.appspot.com",
+      messagingSenderId: "416977995581",
+      appId: "1:416977995581:web:606b67f571540842d0a754",
+      measurementId: "G-GM49L49B0T"
     };
     firebase.initializeApp(firebaseConfig);
 
+    // Show/hide content for logged-in users
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
-        // Show assessment list, hide login message
         document.getElementById('assess-list').style.display = 'block';
         document.getElementById('not-logged-in-message').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
       } else {
-        // Hide assessment list, show login message (with direct login link)
         document.getElementById('assess-list').style.display = 'none';
         document.getElementById('not-logged-in-message').style.display = 'block';
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
-        // Optional: Remove auto-redirect for better UX, or keep with longer delay
-        setTimeout(function() {
-          window.location.href = "login.html";
-        }, 5000); // Give user time to read/click
       }
     });
 
