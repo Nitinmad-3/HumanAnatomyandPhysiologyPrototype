@@ -20,7 +20,7 @@
       z-index: -1;
       background: url('wallpaper.jpg') no-repeat center center fixed;
       background-size: cover;
-      opacity: 1.0; /* Adjust this value for transparency */
+      opacity: 1.0;
       pointer-events: none;
     }
     .overlay {
@@ -81,8 +81,11 @@
       <nav>
         <a href="index.html">Home</a>
         <a href="experiments.html">Experiments</a>
-        <a href="assessments.html">Assesments</a>
+        <a id="assessment-tab" href="assessments.html">Assessments</a>
         <a href="references.html">References</a>
+        <!-- Added Login/Logout buttons -->
+        <a id="login-btn" href="login.html">Login</a>
+        <a id="logout-btn" href="#" style="display:none;">Logout</a>
       </nav>
     </header>
     <div class="intro">
@@ -102,5 +105,36 @@
       </p>
     </div>
   </div>
+  <!-- Firebase SDKs and authentication logic -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    // Add your Firebase config here (replace ... with your actual config)
+    const firebaseConfig = {
+      // ...your firebase config
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // Logged in: show Logout button
+        document.getElementById('logout-btn').style.display = 'inline';
+        document.getElementById('login-btn').style.display = 'none';
+      } else {
+        // Not logged in: show Login button
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'inline';
+      }
+      // Assessment tab is always visible
+    });
+
+    // Logout logic
+    document.getElementById('logout-btn').onclick = function(e) {
+      e.preventDefault();
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
 </body>
 </html>
