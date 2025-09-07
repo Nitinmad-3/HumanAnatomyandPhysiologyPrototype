@@ -9,12 +9,13 @@
     .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
     h1 { color: #1565c0; }
     label { display: block; margin: 1em 0 0.3em;}
-    input, select { width: 100%; padding: 0.6em; margin-bottom: 1em;}
+    input { width: 100%; padding: 0.6em; margin-bottom: 1em;}
     .btn { padding: 0.7em 1.8em; font-size: 1em; border: none; border-radius: 5px;}
     .save-btn { background: #1565c0; color: #fff;}
     .logout-btn { background: #d32f2f; color: #fff; float: right;}
     .msg { color: #388e3c; margin-top: 1em;}
     .error { color: #d32f2f; margin-top: 1em;}
+    .role-display { background: #e3f2fd; padding: 0.6em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #90caf9; font-weight: bold;}
   </style>
 </head>
 <body>
@@ -23,11 +24,7 @@
     <h1>Your Profile</h1>
     <form id="profileForm" autocomplete="off">
       <label for="role">Role*</label>
-      <select id="role" name="role" required>
-        <option value="">Select Role</option>
-        <option value="student">Student</option>
-        <option value="admin">Admin</option>
-      </select>
+      <div id="role-display" class="role-display"></div>
       <label for="name">Full Name*</label>
       <input type="text" id="name" name="name" required>
       <label for="prn">PRN Number*</label>
@@ -59,16 +56,36 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Hardcoded UID lists (must match your Firestore rules)
+    const ADMIN_UIDS = [
+      "Pm6TvmFA1RUiZt7LK6ByUnij68A2",
+      "AztH5xParnf60ZcCdV6tLtWy97v6",
+      "mxT8vKKLgsRiG6zoSLcNyikpvVW1"
+    ];
+    const STUDENT_UIDS = [
+      "Aaty5xJarof60ZcBdV6tZtWv97v2",
+      "aiYxD8qpD9gGB0O3Otqa0Dj1o1w2"
+    ];
+
+    function getUserRole(uid) {
+      if (ADMIN_UIDS.includes(uid)) return "Admin";
+      if (STUDENT_UIDS.includes(uid)) return "Student";
+      return "Unknown";
+    }
+
     // Prefill info if logged in
     auth.onAuthStateChanged(function(user) {
       if (user) {
         document.getElementById('email').value = user.email || "";
         document.getElementById('name').value = user.displayName || "";
+        // Get role from UID
+        const role = getUserRole(user.uid);
+        document.getElementById('role-display').textContent = role;
         // Fetch profile from Firestore and fill all fields
         db.collection('profiles').doc(user.uid).get().then(doc => {
           if (doc.exists) {
             const data = doc.data();
-            document.getElementById('role').value = data.role || "";
+            // role is shown, not editable
             document.getElementById('prn').value = data.prn || "";
             document.getElementById('batch').value = data.batch || "";
             document.getElementById('name').value = data.name || user.displayName || "";
@@ -85,24 +102,25 @@
       document.getElementById('msg').textContent = "";
       document.getElementById('error').textContent = "";
 
-      const role = document.getElementById('role').value;
-      const name = document.getElementById('name').value.trim();
-      const prn = document.getElementById('prn').value.trim();
-      const batch = document.getElementById('batch').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      // All fields required
-      if (!role || !name || !prn || !batch || !email) {
-        document.getElementById('error').textContent = "Please fill all required fields.";
-        return;
-      }
-
       const user = auth.currentUser;
       if (!user) {
         document.getElementById('error').textContent = "You must be signed in to submit your profile.";
         setTimeout(function(){
           window.location.href = 'login.html';
         }, 1500);
+        return;
+      }
+
+      // Get role from UID
+      const role = getUserRole(user.uid);
+      const name = document.getElementById('name').value.trim();
+      const prn = document.getElementById('prn').value.trim();
+      const batch = document.getElementById('batch').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      // All fields required
+      if (role === "Unknown" || !name || !prn || !batch || !email) {
+        document.getElementById('error').textContent = "Please fill all required fields.";
         return;
       }
 
