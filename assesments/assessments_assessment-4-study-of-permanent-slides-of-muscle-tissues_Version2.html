@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assessment: Identification of Appendicular Bones</title>
+  <title>Experiment 4: Microscopic Study of Epithelial and Connective Tissue</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
@@ -21,11 +21,13 @@
     @media (max-width: 600px) { .container { padding: 1rem; } }
     img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
     label.dropdown-label { display: inline-block; min-width: 80px; }
+    .explanation { color: #444; font-size: 0.97em; display: none; }
+    .feedback-visible .explanation { display: block; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Assessment: Identification of Appendicular Bones</h1>
+    <h1>Experiment 4: Microscopic Study of Epithelial and Connective Tissue</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
@@ -74,178 +76,196 @@
       }
       return array;
     }
-    // --- End Utility shuffle function --- //
 
     // ---------- Assessment Questions Data ---------- //
     const questions = [
-      // Multiple Choice Questions //
+      // MCQ 8 to 15
       {
         type: "mcq",
-        text: "1. The largest bone of the hip is:",
+        text: "1. Which of the following is not a general characteristic of epithelial tissue?",
         options: [
-          "Ischium",
-          "Ilium",
-          "Pubis",
-          "Femur"
+          "Highly regenerative",
+          "Vascularized",
+          "Innervated",
+          "Closely attached cells forming a barrier"
         ],
-        answer: "Ilium"
-      },
-      {
-        type: "mcq",
-        text: "2. How many bones are found in each human arm?",
-        options: [
-          "30",
-          "26",
-          "14",
-          "80"
-        ],
-        answer: "30"
+        answer: "Vascularized"
       },
       {
         type: "mcq",
-        text: "3. The scapula is also known as the:",
+        text: "2. What type of epithelial tissue lines the alveoli of the lungs?",
         options: [
-          "Collarbone",
-          "Hip bone",
-          "Shoulder blade",
-          "Wrist bone"
+          "Simple cuboidal epithelium",
+          "Stratified squamous epithelium",
+          "Simple squamous epithelium",
+          "Transitional epithelium"
         ],
-        answer: "Shoulder blade"
+        answer: "Simple squamous epithelium"
       },
       {
         type: "mcq",
-        text: "4. Which bone forms the knee cap?",
+        text: "3. Which epithelial tissue type is specialized for absorption and secretion in the digestive tract?",
         options: [
-          "Tibia",
-          "Patella",
-          "Fibula",
-          "Femur"
+          "Stratified columnar epithelium",
+          "Simple columnar epithelium",
+          "Pseudostratified columnar epithelium",
+          "Simple squamous epithelium"
         ],
-        answer: "Patella"
+        answer: "Simple columnar epithelium"
       },
-      // --- End Multiple Choice Questions --- //
-
-      // One Word/Short Answer Questions (Dropdown) //
+      {
+        type: "mcq",
+        text: "4. What is the main function of fibrocartilage?",
+        options: [
+          "Flexibility",
+          "Mineral storage",
+          "Shock absorption",
+          "Secretion"
+        ],
+        answer: "Shock absorption"
+      },
+      {
+        type: "mcq",
+        text: "5. Which connective tissue type forms tendons and ligaments?",
+        options: [
+          "Dense irregular connective tissue",
+          "Reticular connective tissue",
+          "Dense regular connective tissue",
+          "Areolar connective tissue"
+        ],
+        answer: "Dense regular connective tissue"
+      },
+      {
+        type: "mcq",
+        text: "6. Which epithelial tissue type allows stretching and is found in the urinary bladder?",
+        options: [
+          "Simple cuboidal epithelium",
+          "Transitional epithelium",
+          "Stratified squamous epithelium",
+          "Pseudostratified columnar epithelium"
+        ],
+        answer: "Transitional epithelium"
+      },
+      {
+        type: "mcq",
+        text: "7. Which connective tissue type contains all fiber types and supports inflammation?",
+        options: [
+          "Reticular tissue",
+          "Areolar tissue",
+          "Adipose tissue",
+          "Dense regular tissue"
+        ],
+        answer: "Areolar tissue"
+      },
+      {
+        type: "mcq",
+        text: "8. Which epithelial tissue type appears multilayered but all cells touch the basement membrane?",
+        options: [
+          "Stratified cuboidal epithelium",
+          "Simple columnar epithelium",
+          "Pseudostratified columnar epithelium",
+          "Transitional epithelium"
+        ],
+        answer: "Pseudostratified columnar epithelium"
+      },
+      // Dropdown 9 to 15 with explanations (hidden until feedback)
       {
         type: "dropdown",
-        text: "5. Name the bones that make up the pectoral girdle.",
+        text: "9. Which epithelial tissue is best suited for gas exchange in the lungs?",
         options: [
-          "Radius and Ulna",
-          "Clavicle and Scapula",
-          "Femur and Tibia",
-          "Humerus and Radius"
+          "Simple cuboidal",
+          "Simple squamous",
+          "Stratified squamous",
+          "Transitional"
         ],
-        answer: "Clavicle and Scapula"
+        answer: "Simple squamous",
+        explanation: "Simple squamous epithelium is thin and flat, allowing easy diffusion of gases in alveoli."
       },
       {
         type: "dropdown",
-        text: "6. What is the longest bone in the human body?",
+        text: "10. Which connective tissue stores fat and cushions organs?",
         options: [
-          "Tibia",
-          "Humerus",
-          "Femur",
-          "Spine"
+          "Areolar",
+          "Reticular",
+          "Adipose",
+          "Dense regular"
         ],
-        answer: "Femur"
+        answer: "Adipose",
+        explanation: "Adipose tissue contains fat-storing cells (adipocytes) that insulate and protect organs."
       },
       {
         type: "dropdown",
-        text: "7. Which bones form the palm of the hand?",
+        text: "11. Which epithelial tissue lines the kidney tubules and helps in absorption?",
         options: [
-          "Carpals",
-          "Phalanges",
-          "Metacarpals",
-          "Tarsals"
+          "Simple squamous",
+          "Simple cuboidal",
+          "Stratified cuboidal",
+          "Pseudostratified columnar"
         ],
-        answer: "Metacarpals"
+        answer: "Simple cuboidal",
+        explanation: "Cuboidal cells are ideal for secretion and absorption, especially in kidney tubules."
       },
       {
         type: "dropdown",
-        text: "8. How many phalanges are there in one human foot?",
+        text: "12. Which connective tissue is found in tendons and ligaments?",
         options: [
-          "10",
-          "14",
-          "26",
-          "5"
+          "Dense regular",
+          "Dense irregular",
+          "Areolar",
+          "Reticular"
         ],
-        answer: "14"
+        answer: "Dense regular",
+        explanation: "Dense regular connective tissue has parallel collagen fibers that provide strong tensile strength."
       },
-      // --- End One Word/Short Answer Questions (Dropdown) --- //
-
-      // Application/Diagram-Based Questions (Image-Labels) //
       {
-        type: "image-labels",
-        text: "9. Identify the labelled bones in the diagram below:",
-        image: "../assets/images/experiment-3/Assessment/Assessment exptno7appendicular.png",
-        labels: [
-          {
-            name: "1",
-            answer: "Phalanges",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "2",
-            answer: "Scapula",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "3",
-            answer: "Ulna",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "4",
-            answer: "Carpals",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "5",
-            answer: "Tarsals",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "6",
-            answer: "Patella",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "7",
-            answer: "Tibia",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          }
-        ]
+        type: "dropdown",
+        text: "13. Which epithelial tissue has multiple layers and protects against friction?",
+        options: [
+          "Simple squamous",
+          "Stratified squamous",
+          "Simple cuboidal",
+          "Transitional"
+        ],
+        answer: "Stratified squamous",
+        explanation: "Multiple layers of squamous cells protect surfaces like the skin and oral cavity from abrasion."
+      },
+      {
+        type: "dropdown",
+        text: "14. Which connective tissue has a gel-like matrix and supports inflammation?",
+        options: [
+          "Areolar",
+          "Adipose",
+          "Dense regular",
+          "Reticular"
+        ],
+        answer: "Areolar",
+        explanation: "Areolar tissue contains various immune cells and fibers, making it ideal for defense and fluid exchange."
+      },
+      {
+        type: "dropdown",
+        text: "15. Which connective tissue is most flexible and found in the external ear?",
+        options: [
+          "Hyaline cartilage",
+          "Elastic cartilage",
+          "Fibrocartilage",
+          "Bone"
+        ],
+        answer: "Elastic cartilage",
+        explanation: "Elastic cartilage contains elastic fibers that allow the ear to bend and return to shape."
       }
-      // --- End Application/Diagram-Based Questions (Image-Labels) --- //
     ];
-    // --- End Assessment Questions Data --- //
 
-    // Shuffle options for MCQ/Dropdowns and labels //
+    // Shuffle options for MCQs/Dropdowns //
     questions.forEach(q => {
       if (q.options) shuffleArray(q.options);
-      if (q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
     });
-    // --- End Shuffle options for MCQ/Dropdowns and labels --- //
 
     // ---------- Render Questions ---------- //
-    function renderQuestions() {
+    function renderQuestions(feedbackMode = false) {
       const questionsSection = document.getElementById("questionsSection");
       questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
       questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        let html = `<div class="question${feedbackMode ? ' feedback-visible' : ''}" id="question-${idx}"><label><b>${q.text}</b></label><br>`;
         if(q.type === "mcq") {
           q.options.forEach(opt => {
             html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
@@ -256,23 +276,16 @@
             html += `<option value="${opt}">${opt}</option>`;
           });
           html += `</select>`;
-        } else if(q.type === "image-labels") {
-          html += `<img src="${q.image}" alt="Labelled diagram for question" class="question-img"><br>`;
-          q.labels.forEach((label, lid) => {
-            html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
-            html += `<option value="">Select...</option>`;
-            label.options.forEach(opt => {
-              html += `<option value="${opt}">${opt}</option>`;
-            });
-            html += `</select><br>`;
-          });
+        }
+        // Explanation is hidden unless feedbackMode is true
+        if(q.explanation){
+          html += `<div class="explanation">${q.explanation}</div>`;
         }
         html += `</div>`;
         questionsSection.innerHTML += html;
       });
     }
     renderQuestions();
-    // --- End Render Questions --- //
 
     // ---------- Submission Handler ---------- //
     document.getElementById("assessmentForm").onsubmit = async function(e) {
@@ -284,20 +297,9 @@
       let allAnswered = true;
       let answers = [];
       for(let i=0; i<questions.length; i++) {
-        let val;
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          val = form[`q${i}`]?.value?.trim() || "";
-          if(val === "") allAnswered = false;
-          answers.push(val);
-        } else if(questions[i].type === "image-labels") {
-          let labelAnswers = [];
-          for(let lid=0; lid<questions[i].labels.length; lid++) {
-            let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
-            if(v === "") allAnswered = false;
-            labelAnswers.push(v);
-          }
-          answers.push(labelAnswers.join("; ")); // Store as joined string for Google Sheet
-        }
+        let val = form[`q${i}`]?.value?.trim() || "";
+        if(val === "") allAnswered = false;
+        answers.push(val);
       }
       if(!allAnswered) {
         document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
@@ -310,21 +312,10 @@
 
       // --- Calculate marks (auto-graded) --- //
       let marks = 0;
-      let maxMarks = 0;
+      let maxMarks = questions.length;
       for(let i=0; i<questions.length; i++) {
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          maxMarks += 1;
-          if(answers[i] === questions[i].answer) marks++;
-        } else if(questions[i].type === "image-labels") {
-          const input = answers[i].split(";").map(s => s.trim());
-          questions[i].labels.forEach((label, lid) => {
-            maxMarks += 1;
-            if(input[lid] && input[lid] === label.answer) marks++;
-          });
-        }
+        if(answers[i] === questions[i].answer) marks++;
       }
-      // --- End Calculate marks (auto-graded) --- //
-
       let scoreSummary = `${marks}/${maxMarks}`;
 
       // --- Prepare FormData for Apps Script (must match sheet headers) --- //
@@ -335,15 +326,13 @@
       data.append('prnNumber', form.prnNumber.value.trim());
       data.append('batchNumber', form.batchNumber.value.trim());
       data.append('emailId', form.emailId.value.trim());
-      data.append('experiment', "Identification of Appendicular Bones");
+      data.append('experiment', "Microscopic Study of Epithelial and Connective Tissue");
       answers.forEach((ans,i) => data.append('q'+i, ans));
       data.append('marks', marks);
       data.append('scoreSummary', scoreSummary);
-      // --- End Prepare FormData for Apps Script (must match sheet headers) --- //
 
       // --- Your deployed Apps Script endpoint (provided by you) --- //
       const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
-      // --- End Your deployed Apps Script endpoint (provided by you) --- //
 
       try {
         await fetch(scriptURL, { method: "POST", body: data });
@@ -355,45 +344,25 @@
 
       // --- Feedback for all answers (correct and wrong) --- //
       let feedbackHtml = "<hr><b>Review your answers:</b><br>";
+      // Show explanations after submission (feedback)
+      renderQuestions(true);
       for (let i = 0; i < questions.length; i++) {
         let userAns = answers[i];
-        let correctAns = null;
-        let isCorrect = false;
-
-        if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          correctAns = questions[i].answer;
-          isCorrect = (userAns === correctAns);
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text}<br>
-            <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-              Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-            </span><br>
-            ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
-          </div>`;
-        } else if (questions[i].type === "image-labels") {
-          let userLabels = userAns.split(";").map(s => s.trim());
-          let subFeedback = "";
-          questions[i].labels.forEach((label, lid) => {
-            let labelAns = userLabels[lid] || "";
-            let labelCorrect = labelAns === label.answer;
-            subFeedback += `<br>
-              <span class="${labelCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-                <b>Label ${label.name}:</b> Your answer: <i>${labelAns || "(blank)"}</i> – <b>${labelCorrect ? "Correct" : "Wrong"}</b>
-              </span>
-              ${!labelCorrect ? `<span class="feedback-correct"> Correct: ${label.answer}</span>` : ""}
-            `;
-          });
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text} ${subFeedback}
-          </div>`;
-        }
+        let correctAns = questions[i].answer;
+        let isCorrect = (userAns === correctAns);
+        feedbackHtml += `<div style="margin-bottom:1em;">
+          <b>Q${i+1}:</b> ${questions[i].text}<br>
+          <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
+            Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
+          </span><br>
+          ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
+          ${questions[i].explanation ? `<br><span style="color:#444;font-size:0.97em;"><b>Explanation:</b> ${questions[i].explanation}</span>` : ""}
+        </div>`;
       }
       document.getElementById("resultMsg").innerHTML += feedbackHtml;
-      // --- End Feedback for all answers (correct and wrong) --- //
 
       document.getElementById("submitBtn").disabled = true;
     };
-    // --- End Submission Handler --- //
   </script>
 </body>
 </html>
