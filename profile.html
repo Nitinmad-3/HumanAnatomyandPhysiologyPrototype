@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Profile - Human Anatomy & Physiology Portal</title>
+  <title>Profile | Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
     body { background: #e3f2fd; font-family: 'Segoe UI', Arial, sans-serif;}
@@ -45,7 +45,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Firebase config (use your own!)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
       authDomain: "human-anatomy-physiology.firebaseapp.com",
@@ -62,21 +62,21 @@
     // Prefill info if logged in
     auth.onAuthStateChanged(function(user) {
       if (user) {
-        document.getElementById('email').value = user.email;
-        document.getElementById('name').value = user.displayName || '';
-        // Optionally fetch profile from Firestore
+        document.getElementById('email').value = user.email || "";
+        document.getElementById('name').value = user.displayName || "";
+        // Fetch profile from Firestore and fill all fields
         db.collection('profiles').doc(user.uid).get().then(doc => {
           if (doc.exists) {
             const data = doc.data();
-            document.getElementById('role').value = data.role || '';
-            document.getElementById('prn').value = data.prn || '';
-            document.getElementById('batch').value = data.batch || '';
-            document.getElementById('name').value = data.name || user.displayName || '';
-            document.getElementById('email').value = data.email || user.email || '';
+            document.getElementById('role').value = data.role || "";
+            document.getElementById('prn').value = data.prn || "";
+            document.getElementById('batch').value = data.batch || "";
+            document.getElementById('name').value = data.name || user.displayName || "";
+            document.getElementById('email').value = data.email || user.email || "";
           }
         });
       } else {
-        window.location.href = 'login_Version4.html';
+        window.location.href = 'login.html';
       }
     });
 
@@ -101,7 +101,7 @@
       if (!user) {
         document.getElementById('error').textContent = "You must be signed in to submit your profile.";
         setTimeout(function(){
-          window.location.href = 'login_Version4.html';
+          window.location.href = 'login.html';
         }, 1500);
         return;
       }
