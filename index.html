@@ -2,50 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Profile - Human Anatomy & Physiology Portal</title>
+  <title>Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body { background: #e3f2fd; font-family: 'Segoe UI', Arial, sans-serif;}
-    .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    h1 { color: #1565c0; }
-    label { display: block; margin: 1em 0 0.3em;}
-    input, select { width: 100%; padding: 0.6em; margin-bottom: 1em;}
-    .btn { padding: 0.7em 1.8em; font-size: 1em; border: none; border-radius: 5px;}
-    .save-btn { background: #1565c0; color: #fff;}
-    .logout-btn { background: #d32f2f; color: #fff; float: right;}
-    .msg { color: #388e3c; margin-top: 1em;}
-    .error { color: #d32f2f; margin-top: 1em;}
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      color: #222;
+      position: relative;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url('wallpaper.jpg') no-repeat center center fixed;
+      background-size: cover;
+      opacity: 1.0;
+      pointer-events: none;
+    }
+    .overlay {
+      background: rgba(255,255,255,0.90);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem 1rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin: 0.5rem 0 1rem 0;
+      color: #1a237e;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 8px #cfd8dc;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    nav a, nav button {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #1565c0;
+      text-decoration: none;
+      padding: 0.6em 1.2em;
+      border-radius: 4px;
+      background: #e3f2fd;
+      transition: background 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    nav a:hover, nav button:hover {
+      background: #bbdefb;
+    }
+    .intro {
+      max-width: 700px;
+      margin: auto;
+      background: rgba(255,255,255,0.85);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px #90caf9;
+      font-size: 1.15rem;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      nav { flex-direction: column; gap: 1rem; }
+      .intro { padding: 1rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <button class="logout-btn btn" onclick="logout()">Logout</button>
-    <h1>Your Profile</h1>
-    <form id="profileForm" autocomplete="off">
-      <label for="role">Role*</label>
-      <select id="role" name="role" required>
-        <option value="">Select Role</option>
-        <option value="student">Student</option>
-        <option value="admin">Admin</option>
-      </select>
-      <label for="name">Full Name*</label>
-      <input type="text" id="name" name="name" required>
-      <label for="prn">PRN Number*</label>
-      <input type="text" id="prn" name="prn" required>
-      <label for="batch">Batch*</label>
-      <input type="text" id="batch" name="batch" required>
-      <label for="email">Email*</label>
-      <input type="email" id="email" name="email" required>
-      <button type="submit" class="btn save-btn">Save Profile</button>
-      <div class="msg" id="msg"></div>
-      <div class="error" id="error"></div>
-    </form>
+  <div class="overlay">
+    <header>
+      <h1>Human Anatomy & Physiology Experiments Portal</h1>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="experiments.html">Experiments</a>
+        <a id="assessment-tab" href="assessments.html">Assessments</a>
+        <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
+        <a href="references.html">References</a>
+        <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
+        <button id="logout-btn" style="display:none;">Logout</button>
+      </nav>
+    </header>
+    <div class="intro">
+      <p>
+        Welcome to the Human Anatomy & Physiology Experiments Portal!
+        <br><br>
+        This site provides a comprehensive set of laboratory experiments, assessments, and references for students and instructors. Explore interactive resources, answer experiment-based questions, and discover curated references for deeper study.
+        <br><br>
+        <strong>Navigation:</strong><br>
+        <ul>
+          <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
+          <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
+          <li><b>References</b> – access textbooks and websites for further learning.</li>
+        </ul>
+        <br>
+        <em>Start exploring and build your knowledge of the amazing human body!</em>
+      </p>
+    </div>
   </div>
+  <!-- Firebase SDKs and authentication logic -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Firebase config (use your own!)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
       authDomain: "human-anatomy-physiology.firebaseapp.com",
@@ -56,73 +123,49 @@
       measurementId: "G-34RV9N8GRF"
     };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
 
-    // Prefill info if logged in
-    auth.onAuthStateChanged(function(user) {
+    // Show/hide login/logout/profile buttons based on auth state and check profile completeness
+    firebase.auth().onAuthStateChanged(async function(user) {
       if (user) {
-        document.getElementById('email').value = user.email;
-        document.getElementById('name').value = user.displayName || '';
-        // Optionally fetch profile from Firestore
-        db.collection('profiles').doc(user.uid).get().then(doc => {
-          if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('role').value = data.role || '';
-            document.getElementById('prn').value = data.prn || '';
-            document.getElementById('batch').value = data.batch || '';
-            document.getElementById('name').value = data.name || user.displayName || '';
-            document.getElementById('email').value = data.email || user.email || '';
+        document.getElementById('logout-btn').style.display = 'inline';
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('profile-tab').style.display = 'inline';
+        // Check profile completeness
+        const db = firebase.firestore();
+        try {
+          const doc = await db.collection('profiles').doc(user.uid).get();
+          const data = doc.exists ? doc.data() : {};
+          // All fields required: name, role, email, prn, batch
+          if (!data.name || !data.role || !data.email || !data.prn || !data.batch) {
+            // If not already on profile.html, redirect
+            if (!window.location.href.endsWith("profile.html")) {
+              window.location.href = "profile.html";
+            }
           }
-        });
+        } catch (e) {
+          // If error, allow user to stay on home or show error (optional)
+        }
       } else {
-        window.location.href = 'login_Version4.html';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'inline';
+        document.getElementById('profile-tab').style.display = 'none';
       }
     });
 
-    document.getElementById('profileForm').onsubmit = function(e) {
-      e.preventDefault();
-      document.getElementById('msg').textContent = "";
-      document.getElementById('error').textContent = "";
-
-      const role = document.getElementById('role').value;
-      const name = document.getElementById('name').value.trim();
-      const prn = document.getElementById('prn').value.trim();
-      const batch = document.getElementById('batch').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      // All fields required
-      if (!role || !name || !prn || !batch || !email) {
-        document.getElementById('error').textContent = "Please fill all required fields.";
-        return;
-      }
-
-      const user = auth.currentUser;
+    // Only protect Assessments tab, NOT the whole page
+    document.getElementById('assessment-tab').onclick = function(e) {
+      var user = firebase.auth().currentUser;
       if (!user) {
-        document.getElementById('error').textContent = "You must be signed in to submit your profile.";
-        setTimeout(function(){
-          window.location.href = 'login_Version4.html';
-        }, 1500);
-        return;
+        e.preventDefault();
+        window.location.href = "login_Version4.html";
       }
-
-      db.collection('profiles').doc(user.uid).set({
-        role, name, prn, batch, email, uid: user.uid
-      }, { merge: true }).then(() => {
-        document.getElementById('msg').textContent = "Profile updated successfully!";
-        document.getElementById('error').textContent = "";
-        setTimeout(function() {
-          window.location.href = "index.html";
-        }, 1500);
-      }).catch(err => {
-        document.getElementById('error').textContent = "Error saving profile.";
-        document.getElementById('msg').textContent = "";
-      });
     };
 
-    function logout() {
-      auth.signOut().then(function() {
-        window.location.href = 'index.html';
+    // Logout logic
+    document.getElementById('logout-btn').onclick = function(e) {
+      e.preventDefault();
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
       });
     }
   </script>
