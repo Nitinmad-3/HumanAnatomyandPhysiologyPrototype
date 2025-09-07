@@ -69,6 +69,7 @@
       box-shadow: 0 2px 8px #90caf9;
       font-size: 1.15rem;
     }
+    /* Unified dashboard styling */
     #admin-features, #student-features {
       display: none;
       max-width: 700px;
@@ -79,17 +80,27 @@
       box-shadow: 0 1px 8px #e3f2fd;
       text-align: left;
     }
-    #dashboard-welcome-admin, #dashboard-welcome-student {
-      font-size: 1.2rem;
+    .dashboard-title {
+      font-size: 1.6rem;
       font-weight: bold;
-      margin: 0.7em 0 1em 0;
-      color: #33691e;
+      color: #1565c0;
+      margin-bottom: 0.5em;
+      letter-spacing: 1px;
+    }
+    .dashboard-welcome {
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: #1565c0;
+      margin-bottom: 1em;
+      margin-top: 0;
     }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
       nav { flex-direction: column; gap: 1rem; }
       .intro { padding: 1rem; }
       #admin-features, #student-features { padding: 1rem; }
+      .dashboard-title { font-size: 1.2rem; }
+      .dashboard-welcome { font-size: 1rem; }
     }
   </style>
 </head>
@@ -109,8 +120,8 @@
     </header>
     <!-- Dashboard Features FIRST -->
     <div id="admin-features">
-      <h2>Admin Dashboard</h2>
-      <div id="dashboard-welcome-admin"></div>
+      <div class="dashboard-title">Admin Dashboard</div>
+      <p class="dashboard-welcome" id="dashboard-welcome-admin"></p>
       <ul>
         <li>Manage all profiles and assessments</li>
         <li>View all experiment data</li>
@@ -118,8 +129,8 @@
       </ul>
     </div>
     <div id="student-features">
-      <h2>Student Dashboard</h2>
-      <div id="dashboard-welcome-student"></div>
+      <div class="dashboard-title">Student Dashboard</div>
+      <p class="dashboard-welcome" id="dashboard-welcome-student"></p>
       <ul>
         <li>View your profile and batch assignments</li>
         <li>Access experiments and submit assessments</li>
@@ -237,7 +248,6 @@
       }
     });
 
-    // Protect Assessments tab: must be logged in
     document.getElementById('assessment-tab').onclick = function(e) {
       var user = firebase.auth().currentUser;
       if (!user) {
