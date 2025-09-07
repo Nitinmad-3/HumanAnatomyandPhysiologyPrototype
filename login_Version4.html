@@ -121,7 +121,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Correct Firebase config block
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
       authDomain: "human-anatomy-physiology.firebaseapp.com",
@@ -135,15 +135,15 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Hardcoded UID lists (must match your Firestore rules)
+    // UID lists MUST match Firestore rules!
     const ADMIN_UIDS = [
-      "Pm6TvmFA1RUiZt7LK6ByUnij68A2",
-      "AztH5xParnf60ZcCdV6tLtWy97v6",
-      "mxT8vKKLgsRiG6zoSLcNyikpvVW1"
+      "AytH5xJarnf60ZcBdV6tZtWy97v2",
+      "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
+      "mxT8vKKigsRiG6ooSLcByikpvVw1"
     ];
     const STUDENT_UIDS = [
-      "Aaty5xJarof60ZcBdV6tZtWv97v2",
-      "aiYxD8qpD9gGB0O3Otqa0Dj1o1w2"
+      "Ym6TvmFR1RUiZt7LK6ByUnij68s2",
+      "BztH5xIarnf60ZcBdV6tZtWy97v6"
     ];
 
     function getUserRole(uid) {
