@@ -120,7 +120,6 @@
     <div id="admin-features">
       <h2>Admin Dashboard</h2>
       <p>You are logged in as <span style="color:#1565c0;font-weight:bold;">Admin</span>.</p>
-      <!-- Add your admin-only UI here -->
       <ul>
         <li>Manage all profiles and assessments</li>
         <li>View all experiment data</li>
@@ -130,7 +129,6 @@
     <div id="student-features">
       <h2>Student Dashboard</h2>
       <p>You are logged in as <span style="color:#00796b;font-weight:bold;">Student</span>.</p>
-      <!-- Add your student-only UI here -->
       <ul>
         <li>View your profile and batch assignments</li>
         <li>Access experiments and submit assessments</li>
@@ -155,15 +153,15 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Hardcoded UID lists (must match your Firestore rules)
+    // UID lists MUST match Firestore rules!
     const ADMIN_UIDS = [
-      "Pm6TvmFA1RUiZt7LK6ByUnij68A2",
-      "AztH5xParnf60ZcCdV6tLtWy97v6",
-      "mxT8vKKLgsRiG6zoSLcNyikpvVW1"
+      "AytH5xJarnf60ZcBdV6tZtWy97v2",
+      "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
+      "mxT8vKKigsRiG6ooSLcByikpvVw1"
     ];
     const STUDENT_UIDS = [
-      "Aaty5xJarof60ZcBdV6tZtWv97v2",
-      "aiYxD8qpD9gGB0O3Otqa0Dj1o1w2"
+      "Ym6TvmFR1RUiZt7LK6ByUnij68s2",
+      "BztH5xIarnf60ZcBdV6tZtWy97v6"
     ];
 
     function getUserRole(uid) {
@@ -172,8 +170,8 @@
       return "unknown";
     }
 
-    // Show/hide login/logout/profile buttons and dashboard sections based on auth state
     firebase.auth().onAuthStateChanged(async function(user) {
+      console.log("Auth state changed! User:", user ? user.uid : null); // DEBUG
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
@@ -181,6 +179,7 @@
 
         // Role-based dashboard features
         const role = getUserRole(user.uid);
+        console.log("Detected role:", role); // DEBUG
         if (role === "admin") {
           document.getElementById('admin-features').style.display = 'block';
           document.getElementById('student-features').style.display = 'none';
@@ -192,20 +191,18 @@
           document.getElementById('student-features').style.display = 'none';
         }
 
-        // Check profile completeness
+        // Profile completeness check
         const db = firebase.firestore();
         try {
           const doc = await db.collection('profiles').doc(user.uid).get();
           const data = doc.exists ? doc.data() : {};
-          // All fields required: name, role, email, prn, batch
           if (!data.name || !data.role || !data.email || !data.prn || !data.batch) {
-            // If not already on profile.html, redirect
             if (!window.location.href.endsWith("profile.html")) {
               window.location.href = "profile.html";
             }
           }
         } catch (e) {
-          // If error, allow user to stay on home or show error (optional)
+          // Error handling (optional)
         }
       } else {
         document.getElementById('logout-btn').style.display = 'none';
@@ -225,7 +222,6 @@
       }
     };
 
-    // Logout logic
     document.getElementById('logout-btn').onclick = function(e) {
       e.preventDefault();
       firebase.auth().signOut().then(() => {
