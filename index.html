@@ -84,7 +84,7 @@
         <a href="index.html">Home</a>
         <a href="experiments.html">Experiments</a>
         <a id="assessment-tab" href="assessments.html">Assessments</a>
-        <a href="profile.html">Profile</a>
+        <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
         <a href="references.html">References</a>
         <!-- Login/Logout buttons (shown/hidden by auth state) -->
         <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
@@ -124,14 +124,16 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Show/hide login/logout buttons based on auth state
+    // Show/hide login/logout/profile buttons based on auth state
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('profile-tab').style.display = 'inline';
       } else {
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
+        document.getElementById('profile-tab').style.display = 'none';
       }
     });
 
