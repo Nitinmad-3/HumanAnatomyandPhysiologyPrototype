@@ -77,7 +77,7 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Hardcoded UID lists
+    // UID lists MUST match Firestore rules!
     const ADMIN_UIDS = [
       "AytH5xJarnf60ZcBdV6tZtWy97v2",
       "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
@@ -93,7 +93,6 @@
       return "unknown";
     }
 
-    // Show/hide content for logged-in & authorized users
     firebase.auth().onAuthStateChanged(function(user) {
       if (!user) {
         document.getElementById('assess-list').style.display = 'none';
