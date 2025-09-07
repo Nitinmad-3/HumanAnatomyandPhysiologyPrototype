@@ -21,6 +21,10 @@
     .feedback-correct { color: #388e3c; }
     @media (max-width: 600px) { .container { padding: 1rem; } }
   </style>
+  <!-- Firebase for autofill -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <header>
@@ -65,6 +69,36 @@
     </form>
   </div>
   <script>
+    // --- Firebase Autofill Profile Info ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
+      authDomain: "human-anatomy-physiology.firebaseapp.com",
+      projectId: "human-anatomy-physiology",
+      storageBucket: "human-anatomy-physiology.firebasestorage.app",
+      messagingSenderId: "625270900047",
+      appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
+      measurementId: "G-34RV9N8GRF"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    firebase.auth().onAuthStateChanged(async function(user) {
+      if (user) {
+        const db = firebase.firestore();
+        try {
+          const doc = await db.collection('profiles').doc(user.uid).get();
+          const data = doc.exists ? doc.data() : {};
+          // Autofill fields if available
+          if(data.name) document.getElementById('studentName').value = data.name;
+          if(data.prn) document.getElementById('prnNumber').value = data.prn;
+          if(data.batch) document.getElementById('batchNumber').value = data.batch;
+          if(data.email) document.getElementById('emailId').value = data.email;
+          // Optionally, schoolName if you store it in profile
+        } catch (e) {
+          // Could not fetch profile, do nothing
+        }
+      }
+    });
+
     // --- Utility shuffle function ---
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
