@@ -34,7 +34,8 @@
       letter-spacing: 0.5px;
     }
     .login-form input[type="email"],
-    .login-form input[type="password"] {
+    .login-form input[type="password"],
+    .login-form select {
       width: 100%;
       padding: 0.7em;
       margin-bottom: 1.2em;
@@ -46,7 +47,8 @@
       transition: border 0.2s;
     }
     .login-form input[type="email"]:focus,
-    .login-form input[type="password"]:focus {
+    .login-form input[type="password"]:focus,
+    .login-form select:focus {
       border: 1.5px solid #33691e;
       outline: none;
     }
@@ -113,12 +115,19 @@
       <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus>
       <label for="password">Password</label>
       <input type="password" id="password" name="password" placeholder="Password" required>
+      <label for="role">Login as</label>
+      <select id="role" name="role" required>
+        <option value="">Select Role</option>
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
+      </select>
       <button type="submit">Login</button>
     </form>
   </div>
   <!-- Firebase SDKs and authentication logic -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
     // Correct Firebase config block
     const firebaseConfig = {
@@ -131,8 +140,10 @@
       measurementId: "G-34RV9N8GRF"
     };
     firebase.initializeApp(firebaseConfig);
-    
-    firebase.auth().onAuthStateChanged(function(user) {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(function(user) {
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
@@ -144,33 +155,45 @@
       }
     });
 
-    // Login form logic
-    document.getElementById('login-form').onsubmit = function(e) {
+    // Login form logic with role selection and Firestore profile update
+    document.getElementById('login-form').onsubmit = async function(e) {
       e.preventDefault();
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
+      var role = document.getElementById('role').value;
       var errorDiv = document.getElementById('error-message');
       var successDiv = document.getElementById('success-message');
       errorDiv.style.display = "none";
       successDiv.style.display = "none";
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(function(userCredential) {
-          successDiv.textContent = "Login successful! Redirecting...";
-          successDiv.style.display = "block";
-          setTimeout(function() {
-            window.location.href = "assessments.html";
-          }, 1200);
-        })
-        .catch(function(error) {
-          errorDiv.textContent = error.message;
-          errorDiv.style.display = "block";
-        });
+      if (!email || !password || !role) {
+        errorDiv.textContent = "Please fill all fields and select role.";
+        errorDiv.style.display = "block";
+        return;
+      }
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        const profileRef = db.collection('profiles').doc(uid);
+        const profileDoc = await profileRef.get();
+        // If profile doesn't exist or role not set, set the role
+        if (!profileDoc.exists || !profileDoc.data().role) {
+          await profileRef.set({role: role, email: email}, {merge: true});
+        }
+        successDiv.textContent = "Login successful! Redirecting...";
+        successDiv.style.display = "block";
+        setTimeout(function() {
+          window.location.href = "assessments.html";
+        }, 1200);
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = "block";
+      }
     };
 
     // Logout logic
     document.getElementById('logout-btn').onclick = function(e) {
       e.preventDefault();
-      firebase.auth().signOut().then(() => {
+      auth.signOut().then(() => {
         window.location.href = "index.html";
       });
     };
