@@ -69,10 +69,20 @@
       box-shadow: 0 2px 8px #90caf9;
       font-size: 1.15rem;
     }
+    #admin-features, #student-features {
+      display: none;
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      border-radius: 12px;
+      background: #f5faff;
+      box-shadow: 0 1px 8px #e3f2fd;
+    }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
       nav { flex-direction: column; gap: 1rem; }
       .intro { padding: 1rem; }
+      #admin-features, #student-features { padding: 1rem; }
     }
   </style>
 </head>
@@ -106,6 +116,27 @@
         <em>Start exploring and build your knowledge of the amazing human body!</em>
       </p>
     </div>
+    <!-- Role-based features -->
+    <div id="admin-features">
+      <h2>Admin Dashboard</h2>
+      <p>You are logged in as <span style="color:#1565c0;font-weight:bold;">Admin</span>.</p>
+      <!-- Add your admin-only UI here -->
+      <ul>
+        <li>Manage all profiles and assessments</li>
+        <li>View all experiment data</li>
+        <li>Edit or add new experiments and references</li>
+      </ul>
+    </div>
+    <div id="student-features">
+      <h2>Student Dashboard</h2>
+      <p>You are logged in as <span style="color:#00796b;font-weight:bold;">Student</span>.</p>
+      <!-- Add your student-only UI here -->
+      <ul>
+        <li>View your profile and batch assignments</li>
+        <li>Access experiments and submit assessments</li>
+        <li>See references and learning material</li>
+      </ul>
+    </div>
   </div>
   <!-- Firebase SDKs and authentication logic -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -124,12 +155,43 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Show/hide login/logout/profile buttons based on auth state and check profile completeness
+    // Hardcoded UID lists (must match your Firestore rules)
+    const ADMIN_UIDS = [
+      "Pm6TvmFA1RUiZt7LK6ByUnij68A2",
+      "AztH5xParnf60ZcCdV6tLtWy97v6",
+      "mxT8vKKLgsRiG6zoSLcNyikpvVW1"
+    ];
+    const STUDENT_UIDS = [
+      "Aaty5xJarof60ZcBdV6tZtWv97v2",
+      "aiYxD8qpD9gGB0O3Otqa0Dj1o1w2"
+    ];
+
+    function getUserRole(uid) {
+      if (ADMIN_UIDS.includes(uid)) return "admin";
+      if (STUDENT_UIDS.includes(uid)) return "student";
+      return "unknown";
+    }
+
+    // Show/hide login/logout/profile buttons and dashboard sections based on auth state
     firebase.auth().onAuthStateChanged(async function(user) {
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
         document.getElementById('profile-tab').style.display = 'inline';
+
+        // Role-based dashboard features
+        const role = getUserRole(user.uid);
+        if (role === "admin") {
+          document.getElementById('admin-features').style.display = 'block';
+          document.getElementById('student-features').style.display = 'none';
+        } else if (role === "student") {
+          document.getElementById('admin-features').style.display = 'none';
+          document.getElementById('student-features').style.display = 'block';
+        } else {
+          document.getElementById('admin-features').style.display = 'none';
+          document.getElementById('student-features').style.display = 'none';
+        }
+
         // Check profile completeness
         const db = firebase.firestore();
         try {
@@ -149,10 +211,12 @@
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
         document.getElementById('profile-tab').style.display = 'none';
+        document.getElementById('admin-features').style.display = 'none';
+        document.getElementById('student-features').style.display = 'none';
       }
     });
 
-    // Only protect Assessments tab, NOT the whole page
+    // Protect Assessments tab: must be logged in
     document.getElementById('assessment-tab').onclick = function(e) {
       var user = firebase.auth().currentUser;
       if (!user) {
