@@ -72,11 +72,18 @@
     #admin-features, #student-features {
       display: none;
       max-width: 700px;
-      margin: 2rem auto;
+      margin: 2rem auto 0 auto;
       padding: 1.5rem;
       border-radius: 12px;
       background: #f5faff;
       box-shadow: 0 1px 8px #e3f2fd;
+      text-align: left;
+    }
+    #dashboard-welcome-admin, #dashboard-welcome-student {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin: 0.7em 0 1em 0;
+      color: #33691e;
     }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
@@ -100,6 +107,26 @@
         <button id="logout-btn" style="display:none;">Logout</button>
       </nav>
     </header>
+    <!-- Dashboard Features FIRST -->
+    <div id="admin-features">
+      <h2>Admin Dashboard</h2>
+      <div id="dashboard-welcome-admin"></div>
+      <ul>
+        <li>Manage all profiles and assessments</li>
+        <li>View all experiment data</li>
+        <li>Edit or add new experiments and references</li>
+      </ul>
+    </div>
+    <div id="student-features">
+      <h2>Student Dashboard</h2>
+      <div id="dashboard-welcome-student"></div>
+      <ul>
+        <li>View your profile and batch assignments</li>
+        <li>Access experiments and submit assessments</li>
+        <li>See references and learning material</li>
+      </ul>
+    </div>
+    <!-- Welcome/Intro Message AFTER dashboard -->
     <div class="intro">
       <p>
         Welcome to the Human Anatomy & Physiology Experiments Portal!
@@ -115,25 +142,6 @@
         <br>
         <em>Start exploring and build your knowledge of the amazing human body!</em>
       </p>
-    </div>
-    <!-- Role-based features -->
-    <div id="admin-features">
-      <h2>Admin Dashboard</h2>
-      <p>You are logged in as <span style="color:#1565c0;font-weight:bold;">Admin</span>.</p>
-      <ul>
-        <li>Manage all profiles and assessments</li>
-        <li>View all experiment data</li>
-        <li>Edit or add new experiments and references</li>
-      </ul>
-    </div>
-    <div id="student-features">
-      <h2>Student Dashboard</h2>
-      <p>You are logged in as <span style="color:#00796b;font-weight:bold;">Student</span>.</p>
-      <ul>
-        <li>View your profile and batch assignments</li>
-        <li>Access experiments and submit assessments</li>
-        <li>See references and learning material</li>
-      </ul>
     </div>
   </div>
   <!-- Firebase SDKs and authentication logic -->
@@ -170,8 +178,23 @@
       return "unknown";
     }
 
+    async function setDashboardWelcome(uid, role) {
+      const db = firebase.firestore();
+      try {
+        const doc = await db.collection('profiles').doc(uid).get();
+        const data = doc.exists ? doc.data() : {};
+        const name = data.name || "";
+        if (role === "admin") {
+          document.getElementById('dashboard-welcome-admin').textContent = name ? `Welcome ${name}` : "";
+        } else if (role === "student") {
+          document.getElementById('dashboard-welcome-student').textContent = name ? `Welcome ${name}` : "";
+        }
+      } catch (e) {
+        // Could not fetch name
+      }
+    }
+
     firebase.auth().onAuthStateChanged(async function(user) {
-      console.log("Auth state changed! User:", user ? user.uid : null); // DEBUG
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
         document.getElementById('login-btn').style.display = 'none';
@@ -179,13 +202,14 @@
 
         // Role-based dashboard features
         const role = getUserRole(user.uid);
-        console.log("Detected role:", role); // DEBUG
         if (role === "admin") {
           document.getElementById('admin-features').style.display = 'block';
           document.getElementById('student-features').style.display = 'none';
+          setDashboardWelcome(user.uid, "admin");
         } else if (role === "student") {
           document.getElementById('admin-features').style.display = 'none';
           document.getElementById('student-features').style.display = 'block';
+          setDashboardWelcome(user.uid, "student");
         } else {
           document.getElementById('admin-features').style.display = 'none';
           document.getElementById('student-features').style.display = 'none';
@@ -201,15 +225,15 @@
               window.location.href = "profile.html";
             }
           }
-        } catch (e) {
-          // Error handling (optional)
-        }
+        } catch (e) {}
       } else {
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
         document.getElementById('profile-tab').style.display = 'none';
         document.getElementById('admin-features').style.display = 'none';
         document.getElementById('student-features').style.display = 'none';
+        document.getElementById('dashboard-welcome-admin').textContent = "";
+        document.getElementById('dashboard-welcome-student').textContent = "";
       }
     });
 
