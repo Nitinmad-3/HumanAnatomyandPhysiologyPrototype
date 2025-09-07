@@ -34,8 +34,7 @@
       letter-spacing: 0.5px;
     }
     .login-form input[type="email"],
-    .login-form input[type="password"],
-    .login-form select {
+    .login-form input[type="password"] {
       width: 100%;
       padding: 0.7em;
       margin-bottom: 1.2em;
@@ -47,8 +46,7 @@
       transition: border 0.2s;
     }
     .login-form input[type="email"]:focus,
-    .login-form input[type="password"]:focus,
-    .login-form select:focus {
+    .login-form input[type="password"]:focus {
       border: 1.5px solid #33691e;
       outline: none;
     }
@@ -115,12 +113,6 @@
       <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus>
       <label for="password">Password</label>
       <input type="password" id="password" name="password" placeholder="Password" required>
-      <label for="role">Login as</label>
-      <select id="role" name="role" required>
-        <option value="">Select Role</option>
-        <option value="student">Student</option>
-        <option value="admin">Admin</option>
-      </select>
       <button type="submit">Login</button>
     </form>
   </div>
@@ -143,6 +135,23 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Hardcoded UID lists (must match your Firestore rules)
+    const ADMIN_UIDS = [
+      "Pm6TvmFA1RUiZt7LK6ByUnij68A2",
+      "AztH5xParnf60ZcCdV6tLtWy97v6",
+      "mxT8vKKLgsRiG6zoSLcNyikpvVW1"
+    ];
+    const STUDENT_UIDS = [
+      "Aaty5xJarof60ZcBdV6tZtWv97v2",
+      "aiYxD8qpD9gGB0O3Otqa0Dj1o1w2"
+    ];
+
+    function getUserRole(uid) {
+      if (ADMIN_UIDS.includes(uid)) return "admin";
+      if (STUDENT_UIDS.includes(uid)) return "student";
+      return "unknown";
+    }
+
     auth.onAuthStateChanged(function(user) {
       if (user) {
         document.getElementById('logout-btn').style.display = 'inline';
@@ -155,27 +164,33 @@
       }
     });
 
-    // Login form logic with role selection and Firestore profile update
+    // Login form logic with UID role check (no role selection)
     document.getElementById('login-form').onsubmit = async function(e) {
       e.preventDefault();
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
-      var role = document.getElementById('role').value;
       var errorDiv = document.getElementById('error-message');
       var successDiv = document.getElementById('success-message');
       errorDiv.style.display = "none";
       successDiv.style.display = "none";
-      if (!email || !password || !role) {
-        errorDiv.textContent = "Please fill all fields and select role.";
+      if (!email || !password) {
+        errorDiv.textContent = "Please enter both email and password.";
         errorDiv.style.display = "block";
         return;
       }
       try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
+        const role = getUserRole(uid);
+        if (role === "unknown") {
+          errorDiv.textContent = "Access denied. You are not authorized for this portal.";
+          errorDiv.style.display = "block";
+          await auth.signOut();
+          return;
+        }
+        // Optionally update profile doc with role/email if not already set
         const profileRef = db.collection('profiles').doc(uid);
         const profileDoc = await profileRef.get();
-        // If profile doesn't exist or role not set, set the role
         if (!profileDoc.exists || !profileDoc.data().role) {
           await profileRef.set({role: role, email: email}, {merge: true});
         }
