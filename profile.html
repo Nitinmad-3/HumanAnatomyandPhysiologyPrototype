@@ -2,113 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Human Anatomy & Physiology</title>
+  <title>Profile - Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .hidden { display: none; }
-    .nav-btn { padding: 0.6em 1.2em; background: #1565c0; color: #fff; border-radius: 5px; text-decoration: none; margin-left: 1em;}
+    body { background: #e3f2fd; font-family: 'Segoe UI', Arial, sans-serif;}
+    .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
+    h1 { color: #1565c0; }
+    label { display: block; margin: 1em 0 0.3em;}
+    input, select { width: 100%; padding: 0.6em; margin-bottom: 1em;}
+    .btn { padding: 0.7em 1.8em; font-size: 1em; border: none; border-radius: 5px;}
+    .save-btn { background: #1565c0; color: #fff;}
+    .logout-btn { background: #d32f2f; color: #fff; float: right;}
+    .msg { color: #388e3c; margin-top: 1em;}
+    .error { color: #d32f2f; margin-top: 1em;}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Human Anatomy & Physiology</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="experiments.html">Experiments</a>
-      <a href="assessments.html">Assessments</a>
-      <a href="references.html">References</a>
-      <a href="profile.html" id="profileTab" class="hidden">Profile</a>
-      <a href="#" id="loginTab" class="nav-btn">Login</a>
-      <a href="#" id="logoutTab" class="nav-btn hidden">Logout</a>
-    </nav>
-  </header>
-  <!-- Login Modal -->
-  <div id="loginModal" class="hidden" style="position:fixed;top:10%;left:0;width:100%;height:100%;background:rgba(0,0,0,0.15);z-index:100;">
-    <div style="background:#fff;max-width:400px;margin:5rem auto;padding:2rem;border-radius:16px;box-shadow:0 2px 12px #90caf9;">
-      <h2>Login</h2>
-      <form id="loginForm">
-        <label for="loginEmail">Login ID (Email or PRN)</label>
-        <input type="text" id="loginEmail" name="loginEmail" required>
-        <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" name="loginPassword" required>
-        <button type="submit" class="nav-btn" style="width:100%;">Login</button>
-        <div id="loginError" style="color:#d32f2f;margin-top:1em;"></div>
-      </form>
-      <button onclick="closeLoginModal()" style="margin-top:1em;">Cancel</button>
-    </div>
+  <div class="container">
+    <button class="logout-btn btn" onclick="logout()">Logout</button>
+    <h1>Your Profile</h1>
+    <form id="profileForm" autocomplete="off">
+      <label for="role">Role*</label>
+      <select id="role" name="role" required>
+        <option value="">Select Role</option>
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
+      </select>
+      <label for="name">Full Name*</label>
+      <input type="text" id="name" name="name" required>
+      <label for="prn">PRN Number</label>
+      <input type="text" id="prn" name="prn">
+      <label for="batch">Batch</label>
+      <input type="text" id="batch" name="batch">
+      <label for="email">Email*</label>
+      <input type="email" id="email" name="email" required>
+      <button type="submit" class="btn save-btn">Save Profile</button>
+      <div class="msg" id="msg"></div>
+      <div class="error" id="error"></div>
+    </form>
   </div>
-  <main>
-    <!-- Page content -->
-  </main>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // --- Firebase config: fill in your own ---
-    const firebaseConfig = { /* YOUR CONFIG */ };
+    // Firebase config (use your own!)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
+      authDomain: "human-anatomy-physiology.firebaseapp.com",
+      projectId: "human-anatomy-physiology",
+      storageBucket: "human-anatomy-physiology.firebasestorage.app",
+      messagingSenderId: "625270900047",
+      appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
+      measurementId: "G-34RV9N8GRF"
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // --- Navigation logic ---
-    function show(id) { document.getElementById(id).classList.remove('hidden'); }
-    function hide(id) { document.getElementById(id).classList.add('hidden'); }
-
-    function openLoginModal() { show('loginModal'); }
-    function closeLoginModal() { hide('loginModal'); }
-
-    document.getElementById('loginTab').onclick = function(e) {
-      e.preventDefault();
-      openLoginModal();
-    };
-
-    document.getElementById('logoutTab').onclick = function(e) {
-      e.preventDefault();
-      auth.signOut();
-      hide('profileTab');
-      show('loginTab');
-      hide('logoutTab');
-    };
-
-    // --- Login logic ---
-    document.getElementById('loginForm').onsubmit = function(e) {
-      e.preventDefault();
-      const emailOrPrn = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      document.getElementById('loginError').textContent = "";
-
-      // You should use email for Firebase Auth. If PRN is used, map to email first.
-      // For demo, treating as email:
-      auth.signInWithEmailAndPassword(emailOrPrn, password)
-        .then(userCredential => {
-          closeLoginModal();
-          show('profileTab');
-          hide('loginTab');
-          show('logoutTab');
-          window.location.href = "index.html"; // Redirect to homepage
-        })
-        .catch(error => {
-          document.getElementById('loginError').textContent = "Login failed: " + error.message;
-        });
-    };
-
-    // --- Session logic ---
-    auth.onAuthStateChanged(async function(user) {
+    // Prefill info if logged in
+    auth.onAuthStateChanged(function(user) {
       if (user) {
-        show('profileTab');
-        hide('loginTab');
-        show('logoutTab');
-        // Check if profile is complete
-        const doc = await db.collection('profiles').doc(user.uid).get();
-        if (!doc.exists || !doc.data().name || !doc.data().role) {
-          window.location.href = "profile.html"; // Force profile completion
-        }
+        document.getElementById('email').value = user.email;
+        document.getElementById('name').value = user.displayName || '';
+        // Optionally fetch profile from Firestore
+        db.collection('profiles').doc(user.uid).get().then(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('role').value = data.role || '';
+            document.getElementById('prn').value = data.prn || '';
+            document.getElementById('batch').value = data.batch || '';
+            document.getElementById('name').value = data.name || user.displayName || '';
+            document.getElementById('email').value = data.email || user.email || '';
+          }
+        });
       } else {
-        hide('profileTab');
-        show('loginTab');
-        hide('logoutTab');
+        window.location.href = 'login_Version4.html';
       }
     });
+
+    document.getElementById('profileForm').onsubmit = function(e) {
+      e.preventDefault();
+      document.getElementById('msg').textContent = "";
+      document.getElementById('error').textContent = "";
+
+      const role = document.getElementById('role').value;
+      const name = document.getElementById('name').value.trim();
+      const prn = document.getElementById('prn').value.trim();
+      const batch = document.getElementById('batch').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!role || !name || !email) {
+        document.getElementById('error').textContent = "Please fill all required fields.";
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        document.getElementById('error').textContent = "You must be signed in to submit your profile.";
+        setTimeout(function(){
+          window.location.href = 'login_Version4.html';
+        }, 1500);
+        return;
+      }
+
+      db.collection('profiles').doc(user.uid).set({
+        role, name, prn, batch, email, uid: user.uid
+      }, { merge: true }).then(() => {
+        document.getElementById('msg').textContent = "Profile updated successfully!";
+        document.getElementById('error').textContent = "";
+        setTimeout(function() {
+          window.location.href = "index.html";
+        }, 1500);
+      }).catch(err => {
+        document.getElementById('error').textContent = "Error saving profile.";
+        document.getElementById('msg').textContent = "";
+      });
+    };
+
+    function logout() {
+      auth.signOut().then(function() {
+        window.location.href = 'index.html';
+      });
+    }
   </script>
 </body>
 </html>
