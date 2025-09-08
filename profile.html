@@ -19,6 +19,7 @@
     nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
     nav a { font-weight: bold; color: #1565c0; text-decoration: none; padding: 0.6em 1.2em; border-radius: 4px; background: #e3f2fd; transition: background 0.2s; }
     nav a:hover { background: #bbdefb; }
+    #profilePicPreview {max-width:100px; border-radius:50%; display:none; margin-bottom:1em; border:2px solid #90caf9;}
   </style>
 </head>
 <body>
@@ -43,6 +44,10 @@
       <input type="text" id="batch" name="batch" required>
       <label for="email">Email*</label>
       <input type="email" id="email" name="email" required>
+      <!-- Step 1: Add profile picture input and preview -->
+      <label for="profilePic">Profile Picture</label>
+      <input type="file" id="profilePic" name="profilePic" accept="image/*">
+      <img id="profilePicPreview" src="" alt="Profile Picture Preview">
       <button type="submit" class="btn save-btn">Save Profile</button>
       <div class="msg" id="msg"></div>
       <div class="error" id="error"></div>
@@ -51,6 +56,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script>
     // Firebase config
     const firebaseConfig = {
@@ -65,6 +71,7 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage();
 
     // UID lists MUST match Firestore rules!
     const ADMIN_UIDS = [
@@ -88,9 +95,11 @@
       if (user) {
         document.getElementById('email').value = user.email || "";
         document.getElementById('name').value = user.displayName || "";
+
         // Get role from UID
         const role = getUserRole(user.uid);
         document.getElementById('role-display').textContent = role;
+
         // Fetch profile from Firestore and fill all fields
         db.collection('profiles').doc(user.uid).get().then(doc => {
           if (doc.exists) {
@@ -100,10 +109,28 @@
             document.getElementById('batch').value = data.batch || "";
             document.getElementById('name').value = data.name || user.displayName || "";
             document.getElementById('email').value = data.email || user.email || "";
+            // Step 1: Show profile picture preview if exists
+            if (data.profilePicUrl) {
+              document.getElementById('profilePicPreview').src = data.profilePicUrl;
+              document.getElementById('profilePicPreview').style.display = "block";
+            }
           }
         });
       } else {
         window.location.href = 'login.html';
+      }
+    });
+
+    // Step 1: Show preview when user selects image
+    document.getElementById('profilePic').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('profilePicPreview').src = ev.target.result;
+          document.getElementById('profilePicPreview').style.display = "block";
+        };
+        reader.readAsDataURL(file);
       }
     });
 
@@ -135,18 +162,43 @@
         return;
       }
 
-      db.collection('profiles').doc(user.uid).set({
-        role, name, schoolName, prn, batch, email, uid: user.uid
-      }, { merge: true }).then(() => {
-        document.getElementById('msg').textContent = "Profile updated successfully!";
-        document.getElementById('error').textContent = "";
-        setTimeout(function() {
-          window.location.href = "index.html";
-        }, 1500);
-      }).catch(err => {
-        document.getElementById('error').textContent = "Error saving profile.";
-        document.getElementById('msg').textContent = "";
-      });
+      // Step 1: Profile picture upload
+      const fileInput = document.getElementById('profilePic');
+      if (fileInput.files[0]) {
+        // Upload to Firebase Storage
+        const storageRef = storage.ref('profilePics/' + user.uid);
+        storageRef.put(fileInput.files[0]).then(() => {
+          // Get URL and save to profile
+          storageRef.getDownloadURL().then(profilePicUrl => {
+            db.collection('profiles').doc(user.uid).set({
+              role, name, schoolName, prn, batch, email, uid: user.uid, profilePicUrl
+            }, { merge: true }).then(() => {
+              document.getElementById('msg').textContent = "Profile updated successfully!";
+              document.getElementById('error').textContent = "";
+              setTimeout(function() {
+                window.location.href = "index.html";
+              }, 1500);
+            }).catch(err => {
+              document.getElementById('error').textContent = "Error saving profile.";
+              document.getElementById('msg').textContent = "";
+            });
+          });
+        });
+      } else {
+        // No picture uploaded
+        db.collection('profiles').doc(user.uid).set({
+          role, name, schoolName, prn, batch, email, uid: user.uid
+        }, { merge: true }).then(() => {
+          document.getElementById('msg').textContent = "Profile updated successfully!";
+          document.getElementById('error').textContent = "";
+          setTimeout(function() {
+            window.location.href = "index.html";
+          }, 1500);
+        }).catch(err => {
+          document.getElementById('error').textContent = "Error saving profile.";
+          document.getElementById('msg').textContent = "";
+        });
+      }
     };
 
     function logout() {
