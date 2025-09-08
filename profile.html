@@ -7,7 +7,7 @@
   <style>
     body { background: #e3f2fd; font-family: 'Segoe UI', Arial, sans-serif;}
     .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    h1 { color: #1565c0; }
+    h1 { color: #1565c0; text-align: center; }
     label { display: block; margin: 1em 0 0.3em;}
     input { width: 100%; padding: 0.6em; margin-bottom: 1em;}
     .btn { padding: 0.7em 1.8em; font-size: 1em; border: none; border-radius: 5px;}
@@ -19,7 +19,9 @@
     nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
     nav a { font-weight: bold; color: #1565c0; text-decoration: none; padding: 0.6em 1.2em; border-radius: 4px; background: #e3f2fd; transition: background 0.2s; }
     nav a:hover { background: #bbdefb; }
-    #profilePicPreview {max-width:100px; border-radius:50%; margin-bottom:1em; border:2px solid #90caf9;}
+    .profile-pic-center { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5em; }
+    #profilePicPreview { max-width:120px; border-radius:50%; border:2px solid #90caf9; margin-bottom:1em;}
+    #profilePic { width: 60%; margin: 0 auto 1em auto; }
   </style>
 </head>
 <body>
@@ -32,6 +34,11 @@
     <button class="logout-btn btn" onclick="logout()">Logout</button>
     <h1>Your Profile</h1>
     <form id="profileForm" autocomplete="off">
+      <!-- Profile Picture Centered at Top -->
+      <div class="profile-pic-center">
+        <img id="profilePicPreview" src="assets/element for preview.png" alt="Profile Picture Preview">
+        <input type="file" id="profilePic" name="profilePic" accept="image/*">
+      </div>
       <label for="role">Role*</label>
       <div id="role-display" class="role-display"></div>
       <label for="name">Full Name*</label>
@@ -44,10 +51,6 @@
       <input type="text" id="batch" name="batch" required>
       <label for="email">Email*</label>
       <input type="email" id="email" name="email" required>
-      <!-- Profile Picture Upload and Preview -->
-      <label for="profilePic">Profile Picture</label>
-      <input type="file" id="profilePic" name="profilePic" accept="image/*">
-      <img id="profilePicPreview" src="assets/element for preview.png" alt="Profile Picture Preview">
       <button type="submit" class="btn save-btn">Save Profile</button>
       <div class="msg" id="msg"></div>
       <div class="error" id="error"></div>
@@ -58,12 +61,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script>
-    // Firebase config
+    // Firebase config: fix typo in storageBucket
     const firebaseConfig = {
       apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
       authDomain: "human-anatomy-physiology.firebaseapp.com",
       projectId: "human-anatomy-physiology",
-      storageBucket: "human-anatomy-physiology.firbasestorage.app",
+      storageBucket: "human-anatomy-physiology.appspot.com", // <-- fixed bucket name!
       messagingSenderId: "625270900047",
       appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
       measurementId: "G-34RV9N8GRF"
@@ -73,7 +76,6 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // UID lists MUST match Firestore rules!
     const ADMIN_UIDS = [
       "AytH5xJarnf60ZcBdV6tZtWy97v2",
       "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
@@ -116,6 +118,8 @@
               document.getElementById('profilePicPreview').src = "assets/element for preview.png";
             }
           }
+        }).catch((err) => {
+          document.getElementById('error').textContent = "Error loading profile: " + err.message;
         });
       } else {
         window.location.href = 'login.html';
@@ -167,36 +171,40 @@
 
       const fileInput = document.getElementById('profilePic');
       if (fileInput.files[0]) {
-        // Upload to Firebase Storage
         const storageRef = storage.ref('profilePics/' + user.uid);
-        storageRef.put(fileInput.files[0]).then(() => {
-          storageRef.getDownloadURL().then(profilePicUrl => {
-            db.collection('profiles').doc(user.uid).set({
-              role, name, schoolName, prn, batch, email, uid: user.uid, profilePicUrl
-            }, { merge: true }).then(() => {
-              document.getElementById('msg').textContent = "Profile updated successfully!";
-              document.getElementById('error').textContent = "";
-              setTimeout(function() {
-                window.location.href = "index.html";
-              }, 1500);
-            }).catch(err => {
-              document.getElementById('error').textContent = "Error saving profile.";
-              document.getElementById('msg').textContent = "";
-            });
-          });
-        });
-      } else {
-        // No picture uploaded
-        db.collection('profiles').doc(user.uid).set({
-          role, name, schoolName, prn, batch, email, uid: user.uid
-        }, { merge: true }).then(() => {
+        storageRef.put(fileInput.files[0])
+        .then(snapshot => {
+          return storageRef.getDownloadURL();
+        })
+        .then(profilePicUrl => {
+          return db.collection('profiles').doc(user.uid).set({
+            role, name, schoolName, prn, batch, email, uid: user.uid, profilePicUrl
+          }, { merge: true });
+        })
+        .then(() => {
           document.getElementById('msg').textContent = "Profile updated successfully!";
           document.getElementById('error').textContent = "";
           setTimeout(function() {
-            window.location.href = "index.html";
-          }, 1500);
-        }).catch(err => {
-          document.getElementById('error').textContent = "Error saving profile.";
+            window.location.reload();
+          }, 1200);
+        })
+        .catch(err => {
+          document.getElementById('error').textContent = "Error saving profile: " + err.message;
+          document.getElementById('msg').textContent = "";
+        });
+      } else {
+        db.collection('profiles').doc(user.uid).set({
+          role, name, schoolName, prn, batch, email, uid: user.uid
+        }, { merge: true })
+        .then(() => {
+          document.getElementById('msg').textContent = "Profile updated successfully!";
+          document.getElementById('error').textContent = "";
+          setTimeout(function() {
+            window.location.reload();
+          }, 1200);
+        })
+        .catch(err => {
+          document.getElementById('error').textContent = "Error saving profile: " + err.message;
           document.getElementById('msg').textContent = "";
         });
       }
