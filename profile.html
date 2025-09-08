@@ -16,10 +16,18 @@
     .msg { color: #388e3c; margin-top: 1em;}
     .error { color: #d32f2f; margin-top: 1em;}
     .role-display { background: #e3f2fd; padding: 0.6em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #90caf9; font-weight: bold;}
+    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
+    nav a { font-weight: bold; color: #1565c0; text-decoration: none; padding: 0.6em 1.2em; border-radius: 4px; background: #e3f2fd; transition: background 0.2s; }
+    nav a:hover { background: #bbdefb; }
   </style>
 </head>
 <body>
   <div class="container">
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="experiments.html">Experiments</a>
+      <a href="references.html">References</a>
+    </nav>
     <button class="logout-btn btn" onclick="logout()">Logout</button>
     <h1>Your Profile</h1>
     <form id="profileForm" autocomplete="off">
@@ -27,6 +35,8 @@
       <div id="role-display" class="role-display"></div>
       <label for="name">Full Name*</label>
       <input type="text" id="name" name="name" required>
+      <label for="schoolName">School Name*</label>
+      <input type="text" id="schoolName" name="schoolName" required>
       <label for="prn">PRN Number*</label>
       <input type="text" id="prn" name="prn" required>
       <label for="batch">Batch*</label>
@@ -85,6 +95,7 @@
         db.collection('profiles').doc(user.uid).get().then(doc => {
           if (doc.exists) {
             const data = doc.data();
+            document.getElementById('schoolName').value = data.schoolName || "";
             document.getElementById('prn').value = data.prn || "";
             document.getElementById('batch').value = data.batch || "";
             document.getElementById('name').value = data.name || user.displayName || "";
@@ -113,18 +124,19 @@
       // Get role from UID
       const role = getUserRole(user.uid);
       const name = document.getElementById('name').value.trim();
+      const schoolName = document.getElementById('schoolName').value.trim();
       const prn = document.getElementById('prn').value.trim();
       const batch = document.getElementById('batch').value.trim();
       const email = document.getElementById('email').value.trim();
 
       // All fields required
-      if (role === "Unknown" || !name || !prn || !batch || !email) {
+      if (role === "Unknown" || !name || !schoolName || !prn || !batch || !email) {
         document.getElementById('error').textContent = "Please fill all required fields.";
         return;
       }
 
       db.collection('profiles').doc(user.uid).set({
-        role, name, prn, batch, email, uid: user.uid
+        role, name, schoolName, prn, batch, email, uid: user.uid
       }, { merge: true }).then(() => {
         document.getElementById('msg').textContent = "Profile updated successfully!";
         document.getElementById('error').textContent = "";
