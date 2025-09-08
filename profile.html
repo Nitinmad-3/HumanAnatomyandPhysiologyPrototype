@@ -19,7 +19,7 @@
     nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
     nav a { font-weight: bold; color: #1565c0; text-decoration: none; padding: 0.6em 1.2em; border-radius: 4px; background: #e3f2fd; transition: background 0.2s; }
     nav a:hover { background: #bbdefb; }
-    #profilePicPreview {max-width:100px; border-radius:50%; display:none; margin-bottom:1em; border:2px solid #90caf9;}
+    #profilePicPreview {max-width:100px; border-radius:50%; margin-bottom:1em; border:2px solid #90caf9;}
   </style>
 </head>
 <body>
@@ -44,10 +44,10 @@
       <input type="text" id="batch" name="batch" required>
       <label for="email">Email*</label>
       <input type="email" id="email" name="email" required>
-      <!-- Step 1: Add profile picture input and preview -->
+      <!-- Profile Picture Upload and Preview -->
       <label for="profilePic">Profile Picture</label>
       <input type="file" id="profilePic" name="profilePic" accept="image/*">
-      <img id="profilePicPreview" src="" alt="Profile Picture Preview">
+      <img id="profilePicPreview" src="assets/element for preview.png" alt="Profile Picture Preview">
       <button type="submit" class="btn save-btn">Save Profile</button>
       <div class="msg" id="msg"></div>
       <div class="error" id="error"></div>
@@ -63,7 +63,7 @@
       apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
       authDomain: "human-anatomy-physiology.firebaseapp.com",
       projectId: "human-anatomy-physiology",
-      storageBucket: "human-anatomy-physiology.firebasestorage.app",
+      storageBucket: "human-anatomy-physiology.firbasestorage.app",
       messagingSenderId: "625270900047",
       appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
       measurementId: "G-34RV9N8GRF"
@@ -109,10 +109,11 @@
             document.getElementById('batch').value = data.batch || "";
             document.getElementById('name').value = data.name || user.displayName || "";
             document.getElementById('email').value = data.email || user.email || "";
-            // Step 1: Show profile picture preview if exists
+            // Show profile picture preview if exists
             if (data.profilePicUrl) {
               document.getElementById('profilePicPreview').src = data.profilePicUrl;
-              document.getElementById('profilePicPreview').style.display = "block";
+            } else {
+              document.getElementById('profilePicPreview').src = "assets/element for preview.png";
             }
           }
         });
@@ -121,19 +122,21 @@
       }
     });
 
-    // Step 1: Show preview when user selects image
+    // Preview logic for file input
     document.getElementById('profilePic').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(ev) {
           document.getElementById('profilePicPreview').src = ev.target.result;
-          document.getElementById('profilePicPreview').style.display = "block";
         };
         reader.readAsDataURL(file);
+      } else {
+        document.getElementById('profilePicPreview').src = "assets/element for preview.png";
       }
     });
 
+    // Save profile with or without image
     document.getElementById('profileForm').onsubmit = function(e) {
       e.preventDefault();
       document.getElementById('msg').textContent = "";
@@ -162,13 +165,11 @@
         return;
       }
 
-      // Step 1: Profile picture upload
       const fileInput = document.getElementById('profilePic');
       if (fileInput.files[0]) {
         // Upload to Firebase Storage
         const storageRef = storage.ref('profilePics/' + user.uid);
         storageRef.put(fileInput.files[0]).then(() => {
-          // Get URL and save to profile
           storageRef.getDownloadURL().then(profilePicUrl => {
             db.collection('profiles').doc(user.uid).set({
               role, name, schoolName, prn, batch, email, uid: user.uid, profilePicUrl
