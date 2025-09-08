@@ -32,7 +32,6 @@
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
-      <a href="../assessments.html">Assessments</a>
       <a href="../references.html">References</a>
     </nav>
   </header>
@@ -42,18 +41,18 @@
         <h2>Student Information</h2>
         <label for="studentName">Student Name*</label>
         <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name</label>
-        <input type="text" id="schoolName" name="schoolName">
-        <label for="prnNumber">PRN Number</label>
-        <input type="text" id="prnNumber" name="prnNumber">
+        <label for="schoolName">School Name*</label>
+        <input type="text" id="schoolName" name="schoolName" required>
+        <label for="prnNumber">PRN Number*</label>
+        <input type="text" id="prnNumber" name="prnNumber" required>
         <label for="batchNumber">Batch Number*</label>
         <select id="batchNumber" name="batchNumber" required>
           <option value="">Select Batch</option>
           <option value="A">A</option>
           <option value="B">B</option>
         </select>
-        <label for="emailId">Email ID (add your institutional email id)</label>
-        <input type="email" id="emailId" name="emailId">
+        <label for="emailId">Email ID (add your institutional email id)*</label>
+        <input type="email" id="emailId" name="emailId" required>
       </div>
       <hr>
       <div id="questionsSection"></div>
@@ -87,12 +86,11 @@
         try {
           const doc = await db.collection('profiles').doc(user.uid).get();
           const data = doc.exists ? doc.data() : {};
-          // Autofill fields if available
           if(data.name) document.getElementById('studentName').value = data.name;
+          if(data.schoolName) document.getElementById('schoolName').value = data.schoolName;
           if(data.prn) document.getElementById('prnNumber').value = data.prn;
           if(data.batch) document.getElementById('batchNumber').value = data.batch;
           if(data.email) document.getElementById('emailId').value = data.email;
-          // Optionally, schoolName if you store it in profile
         } catch (e) {
           // Could not fetch profile, do nothing
         }
