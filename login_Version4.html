@@ -85,7 +85,7 @@
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
-      <a id="login-btn" href="login.html">Login</a>
+      <a id="login-btn" href="login_Version4.html">Login</a>
       <a id="logout-btn" href="#" style="display:none;">Logout</a>
     </nav>
   </header>
@@ -104,12 +104,11 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Supabase config - must be initialized before any usage!
+    // Initialize Supabase client BEFORE any usage!
     const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Login form logic with role check via profiles table
     document.getElementById('login-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
