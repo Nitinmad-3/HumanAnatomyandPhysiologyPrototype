@@ -11,14 +11,24 @@
     nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
     nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer;}
     nav a:hover, nav button:hover { background: #aed581; }
+
     .assess-list { max-width: 700px; margin: auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #c5e1a5; }
     .assess-list ul { list-style: none; padding: 0; }
     .assess-list li { margin-bottom: 1.25em; }
     .assess-list a { color: #33691e; text-decoration: none; font-size: 1.08em; font-weight: bold;}
     .assess-list a:hover { text-decoration: underline; }
-    #not-logged-in-message, #access-denied-message { color: #c62828; font-weight: bold; text-align: center; margin-top: 2rem; }
+
+    #not-logged-in-message, #access-denied-message, #error-message {
+      font-weight: bold; text-align: center; margin: 2rem auto 0 auto; max-width: 700px; padding: 0.9rem 1rem; border-radius: 8px;
+    }
+    #not-logged-in-message { color: #1b5e20; background: #e8f5e9; border: 1px solid #c8e6c9; }
+    #access-denied-message { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
+    #error-message { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
+
     #login-direct { display: inline-block; margin: 1.5rem auto 0 auto; background: #33691e; color: #fff; padding: 0.65em 1.3em; border-radius: 4px; text-decoration: none; }
     #login-direct:hover { background: #558b2f; }
+
+    .hidden { display: none; }
     @media (max-width: 600px) { .assess-list { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
   </style>
 </head>
@@ -34,7 +44,10 @@
       <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
-  <div class="assess-list" id="assess-list" style="display:none;">
+
+  <div id="error-message" class="hidden">Unexpected error loading page. Please refresh.</div>
+
+  <div class="assess-list hidden" id="assess-list">
     <ul>
       <li><a href="assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html">1. Study of Compound Microscope</a></li>
       <li><a href="assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html">2. Identification of Axial Bones</a></li>
@@ -53,69 +66,118 @@
       <li><a href="assesments/assessments_assessment-15-study-of-human-skin-model_Version2.html">15. Determination of Erythrocyte Sedimentation Rate (ESR)</a></li>
     </ul>
   </div>
-  <div id="not-logged-in-message" style="display:none;">
+
+  <div id="not-logged-in-message" class="hidden">
     You must be logged in to view assessment questions.<br>
     <a id="login-direct" href="login.html">Go to Login Page</a>
   </div>
-  <div id="access-denied-message" style="display:none;">
+
+  <div id="access-denied-message" class="hidden">
     Access denied. You are not authorized for this portal.<br>
     <a id="login-direct" href="login.html">Go to Login Page</a>
   </div>
-  <!-- Supabase SDK and authentication logic -->
+
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Supabase config
-    const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    document.addEventListener('DOMContentLoaded', () => {
+      const assessList = document.getElementById('assess-list');
+      const notLoggedIn = document.getElementById('not-logged-in-message');
+      const accessDenied = document.getElementById('access-denied-message');
+      const errorMsg = document.getElementById('error-message');
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
 
-    async function getUserRole(uid) {
-      if (!uid) return "unknown";
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', uid)
-        .single();
-      if (error || !data || !data.role) return "unknown";
-      return data.role;
-    }
-
-    async function checkAuthAndRole() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user) {
-        document.getElementById('assess-list').style.display = 'none';
-        document.getElementById('not-logged-in-message').style.display = 'block';
-        document.getElementById('access-denied-message').style.display = 'none';
-        document.getElementById('logout-btn').style.display = 'none';
-        document.getElementById('login-btn').style.display = 'inline';
-      } else {
-        const uid = session.user.id;
-        const role = await getUserRole(uid);
-        if (role === "unknown") {
-          document.getElementById('assess-list').style.display = 'none';
-          document.getElementById('not-logged-in-message').style.display = 'none';
-          document.getElementById('access-denied-message').style.display = 'block';
-          document.getElementById('logout-btn').style.display = 'inline';
-          document.getElementById('login-btn').style.display = 'none';
-          await supabase.auth.signOut(); // Optionally auto-logout unauthorized users
+      function show(el) { el.classList.remove('hidden'); }
+      function hide(el) { el.classList.add('hidden'); }
+      function setNav(loggedIn) {
+        if (loggedIn) {
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'inline';
         } else {
-          document.getElementById('assess-list').style.display = 'block';
-          document.getElementById('not-logged-in-message').style.display = 'none';
-          document.getElementById('access-denied-message').style.display = 'none';
-          document.getElementById('logout-btn').style.display = 'inline';
-          document.getElementById('login-btn').style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login.html'; }
         }
       }
-    }
+      function setState(state) {
+        // states: 'loggedOut' | 'denied' | 'allowed' | 'error'
+        hide(assessList); hide(notLoggedIn); hide(accessDenied); hide(errorMsg);
+        if (state === 'loggedOut') { show(notLoggedIn); setNav(false); }
+        if (state === 'denied')    { show(accessDenied); setNav(true); }
+        if (state === 'allowed')   { show(assessList); setNav(true); }
+        if (state === 'error')     { show(errorMsg); }
+      }
 
-    checkAuthAndRole();
+      async function getRole(sb, uid) {
+        if (!uid) return null;
+        const { data, error } = await sb.from('profiles').select('role').eq('id', uid).maybeSingle();
+        if (error) { console.warn('Profile fetch error:', error); }
+        return data?.role || null;
+      }
 
-    // Logout logic
-    document.getElementById('logout-btn').onclick = async function(e) {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    };
+      async function checkAuthAndRender() {
+        try {
+          if (!window.supabase) {
+            console.error('Supabase SDK missing.');
+            setState('error');
+            return;
+          }
+
+          // IMPORTANT: use a different variable name than "supabase" to avoid shadowing the SDK global
+          const sb = window.sb || window.supabase.createClient(
+            'https://hunlistfklwvpivfjmbk.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+          );
+          // Cache client globally for reuse on other pages if needed
+          window.sb = sb;
+
+          // Update nav based on current session
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session || !session.user) {
+            setState('loggedOut');
+          } else {
+            const role = await getRole(sb, session.user.id);
+            if (!role) {
+              setState('denied');
+              // Optional: auto sign out unauthorized users
+              // await sb.auth.signOut();
+            } else {
+              setState('allowed');
+            }
+          }
+
+          // Keep UI in sync if auth changes while on this page
+          sb.auth.onAuthStateChange(async (_event, newSession) => {
+            if (!newSession || !newSession.user) {
+              setState('loggedOut');
+            } else {
+              const role = await getRole(sb, newSession.user.id);
+              if (!role) {
+                setState('denied');
+              } else {
+                setState('allowed');
+              }
+            }
+          });
+
+          // Logout handler
+          if (logoutBtn) {
+            logoutBtn.onclick = async (e) => {
+              e.preventDefault();
+              try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+              setState('loggedOut');
+              window.location.href = 'index.html';
+            };
+          }
+        } catch (e) {
+          console.error('Assessments init error:', e);
+          setState('error');
+        }
+      }
+
+      checkAuthAndRender();
+    });
   </script>
 </body>
 </html>
