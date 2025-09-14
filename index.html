@@ -155,103 +155,146 @@
       </p>
     </div>
   </div>
-  <!-- Supabase SDK and authentication logic -->
+
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Supabase config
-    const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Get role from profiles table
-    async function getUserRole(userId) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      if (error || !data || !data.role) return "unknown";
-      return data.role;
-    }
-
-    // Set dashboard welcome message
-    async function setDashboardWelcome(userId, role) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', userId)
-        .single();
-      const name = (data && data.name) ? data.name : "";
-      if (role === "admin") {
-        document.getElementById('dashboard-welcome-admin').textContent = name ? `Welcome ${name}` : "";
-      } else if (role === "student") {
-        document.getElementById('dashboard-welcome-student').textContent = name ? `Welcome ${name}` : "";
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.supabase) {
+        console.error('Supabase SDK failed to load.');
+        return;
       }
-    }
 
-    // Auth state logic
-    async function handleAuthState() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && session.user) {
-        document.getElementById('logout-btn').style.display = 'inline';
-        document.getElementById('login-btn').style.display = 'none';
-        document.getElementById('profile-tab').style.display = 'inline';
+      // IMPORTANT: Use a different variable name than "supabase" to avoid shadowing the SDK global.
+      const sb = window.sb || (window.sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      ));
 
-        const userId = session.user.id;
-        const role = await getUserRole(userId);
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const profileTab = document.getElementById('profile-tab');
+      const adminFeatures = document.getElementById('admin-features');
+      const studentFeatures = document.getElementById('student-features');
+      const welcomeAdmin = document.getElementById('dashboard-welcome-admin');
+      const welcomeStudent = document.getElementById('dashboard-welcome-student');
+      const assessmentTab = document.getElementById('assessment-tab');
 
-        if (role === "admin") {
-          document.getElementById('admin-features').style.display = 'block';
-          document.getElementById('student-features').style.display = 'none';
-          setDashboardWelcome(userId, "admin");
-        } else if (role === "student") {
-          document.getElementById('admin-features').style.display = 'none';
-          document.getElementById('student-features').style.display = 'block';
-          setDashboardWelcome(userId, "student");
+      function setNav(loggedIn) {
+        if (loggedIn) {
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'inline';
+          if (profileTab) profileTab.style.display = 'inline';
         } else {
-          document.getElementById('admin-features').style.display = 'none';
-          document.getElementById('student-features').style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
+          if (profileTab) profileTab.style.display = 'none';
         }
+      }
 
-        // Profile completeness check
-        const { data, error } = await supabase
+      async function getUserRole(userId) {
+        const { data, error } = await sb
           .from('profiles')
-          .select('name,role,email,prn,batch')
+          .select('role')
           .eq('id', userId)
-          .single();
-        if (!data || !data.name || !data.role || !data.email || !data.prn || !data.batch) {
-          if (!window.location.href.endsWith("profile.html")) {
-            window.location.href = "profile.html";
-          }
+          .maybeSingle();
+        if (error) console.warn('Role fetch error:', error);
+        return data?.role || 'unknown';
+      }
+
+      async function setDashboardWelcome(userId, role) {
+        const { data, error } = await sb
+          .from('profiles')
+          .select('name')
+          .eq('id', userId)
+          .maybeSingle();
+        if (error) console.warn('Name fetch error:', error);
+        const name = data?.name || '';
+        if (role === 'admin') {
+          if (welcomeAdmin) welcomeAdmin.textContent = name ? `Welcome ${name}` : '';
+        } else if (role === 'student') {
+          if (welcomeStudent) welcomeStudent.textContent = name ? `Welcome ${name}` : '';
         }
-      } else {
-        document.getElementById('logout-btn').style.display = 'none';
-        document.getElementById('login-btn').style.display = 'inline';
-        document.getElementById('profile-tab').style.display = 'none';
-        document.getElementById('admin-features').style.display = 'none';
-        document.getElementById('student-features').style.display = 'none';
-        document.getElementById('dashboard-welcome-admin').textContent = "";
-        document.getElementById('dashboard-welcome-student').textContent = "";
       }
-    }
-    handleAuthState();
 
-    // Re-check auth state on page focus (for SPA-like behavior)
-    window.addEventListener('focus', handleAuthState);
+      async function refreshUI() {
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session?.user) {
+            setNav(true);
 
-    document.getElementById('assessment-tab').onclick = async function(e) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user) {
-        e.preventDefault();
-        window.location.href = "login_Version4.html";
+            const userId = session.user.id;
+            const role = await getUserRole(userId);
+
+            if (role === 'admin') {
+              if (adminFeatures) adminFeatures.style.display = 'block';
+              if (studentFeatures) studentFeatures.style.display = 'none';
+              await setDashboardWelcome(userId, 'admin');
+            } else if (role === 'student') {
+              if (adminFeatures) adminFeatures.style.display = 'none';
+              if (studentFeatures) studentFeatures.style.display = 'block';
+              await setDashboardWelcome(userId, 'student');
+            } else {
+              if (adminFeatures) adminFeatures.style.display = 'none';
+              if (studentFeatures) studentFeatures.style.display = 'none';
+              if (welcomeAdmin) welcomeAdmin.textContent = '';
+              if (welcomeStudent) welcomeStudent.textContent = '';
+            }
+
+            // Profile completeness check
+            const { data: profile, error: profErr } = await sb
+              .from('profiles')
+              .select('name, role, email, prn, batch')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (profErr) console.warn('Profile fetch error:', profErr);
+
+            const incomplete = !profile || !profile.name || !profile.role || !profile.email || !profile.prn || !profile.batch;
+            if (incomplete && !window.location.pathname.endsWith('profile.html')) {
+              window.location.href = 'profile.html';
+            }
+          } else {
+            // Logged out
+            setNav(false);
+            if (adminFeatures) adminFeatures.style.display = 'none';
+            if (studentFeatures) studentFeatures.style.display = 'none';
+            if (welcomeAdmin) welcomeAdmin.textContent = '';
+            if (welcomeStudent) welcomeStudent.textContent = '';
+          }
+        } catch (e) {
+          console.error('refreshUI error:', e);
+        }
       }
-    };
 
-    document.getElementById('logout-btn').onclick = async function(e) {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    };
+      // Initial UI
+      refreshUI();
+
+      // Keep UI in sync with auth changes and when returning focus to the tab
+      sb.auth.onAuthStateChange((_event, _session) => { refreshUI(); });
+      window.addEventListener('focus', refreshUI);
+
+      // Protect Assessments link: require login
+      if (assessmentTab) {
+        assessmentTab.addEventListener('click', async (e) => {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) {
+            e.preventDefault();
+            window.location.href = 'login_Version4.html';
+          }
+        });
+      }
+
+      // Logout handler
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+          window.location.href = 'index.html';
+        });
+      }
+    });
   </script>
 </body>
 </html>
