@@ -28,7 +28,7 @@
     <nav>
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
-      <a id="assessment-tab" href="assessment.html">Assessments</a>
+      <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
       <a id="login-btn" href="login.html" style="display:inline;">Login</a>
       <button id="logout-btn" style="display:none;">Logout</button>
@@ -61,54 +61,43 @@
     Access denied. You are not authorized for this portal.<br>
     <a id="login-direct" href="login.html">Go to Login Page</a>
   </div>
-  <!-- Firebase SDKs and authentication logic -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <!-- Supabase SDK and authentication logic -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
-      authDomain: "human-anatomy-physiology.firebaseapp.com",
-      projectId: "human-anatomy-physiology",
-      storageBucket: "human-anatomy-physiology.firebasestorage.app",
-      messagingSenderId: "625270900047",
-      appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
-      measurementId: "G-34RV9N8GRF"
-    };
-    firebase.initializeApp(firebaseConfig);
+    // Supabase config
+    const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // UID lists MUST match Firestore rules!
-    const ADMIN_UIDS = [
-      "AytH5xJarnf60ZcBdV6tZtWy97v2",
-      "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
-      "mxT8vKKigsRiG6ooSLcByikpvVw1"
-    ];
-    const STUDENT_UIDS = [
-      "Ym6TvmFR1RUiZt7LK6ByUnij68s2",
-      "BztH5xIarnf60ZcBdV6tZtWy97v6"
-    ];
-    function getUserRole(uid) {
-      if (ADMIN_UIDS.includes(uid)) return "admin";
-      if (STUDENT_UIDS.includes(uid)) return "student";
-      return "unknown";
+    async function getUserRole(uid) {
+      if (!uid) return "unknown";
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', uid)
+        .single();
+      if (error || !data || !data.role) return "unknown";
+      return data.role;
     }
 
-    firebase.auth().onAuthStateChanged(function(user) {
-      if (!user) {
+    async function checkAuthAndRole() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
         document.getElementById('assess-list').style.display = 'none';
         document.getElementById('not-logged-in-message').style.display = 'block';
         document.getElementById('access-denied-message').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'none';
         document.getElementById('login-btn').style.display = 'inline';
       } else {
-        const role = getUserRole(user.uid);
+        const uid = session.user.id;
+        const role = await getUserRole(uid);
         if (role === "unknown") {
           document.getElementById('assess-list').style.display = 'none';
           document.getElementById('not-logged-in-message').style.display = 'none';
           document.getElementById('access-denied-message').style.display = 'block';
           document.getElementById('logout-btn').style.display = 'inline';
           document.getElementById('login-btn').style.display = 'none';
-          firebase.auth().signOut(); // Optionally auto-logout unauthorized users
+          await supabase.auth.signOut(); // Optionally auto-logout unauthorized users
         } else {
           document.getElementById('assess-list').style.display = 'block';
           document.getElementById('not-logged-in-message').style.display = 'none';
@@ -117,14 +106,15 @@
           document.getElementById('login-btn').style.display = 'none';
         }
       }
-    });
+    }
+
+    checkAuthAndRole();
 
     // Logout logic
-    document.getElementById('logout-btn').onclick = function(e) {
+    document.getElementById('logout-btn').onclick = async function(e) {
       e.preventDefault();
-      firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
-      });
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
     };
   </script>
 </body>
