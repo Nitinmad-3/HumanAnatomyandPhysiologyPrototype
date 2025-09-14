@@ -56,75 +56,49 @@
       <div class="error" id="error"></div>
     </form>
   </div>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Firebase config: fix typo in storageBucket
-    const firebaseConfig = {
-      apiKey: "AIzaSyAsTq1EeRoVLpy9n9KEVNrMbOuYpTJ-hD4",
-      authDomain: "human-anatomy-physiology.firebaseapp.com",
-      projectId: "human-anatomy-physiology",
-      storageBucket: "human-anatomy-physiology.appspot.com", // <-- fixed bucket name!
-      messagingSenderId: "625270900047",
-      appId: "1:625270900047:web:6d98049ce2fb8d9216b13a",
-      measurementId: "G-34RV9N8GRF"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
-    const ADMIN_UIDS = [
-      "AytH5xJarnf60ZcBdV6tZtWy97v2",
-      "biYxD8qpU9gGB0O3Otqa0Dj1o1w1",
-      "mxT8vKKigsRiG6ooSLcByikpvVw1"
-    ];
-    const STUDENT_UIDS = [
-      "Ym6TvmFR1RUiZt7LK6ByUnij68s2",
-      "BztH5xIarnf60ZcBdV6tZtWy97v6"
-    ];
-
-    function getUserRole(uid) {
-      if (ADMIN_UIDS.includes(uid)) return "Admin";
-      if (STUDENT_UIDS.includes(uid)) return "Student";
-      return "Unknown";
-    }
+    // Supabase config
+    const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     // Prefill info if logged in
-    auth.onAuthStateChanged(function(user) {
-      if (user) {
-        document.getElementById('email').value = user.email || "";
-        document.getElementById('name').value = user.displayName || "";
-
-        // Get role from UID
-        const role = getUserRole(user.uid);
-        document.getElementById('role-display').textContent = role;
-
-        // Fetch profile from Firestore and fill all fields
-        db.collection('profiles').doc(user.uid).get().then(doc => {
-          if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('schoolName').value = data.schoolName || "";
-            document.getElementById('prn').value = data.prn || "";
-            document.getElementById('batch').value = data.batch || "";
-            document.getElementById('name').value = data.name || user.displayName || "";
-            document.getElementById('email').value = data.email || user.email || "";
-            // Show profile picture preview if exists
-            if (data.profilePicUrl) {
-              document.getElementById('profilePicPreview').src = data.profilePicUrl;
-            } else {
-              document.getElementById('profilePicPreview').src = "assets/element for preview.png";
-            }
-          }
-        }).catch((err) => {
-          document.getElementById('error').textContent = "Error loading profile: " + err.message;
-        });
-      } else {
+    async function prefillProfile() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
         window.location.href = 'login.html';
+        return;
       }
-    });
+      const user = session.user;
+      document.getElementById('email').value = user.email || "";
+      document.getElementById('name').value = user.user_metadata?.full_name || "";
+
+      // Get role from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error || !profile) {
+        document.getElementById('role-display').textContent = "Unknown";
+      } else {
+        document.getElementById('role-display').textContent = profile.role || "Unknown";
+        document.getElementById('schoolName').value = profile.schoolName || "";
+        document.getElementById('prn').value = profile.prn || "";
+        document.getElementById('batch').value = profile.batch || "";
+        document.getElementById('name').value = profile.name || user.user_metadata?.full_name || "";
+        document.getElementById('email').value = profile.email || user.email || "";
+        // Show profile picture preview if exists
+        if (profile.profilePicUrl) {
+          document.getElementById('profilePicPreview').src = profile.profilePicUrl;
+        } else {
+          document.getElementById('profilePicPreview').src = "assets/element for preview.png";
+        }
+      }
+    }
+    prefillProfile();
 
     // Preview logic for file input
     document.getElementById('profilePic').addEventListener('change', function(e) {
@@ -141,27 +115,29 @@
     });
 
     // Save profile with or without image
-    document.getElementById('profileForm').onsubmit = function(e) {
+    document.getElementById('profileForm').onsubmit = async function(e) {
       e.preventDefault();
       document.getElementById('msg').textContent = "";
       document.getElementById('error').textContent = "";
 
-      const user = auth.currentUser;
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
         document.getElementById('error').textContent = "You must be signed in to submit your profile.";
         setTimeout(function(){
           window.location.href = 'login.html';
         }, 1500);
         return;
       }
+      const user = session.user;
+      const id = user.id;
 
-      // Get role from UID
-      const role = getUserRole(user.uid);
+      // Get form fields
       const name = document.getElementById('name').value.trim();
       const schoolName = document.getElementById('schoolName').value.trim();
       const prn = document.getElementById('prn').value.trim();
       const batch = document.getElementById('batch').value.trim();
       const email = document.getElementById('email').value.trim();
+      const role = document.getElementById('role-display').textContent;
 
       // All fields required
       if (role === "Unknown" || !name || !schoolName || !prn || !batch || !email) {
@@ -169,51 +145,62 @@
         return;
       }
 
+      // Upload profilePic if selected
       const fileInput = document.getElementById('profilePic');
+      let profilePicUrl = null;
       if (fileInput.files[0]) {
-        const storageRef = storage.ref('profilePics/' + user.uid);
-        storageRef.put(fileInput.files[0])
-        .then(snapshot => {
-          return storageRef.getDownloadURL();
-        })
-        .then(profilePicUrl => {
-          return db.collection('profiles').doc(user.uid).set({
-            role, name, schoolName, prn, batch, email, uid: user.uid, profilePicUrl
-          }, { merge: true });
-        })
-        .then(() => {
-          document.getElementById('msg').textContent = "Profile updated successfully!";
-          document.getElementById('error').textContent = "";
-          setTimeout(function() {
-            window.location.reload();
-          }, 1200);
-        })
-        .catch(err => {
-          document.getElementById('error').textContent = "Error saving profile: " + err.message;
-          document.getElementById('msg').textContent = "";
-        });
-      } else {
-        db.collection('profiles').doc(user.uid).set({
-          role, name, schoolName, prn, batch, email, uid: user.uid
-        }, { merge: true })
-        .then(() => {
-          document.getElementById('msg').textContent = "Profile updated successfully!";
-          document.getElementById('error').textContent = "";
-          setTimeout(function() {
-            window.location.reload();
-          }, 1200);
-        })
-        .catch(err => {
-          document.getElementById('error').textContent = "Error saving profile: " + err.message;
-          document.getElementById('msg').textContent = "";
-        });
+        // Upload to Supabase Storage
+        const file = fileInput.files[0];
+        const { data, error } = await supabase
+          .storage
+          .from('profilePics')
+          .upload(`${id}/profilePic.png`, file, { upsert: true });
+        if (error) {
+          document.getElementById('error').textContent = "Error uploading image: " + error.message;
+          return;
+        }
+        // Get public URL
+        const { data: urlData } = supabase
+          .storage
+          .from('profilePics')
+          .getPublicUrl(`${id}/profilePic.png`);
+        profilePicUrl = urlData.publicUrl;
       }
+
+      // Update profile in Supabase DB
+      const updateFields = {
+        role,
+        name,
+        schoolName,
+        prn,
+        batch,
+        email,
+        id
+      };
+      if (profilePicUrl) {
+        updateFields.profilePicUrl = profilePicUrl;
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert([updateFields], { onConflict: ['id'] });
+
+      if (updateError) {
+        document.getElementById('error').textContent = "Error saving profile: " + updateError.message;
+        document.getElementById('msg').textContent = "";
+        return;
+      }
+
+      document.getElementById('msg').textContent = "Profile updated successfully!";
+      document.getElementById('error').textContent = "";
+      setTimeout(function() {
+        window.location.reload();
+      }, 1200);
     };
 
-    function logout() {
-      auth.signOut().then(function() {
-        window.location.href = 'index.html';
-      });
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
     }
   </script>
 </body>
