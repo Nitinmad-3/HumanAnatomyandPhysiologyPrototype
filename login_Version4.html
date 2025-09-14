@@ -75,6 +75,7 @@
       margin-bottom: 1em;
       text-align: center;
       font-weight: 500;
+      display: none;
     }
     .success-message {
       color: #33691e;
@@ -85,6 +86,7 @@
       margin-bottom: 1em;
       text-align: center;
       font-weight: 500;
+      display: none;
     }
     @media (max-width: 600px) {
       .login-container { padding: 1.2rem; }
@@ -107,8 +109,8 @@
   <div class="login-container">
     <h2>Sign in to your account</h2>
     <form id="login-form" class="login-form" autocomplete="on">
-      <div id="error-message" class="error-message" style="display:none;"></div>
-      <div id="success-message" class="success-message" style="display:none;"></div>
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
       <label for="email">Email</label>
       <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus>
       <label for="password">Password</label>
@@ -140,7 +142,7 @@
     checkSession();
 
     // Login form logic with role check via profiles table
-    document.getElementById('login-form').onsubmit = async function(e) {
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
@@ -148,16 +150,14 @@
       var successDiv = document.getElementById('success-message');
       errorDiv.style.display = "none";
       successDiv.style.display = "none";
-      if (!email || !password) {
-        errorDiv.textContent = "Please enter both email and password.";
-        errorDiv.style.display = "block";
-        return;
-      }
+      errorDiv.textContent = "";
+      successDiv.textContent = "";
+
       try {
         // Sign in with Supabase Auth
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          errorDiv.textContent = error.message;
+          errorDiv.textContent = "Login failed: " + error.message;
           errorDiv.style.display = "block";
           return;
         }
@@ -182,14 +182,6 @@
           return;
         }
 
-        // Optionally update profile with email if missing
-        if (!profile.email) {
-          await supabase
-            .from('profiles')
-            .update({ email: email })
-            .eq('id', user.id);
-        }
-
         successDiv.textContent = "Login successful! Redirecting...";
         successDiv.style.display = "block";
         setTimeout(function() {
@@ -197,10 +189,11 @@
         }, 1200);
 
       } catch (err) {
-        errorDiv.textContent = err.message || "Login failed.";
+        errorDiv.textContent = "Unexpected error: " + (err.message || err);
         errorDiv.style.display = "block";
+        console.log("Login error:", err);
       }
-    };
+    });
 
     // Logout logic
     document.getElementById('logout-btn').onclick = async function(e) {
