@@ -54,14 +54,6 @@
       nav { flex-direction: column; gap: 1rem; }
       .row { grid-template-columns: 1fr; }
     }
-    @media (max-width: 600px) {
-      .container { padding: 0.5rem; }
-      .avatar-card, .form-card { padding: 0.5rem; }
-      .avatar-wrap { width: 120px; height: 120px; }
-      .section-title { font-size: 1.2rem; }
-      label, .btn, .footer-links a { font-size: 1rem; }
-      .progress { height: 8px; }
-    }
   </style>
 </head>
 <body>
@@ -90,6 +82,7 @@
     <div class="hint" id="progress-hint"></div>
 
     <div class="grid">
+      <!-- Avatar column -->
       <aside class="avatar-card">
         <div class="avatar-wrap" id="avatar-wrap" aria-live="polite">
           <img id="avatar-img" alt="Profile avatar" class="hidden" />
@@ -104,6 +97,7 @@
         </div>
       </aside>
 
+      <!-- Form column -->
       <section class="form-card">
         <form id="profile-form" novalidate>
           <div class="row">
@@ -147,6 +141,7 @@
     </div>
   </div>
 
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
   <script>
@@ -180,8 +175,8 @@
       const progressBar = document.getElementById('progress-bar');
       const progressHint = document.getElementById('progress-hint');
 
-      let selectedFile = null;
-      let previousAvatarPath = null;
+      let selectedFile = null;          // new file chosen but not saved yet
+      let previousAvatarPath = null;    // stored path in DB for deletion if replaced
       let currentUserId = null;
       let profileSub = null;
 
@@ -240,7 +235,7 @@
       function validateFile(file) {
         if (!file) return 'No file selected.';
         const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        const maxBytes = 5 * 1024 * 1024;
+        const maxBytes = 5 * 1024 * 1024; // 5MB
         if (!validTypes.includes(file.type)) return 'Please select a JPG, PNG, or WEBP image.';
         if (file.size > maxBytes) return 'Image is too large. Max 5 MB.';
         return '';
@@ -260,6 +255,7 @@
       }
 
       function subscribeToProfile(sb, uid) {
+        // Live reflect role (and other fields) if admin updates the row
         if (profileSub) {
           try { sb.removeChannel(profileSub); } catch {}
         }
@@ -271,6 +267,7 @@
             (payload) => {
               const p = payload.new || {};
               roleEl.value = p.role || '';
+              // Update other fields only if empty (avoid clobbering user input)
               if (!nameEl.value) nameEl.value = p.name || '';
               if (!prnEl.value) prnEl.value = p.prn || '';
               if (!batchEl.value) batchEl.value = p.batch || '';
@@ -336,6 +333,7 @@
           return null;
         }
 
+        // Populate UI
         nameEl.value = p.name || '';
         emailEl.value = p.email || authEmail || '';
         roleEl.value = p.role || '';
@@ -352,13 +350,14 @@
         setAvatarPreview(p.avatar_url || '');
         updateProgress(p);
 
+        // Subscribe to live changes so role reflects automatically
         subscribeToProfile(sb, currentUserId);
 
         setLoading(false);
         return p;
       }
 
-      // Avatar storage: use bucket "Avatar" and key `${uid}/...` (no bucket name in key)
+      // Storage helpers for "Avatar" bucket
       async function uploadAvatar(sb, uid, file) {
         if (!file) return { url: null, path: null };
         const errText = validateFile(file);
@@ -368,13 +367,12 @@
         }
 
         const cleanName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-        const path = `${uid}/${Date.now()}_${cleanName}`;
-        const { error: upErr } = await sb.storage.from('Avatar').upload(path, file, {
-          upsert: false,
-          contentType: file.type
-        });
+        const path = `${uid}/${Date.now()}_${cleanName}`; // NOTE: no bucket name in the key
+        console.log('Uploading avatar to bucket "Avatar" with key:', path);
+        const { error: upErr } = await sb.storage.from('Avatar').upload(path, file, { upsert: false, contentType: file.type });
         if (upErr) throw upErr;
 
+        // Public URL (make sure your bucket has a public policy for reads, or you use signed URLs)
         const { data: pub } = sb.storage.from('Avatar').getPublicUrl(path);
         const url = pub?.publicUrl || '';
         return { url, path };
@@ -402,6 +400,7 @@
         }
         const uid = session.user.id;
 
+        // Upload new avatar if selected
         let avatar_url = null;
         let avatar_path = null;
         try {
@@ -422,6 +421,7 @@
           email: emailEl.value.trim(),
           prn: prnEl.value.trim(),
           batch: batchEl.value.trim()
+          // role remains as-is (admin-managed)
         };
 
         if (!payload.name || !payload.prn || !payload.batch) {
@@ -430,6 +430,7 @@
           return;
         }
 
+        // Attach avatar fields if uploaded
         if (avatar_url && avatar_path) {
           payload.avatar_url = avatar_url;
           payload.avatar_path = avatar_path;
@@ -448,6 +449,7 @@
           return;
         }
 
+        // If we replaced the avatar successfully, delete the previous one
         if (avatar_path && previousAvatarPath && previousAvatarPath !== avatar_path) {
           await deleteAvatar(sb, previousAvatarPath);
           previousAvatarPath = avatar_path;
@@ -455,8 +457,8 @@
 
         if (avatar_url) {
           setAvatarPreview(avatar_url);
-          deleteAvatarBtn.classList.remove('hidden');
           selectedFile = null;
+          deleteAvatarBtn.classList.remove('hidden');
         }
 
         show(statusInfo, 'Profile saved successfully.');
@@ -473,6 +475,7 @@
         setLoading(false);
       }
 
+      // UI bindings
       pickAvatarBtn.addEventListener('click', () => avatarInput.click());
       avatarInput.addEventListener('change', () => {
         const file = avatarInput.files && avatarInput.files[0];
@@ -487,6 +490,7 @@
       clearAvatarBtn.addEventListener('click', () => {
         selectedFile = null;
         avatarInput.value = '';
+        // Keep current saved avatar preview; this only clears new selection
         show(statusInfo, 'Cleared new image selection.');
         setTimeout(() => hide(statusInfo), 1200);
       });
@@ -497,6 +501,7 @@
         try {
           await deleteAvatar(sb, previousAvatarPath);
           previousAvatarPath = null;
+          // Remove avatar from profile row
           await sb.from('profiles').update({ avatar_url: null, avatar_path: null }).eq('id', currentUserId);
           setAvatarPreview('');
           deleteAvatarBtn.classList.add('hidden');
@@ -522,6 +527,7 @@
         await loadProfile(sb);
       });
 
+      // Protect Assessments link if logged out
       if (assessTab) {
         assessTab.addEventListener('click', async (e) => {
           const sb = window.sb;
@@ -534,15 +540,19 @@
         });
       }
 
+      // Initialize
       (async () => {
         try {
           const sb = await initSupabase();
+
+          // Auth UI
           const { data: { session } } = await sb.auth.getSession();
           setNav(!!(session && session.user));
           sb.auth.onAuthStateChange((_event, newSession) => setNav(!!(newSession && newSession.user)));
 
           const p = await loadProfile(sb);
 
+          // Show delete saved avatar button only if we have one
           if (p && p.avatar_url) {
             deleteAvatarBtn.classList.remove('hidden');
           } else {
@@ -554,6 +564,7 @@
         }
       })();
 
+      // Warn on navigation if unsaved changes (simple heuristic)
       let pristineSnapshot = '';
       function snapshot() {
         return [
