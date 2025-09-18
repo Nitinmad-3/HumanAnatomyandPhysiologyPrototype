@@ -54,7 +54,6 @@
       nav { flex-direction: column; gap: 1rem; }
       .row { grid-template-columns: 1fr; }
     }
-    /* Extra responsiveness for <600px screens */
     @media (max-width: 600px) {
       .container { padding: 0.5rem; }
       .avatar-card, .form-card { padding: 0.5rem; }
@@ -91,7 +90,6 @@
     <div class="hint" id="progress-hint"></div>
 
     <div class="grid">
-      <!-- Avatar column -->
       <aside class="avatar-card">
         <div class="avatar-wrap" id="avatar-wrap" aria-live="polite">
           <img id="avatar-img" alt="Profile avatar" class="hidden" />
@@ -106,7 +104,6 @@
         </div>
       </aside>
 
-      <!-- Form column -->
       <section class="form-card">
         <form id="profile-form" novalidate>
           <div class="row">
@@ -150,7 +147,6 @@
     </div>
   </div>
 
-  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
   <script>
@@ -184,8 +180,8 @@
       const progressBar = document.getElementById('progress-bar');
       const progressHint = document.getElementById('progress-hint');
 
-      let selectedFile = null;          // new file chosen but not saved yet
-      let previousAvatarPath = null;    // stored path in DB for deletion if replaced
+      let selectedFile = null;
+      let previousAvatarPath = null;
       let currentUserId = null;
       let profileSub = null;
 
@@ -244,7 +240,7 @@
       function validateFile(file) {
         if (!file) return 'No file selected.';
         const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        const maxBytes = 5 * 1024 * 1024; // 5MB
+        const maxBytes = 5 * 1024 * 1024;
         if (!validTypes.includes(file.type)) return 'Please select a JPG, PNG, or WEBP image.';
         if (file.size > maxBytes) return 'Image is too large. Max 5 MB.';
         return '';
@@ -362,7 +358,7 @@
         return p;
       }
 
-      // --------- CHANGES FOR YOUR BUCKET NAME ("Avatar") ----------
+      // Avatar storage: use bucket "Avatar" and key `${uid}/...` (no bucket name in key)
       async function uploadAvatar(sb, uid, file) {
         if (!file) return { url: null, path: null };
         const errText = validateFile(file);
@@ -372,8 +368,11 @@
         }
 
         const cleanName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-        const path = `Avatar/${uid}/${Date.now()}_${cleanName}`;
-        const { error: upErr } = await sb.storage.from('Avatar').upload(path, file, { upsert: false, contentType: file.type });
+        const path = `${uid}/${Date.now()}_${cleanName}`;
+        const { error: upErr } = await sb.storage.from('Avatar').upload(path, file, {
+          upsert: false,
+          contentType: file.type
+        });
         if (upErr) throw upErr;
 
         const { data: pub } = sb.storage.from('Avatar').getPublicUrl(path);
@@ -389,7 +388,6 @@
           console.warn('Avatar delete warning:', e);
         }
       }
-      // ------------------------------------------------------------
 
       async function saveProfile(sb, goNext = false) {
         clearStatuses();
@@ -413,6 +411,7 @@
             avatar_path = res.path;
           }
         } catch (e) {
+          show(statusError, 'Avatar upload failed: ' + (e?.message || 'Please try again.'));
           setLoading(false);
           return;
         }
@@ -444,7 +443,7 @@
 
         if (error) {
           console.error('Profile save error:', error);
-          show(statusError, 'Could not save profile. Please try again.');
+          show(statusError, 'Could not save profile: ' + (error.message || 'Please try again.'));
           setLoading(false);
           return;
         }
@@ -456,6 +455,7 @@
 
         if (avatar_url) {
           setAvatarPreview(avatar_url);
+          deleteAvatarBtn.classList.remove('hidden');
           selectedFile = null;
         }
 
@@ -499,6 +499,7 @@
           previousAvatarPath = null;
           await sb.from('profiles').update({ avatar_url: null, avatar_path: null }).eq('id', currentUserId);
           setAvatarPreview('');
+          deleteAvatarBtn.classList.add('hidden');
           show(statusInfo, 'Saved avatar deleted.');
         } catch (e) {
           show(statusError, 'Could not delete avatar. Please try again.');
