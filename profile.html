@@ -1,207 +1,580 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Profile | Human Anatomy & Physiology Portal</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <style>
-    body { background: #e3f2fd; font-family: 'Segoe UI', Arial, sans-serif;}
-    .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    h1 { color: #1565c0; text-align: center; }
-    label { display: block; margin: 1em 0 0.3em;}
-    input { width: 100%; padding: 0.6em; margin-bottom: 1em;}
-    .btn { padding: 0.7em 1.8em; font-size: 1em; border: none; border-radius: 5px;}
-    .save-btn { background: #1565c0; color: #fff;}
-    .logout-btn { background: #d32f2f; color: #fff; float: right;}
-    .msg { color: #388e3c; margin-top: 1em;}
-    .error { color: #d32f2f; margin-top: 1em;}
-    .role-display { background: #e3f2fd; padding: 0.6em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #90caf9; font-weight: bold;}
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
-    nav a { font-weight: bold; color: #1565c0; text-decoration: none; padding: 0.6em 1.2em; border-radius: 4px; background: #e3f2fd; transition: background 0.2s; }
-    nav a:hover { background: #bbdefb; }
-    .profile-pic-center { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5em; }
-    #profilePicPreview { max-width:120px; border-radius:50%; border:2px solid #90caf9; margin-bottom:1em;}
-    #profilePic { width: 60%; margin: 0 auto 1em auto; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0; }
+    header { text-align: center; padding: 2rem 1rem 1rem 1rem; }
+    h1 { color: #33691e; }
+    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
+    nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer; }
+    nav a:hover, nav button:hover { background: #aed581; }
+
+    .container { max-width: 820px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px #c5e1a5; }
+    .section-title { color: #33691e; margin: 0 0 1rem 0; }
+    .notice { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600; }
+    .notice.info { color: #1b5e20; background: #e8f5e9; border: 1px solid #c8e6c9; }
+    .notice.warn { color: #b28704; background: #fff8e1; border: 1px solid #ffe082; }
+    .notice.error { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
+
+    .grid { display: grid; grid-template-columns: 240px 1fr; gap: 1.25rem; }
+    .avatar-card { background: #f9fff2; border: 1px dashed #c5e1a5; border-radius: 12px; padding: 1rem; text-align: center; }
+    .avatar-wrap { width: 180px; height: 180px; border-radius: 50%; overflow: hidden; margin: 0 auto 0.75rem; background: #f1f8e9; display: flex; align-items: center; justify-content: center; }
+    .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-placeholder { color: #8fb36a; font-weight: 600; }
+    .avatar-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+    .btn { padding: 0.65em 1.1em; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .btn.primary { background: #558b2f; color: #fff; }
+    .btn.primary:hover { background: #33691e; }
+    .btn.secondary { background: #c5e1a5; color: #2e7d32; }
+    .btn.danger { background: #e57373; color: #fff; }
+    .btn.muted { background: #e0e0e0; color: #555; font-weight: 600; }
+
+    .form-card { background: #fff; border-radius: 12px; padding: 1rem; }
+    .row { display: grid; grid-template-columns: 1fr 2fr; gap: 0.75rem 1rem; align-items: center; margin-bottom: 0.9rem; }
+    label { color: #558b2f; font-weight: 600; }
+    input, select { width: 100%; padding: 0.6em; border: 1px solid #aed581; border-radius: 6px; background: #f1f8e9; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: #33691e; }
+    input[readonly] { background: #f5f5f5; color: #555; border-color: #ddd; }
+
+    .actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .footer-links { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .progress { background: #f1f8e9; border: 1px solid #c8e6c9; border-radius: 6px; height: 10px; width: 100%; overflow: hidden; }
+    .progress > div { height: 100%; background: #66bb6a; width: 0%; transition: width 0.3s ease; border-radius: 6px; }
+
+    .hint { font-size: 0.9rem; color: #6b8f47; margin-top: 0.25rem; }
+    .hidden { display: none; }
+    .loading { opacity: 0.6; pointer-events: none; }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      nav { flex-direction: column; gap: 1rem; }
+      .row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <header>
+    <h1>Your Profile</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
+      <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
+      <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
+      <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
-    <button class="logout-btn btn" onclick="logout()">Logout</button>
-    <h1>Your Profile</h1>
-    <form id="profileForm" autocomplete="off">
-      <!-- Profile Picture Centered at Top -->
-      <div class="profile-pic-center">
-        <img id="profilePicPreview" src="assets/element for preview.png" alt="Profile Picture Preview">
-        <input type="file" id="profilePic" name="profilePic" accept="image/*">
-      </div>
-      <label for="role">Role*</label>
-      <div id="role-display" class="role-display"></div>
-      <label for="name">Full Name*</label>
-      <input type="text" id="name" name="name" required>
-      <label for="schoolName">School Name*</label>
-      <input type="text" id="schoolName" name="schoolName" required>
-      <label for="prn">PRN Number*</label>
-      <input type="text" id="prn" name="prn" required>
-      <label for="batch">Batch*</label>
-      <input type="text" id="batch" name="batch" required>
-      <label for="email">Email*</label>
-      <input type="email" id="email" name="email" required>
-      <button type="submit" class="btn save-btn">Save Profile</button>
-      <div class="msg" id="msg"></div>
-      <div class="error" id="error"></div>
-    </form>
+  </header>
+
+  <div class="container" id="profile-card">
+    <div id="status-info" class="notice info hidden"></div>
+    <div id="status-warn" class="notice warn hidden"></div>
+    <div id="status-error" class="notice error hidden"></div>
+
+    <h2 class="section-title">Profile Details</h2>
+
+    <div class="progress" aria-label="Profile completeness">
+      <div id="progress-bar"></div>
+    </div>
+    <div class="hint" id="progress-hint"></div>
+
+    <div class="grid">
+      <!-- Avatar column -->
+      <aside class="avatar-card">
+        <div class="avatar-wrap" id="avatar-wrap" aria-live="polite">
+          <img id="avatar-img" alt="Profile avatar" class="hidden" />
+          <div id="avatar-placeholder" class="avatar-placeholder">No Image</div>
+        </div>
+        <div class="avatar-actions">
+          <input id="avatar-input" type="file" accept="image/*" capture="environment" class="hidden" />
+          <button type="button" class="btn secondary" id="pick-avatar-btn">Choose Image</button>
+          <button type="button" class="btn muted" id="clear-avatar-btn">Remove Selected</button>
+          <button type="button" class="btn danger hidden" id="delete-avatar-btn">Delete Saved Avatar</button>
+          <div class="hint">JPG/PNG, up to 5 MB</div>
+        </div>
+      </aside>
+
+      <!-- Form column -->
+      <section class="form-card">
+        <form id="profile-form" novalidate>
+          <div class="row">
+            <label for="name">Full Name</label>
+            <input id="name" name="name" type="text" placeholder="Your full name" required maxlength="100" autocomplete="name" />
+          </div>
+
+          <div class="row">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" readonly autocomplete="email" />
+          </div>
+
+          <div class="row">
+            <label for="role">Role</label>
+            <input id="role" name="role" type="text" readonly />
+          </div>
+
+          <div class="row">
+            <label for="prn">PRN</label>
+            <input id="prn" name="prn" type="text" placeholder="Your PRN" required maxlength="32" pattern="[A-Za-z0-9\\-/]{3,32}" />
+          </div>
+
+          <div class="row">
+            <label for="batch">Batch</label>
+            <input id="batch" name="batch" type="text" placeholder="e.g., B1, 2024, etc." required maxlength="32" pattern="[A-Za-z0-9\\-/ ]{1,32}" />
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn primary" id="save-btn">Save</button>
+            <button type="button" class="btn secondary" id="save-continue-btn" title="Save and go to Assessments">Save & Go</button>
+            <button type="button" class="btn muted" id="reload-btn">Reload</button>
+          </div>
+        </form>
+
+        <div class="footer-links">
+          <a href="assessments.html">Go to Assessments</a>
+          <a href="experiments.html">Go to Experiments</a>
+          <a href="index.html">Back to Home</a>
+        </div>
+      </section>
+    </div>
   </div>
+
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Supabase config
-    const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const assessTab = document.getElementById('assessment-tab');
 
-    // Prefill info if logged in
-    async function prefillProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user) {
-        window.location.href = 'login.html';
-        return;
+      const statusInfo = document.getElementById('status-info');
+      const statusWarn = document.getElementById('status-warn');
+      const statusError = document.getElementById('status-error');
+
+      const form = document.getElementById('profile-form');
+      const saveBtn = document.getElementById('save-btn');
+      const saveContinueBtn = document.getElementById('save-continue-btn');
+      const reloadBtn = document.getElementById('reload-btn');
+
+      const nameEl = document.getElementById('name');
+      const emailEl = document.getElementById('email');
+      const roleEl = document.getElementById('role');
+      const prnEl = document.getElementById('prn');
+      const batchEl = document.getElementById('batch');
+
+      const avatarImg = document.getElementById('avatar-img');
+      const avatarPlaceholder = document.getElementById('avatar-placeholder');
+      const avatarInput = document.getElementById('avatar-input');
+      const pickAvatarBtn = document.getElementById('pick-avatar-btn');
+      const clearAvatarBtn = document.getElementById('clear-avatar-btn');
+      const deleteAvatarBtn = document.getElementById('delete-avatar-btn');
+
+      const progressBar = document.getElementById('progress-bar');
+      const progressHint = document.getElementById('progress-hint');
+
+      let selectedFile = null;          // new file chosen but not saved yet
+      let previousAvatarPath = null;    // stored path in DB for deletion if replaced
+      let currentUserId = null;
+      let profileSub = null;
+
+      function show(el, msg) {
+        if (!el) return;
+        if (typeof msg === 'string') el.textContent = msg;
+        el.classList.remove('hidden');
       }
-      const user = session.user;
-      document.getElementById('email').value = user.email || "";
-      document.getElementById('name').value = user.user_metadata?.full_name || "";
+      function hide(el) { if (el) el.classList.add('hidden'); }
+      function clearStatuses() { hide(statusInfo); hide(statusWarn); hide(statusError); }
 
-      // Get role from profiles table
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (error || !profile) {
-        document.getElementById('role-display').textContent = "Unknown";
-      } else {
-        document.getElementById('role-display').textContent = profile.role || "Unknown";
-        document.getElementById('schoolName').value = profile.schoolName || "";
-        document.getElementById('prn').value = profile.prn || "";
-        document.getElementById('batch').value = profile.batch || "";
-        document.getElementById('name').value = profile.name || user.user_metadata?.full_name || "";
-        document.getElementById('email').value = profile.email || user.email || "";
-        // Show profile picture preview if exists
-        if (profile.profilePicUrl) {
-          document.getElementById('profilePicPreview').src = profile.profilePicUrl;
+      function setNav(loggedIn) {
+        if (loggedIn) {
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'inline';
         } else {
-          document.getElementById('profilePicPreview').src = "assets/element for preview.png";
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
         }
       }
-    }
-    prefillProfile();
 
-    // Preview logic for file input
-    document.getElementById('profilePic').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          document.getElementById('profilePicPreview').src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        document.getElementById('profilePicPreview').src = "assets/element for preview.png";
-      }
-    });
-
-    // Save profile with or without image
-    document.getElementById('profileForm').onsubmit = async function(e) {
-      e.preventDefault();
-      document.getElementById('msg').textContent = "";
-      document.getElementById('error').textContent = "";
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user) {
-        document.getElementById('error').textContent = "You must be signed in to submit your profile.";
-        setTimeout(function(){
-          window.location.href = 'login.html';
-        }, 1500);
-        return;
-      }
-      const user = session.user;
-      const id = user.id;
-
-      // Get form fields
-      const name = document.getElementById('name').value.trim();
-      const schoolName = document.getElementById('schoolName').value.trim();
-      const prn = document.getElementById('prn').value.trim();
-      const batch = document.getElementById('batch').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const role = document.getElementById('role-display').textContent;
-
-      // All fields required
-      if (role === "Unknown" || !name || !schoolName || !prn || !batch || !email) {
-        document.getElementById('error').textContent = "Please fill all required fields.";
-        return;
+      function setLoading(loading) {
+        const card = document.getElementById('profile-card');
+        if (loading) card.classList.add('loading'); else card.classList.remove('loading');
+        if (saveBtn) saveBtn.disabled = loading;
+        if (saveContinueBtn) saveContinueBtn.disabled = loading;
+        if (reloadBtn) reloadBtn.disabled = loading;
+        if (pickAvatarBtn) pickAvatarBtn.disabled = loading;
+        if (clearAvatarBtn) clearAvatarBtn.disabled = loading;
+        if (deleteAvatarBtn) deleteAvatarBtn.disabled = loading;
       }
 
-      // Upload profilePic if selected
-      const fileInput = document.getElementById('profilePic');
-      let profilePicUrl = null;
-      if (fileInput.files[0]) {
-        // Upload to Supabase Storage
-        const file = fileInput.files[0];
-        const { data, error } = await supabase
-          .storage
-          .from('profilePics')
-          .upload(`${id}/profilePic.png`, file, { upsert: true });
-        if (error) {
-          document.getElementById('error').textContent = "Error uploading image: " + error.message;
+      function computeCompleteness(p) {
+        const fields = ['name', 'email', 'role', 'prn', 'batch'];
+        const done = fields.reduce((acc, f) => acc + (p && p[f] ? 1 : 0), 0);
+        return Math.round((done / fields.length) * 100);
+      }
+      function updateProgress(p) {
+        const pct = computeCompleteness(p);
+        progressBar.style.width = pct + '%';
+        progressHint.textContent = 'Profile completeness: ' + pct + '%';
+      }
+
+      function setAvatarPreview(url) {
+        if (url) {
+          avatarImg.src = url;
+          avatarImg.classList.remove('hidden');
+          hide(avatarPlaceholder);
+        } else {
+          avatarImg.src = '';
+          avatarImg.classList.add('hidden');
+          show(avatarPlaceholder);
+        }
+      }
+
+      function validateFile(file) {
+        if (!file) return 'No file selected.';
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const maxBytes = 5 * 1024 * 1024; // 5MB
+        if (!validTypes.includes(file.type)) return 'Please select a JPG, PNG, or WEBP image.';
+        if (file.size > maxBytes) return 'Image is too large. Max 5 MB.';
+        return '';
+      }
+
+      async function initSupabase() {
+        if (!window.supabase) {
+          show(statusError, 'Failed to load authentication library. Please refresh.');
+          throw new Error('Supabase SDK missing');
+        }
+        const sb = window.sb || window.supabase.createClient(
+          'https://hunlistfklwvpivfjmbk.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+        );
+        window.sb = sb;
+        return sb;
+      }
+
+      function subscribeToProfile(sb, uid) {
+        // Live reflect role (and other fields) if admin updates the row
+        if (profileSub) {
+          try { sb.removeChannel(profileSub); } catch {}
+        }
+        profileSub = sb
+          .channel('profiles_role_reflect_' + uid)
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'profiles', filter: 'id=eq.' + uid },
+            (payload) => {
+              const p = payload.new || {};
+              roleEl.value = p.role || '';
+              // Update other fields only if empty (avoid clobbering user input)
+              if (!nameEl.value) nameEl.value = p.name || '';
+              if (!prnEl.value) prnEl.value = p.prn || '';
+              if (!batchEl.value) batchEl.value = p.batch || '';
+              if (p.avatar_url) setAvatarPreview(p.avatar_url);
+              updateProgress(p);
+              show(statusInfo, 'Profile updated by server. Role reflected automatically.');
+              setTimeout(() => hide(statusInfo), 2000);
+            }
+          )
+          .subscribe();
+      }
+
+      async function ensureProfile(sb, uid, authEmail) {
+        const { data: profile, error } = await sb
+          .from('profiles')
+          .select('id, name, email, role, prn, batch, avatar_url, avatar_path')
+          .eq('id', uid)
+          .maybeSingle();
+        if (error) throw error;
+
+        if (!profile) {
+          const { data: inserted, error: upErr } = await sb
+            .from('profiles')
+            .upsert({ id: uid, email: authEmail }, { onConflict: 'id' })
+            .select()
+            .maybeSingle();
+          if (upErr) throw upErr;
+          return inserted;
+        } else {
+          if (!profile.email && authEmail) {
+            await sb.from('profiles').update({ email: authEmail }).eq('id', uid);
+            profile.email = authEmail;
+          }
+          return profile;
+        }
+      }
+
+      async function loadProfile(sb) {
+        setLoading(true);
+        clearStatuses();
+
+        const { data: { session }, error: sessErr } = await sb.auth.getSession();
+        if (sessErr) console.warn('getSession error:', sessErr);
+        if (!session || !session.user) {
+          setNav(false);
+          show(statusWarn, 'You must be logged in to edit your profile.');
+          window.location.href = 'login_Version4.html';
+          setLoading(false);
+          return null;
+        }
+
+        setNav(true);
+        currentUserId = session.user.id;
+        const authEmail = session.user.email || '';
+
+        let p;
+        try {
+          p = await ensureProfile(sb, currentUserId, authEmail);
+        } catch (e) {
+          console.error('Profile load error:', e);
+          show(statusError, 'Failed to load profile. Please refresh.');
+          setLoading(false);
+          return null;
+        }
+
+        // Populate UI
+        nameEl.value = p.name || '';
+        emailEl.value = p.email || authEmail || '';
+        roleEl.value = p.role || '';
+        prnEl.value = p.prn || '';
+        batchEl.value = p.batch || '';
+        previousAvatarPath = p.avatar_path || null;
+
+        if (!p.role) {
+          show(statusWarn, 'Your role is not set yet. Please contact an administrator to get access.');
+        } else {
+          hide(statusWarn);
+        }
+
+        setAvatarPreview(p.avatar_url || '');
+        updateProgress(p);
+
+        // Subscribe to live changes so role reflects automatically
+        subscribeToProfile(sb, currentUserId);
+
+        setLoading(false);
+        return p;
+      }
+
+      async function uploadAvatar(sb, uid, file) {
+        if (!file) return { url: null, path: null };
+        const errText = validateFile(file);
+        if (errText) {
+          show(statusWarn, errText);
+          throw new Error(errText);
+        }
+
+        const cleanName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+        const path = `avatars/${uid}/${Date.now()}_${cleanName}`;
+        const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: false, contentType: file.type });
+        if (upErr) throw upErr;
+
+        // Public URL (make sure your bucket is public)
+        const { data: pub } = sb.storage.from('avatars').getPublicUrl(path);
+        const url = pub?.publicUrl || '';
+        return { url, path };
+      }
+
+      async function deleteAvatar(sb, path) {
+        if (!path) return;
+        try {
+          await sb.storage.from('avatars').remove([path]);
+        } catch (e) {
+          console.warn('Avatar delete warning:', e);
+        }
+      }
+
+      async function saveProfile(sb, goNext = false) {
+        clearStatuses();
+        setLoading(true);
+
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session || !session.user) {
+          setNav(false);
+          show(statusWarn, 'You must be logged in to save your profile.');
+          setLoading(false);
           return;
         }
-        // Get public URL
-        const { data: urlData } = supabase
-          .storage
-          .from('profilePics')
-          .getPublicUrl(`${id}/profilePic.png`);
-        profilePicUrl = urlData.publicUrl;
+        const uid = session.user.id;
+
+        // Upload new avatar if selected
+        let avatar_url = null;
+        let avatar_path = null;
+        try {
+          if (selectedFile) {
+            // If we have an existing saved avatar, delete after successful upload
+            const res = await uploadAvatar(sb, uid, selectedFile);
+            avatar_url = res.url;
+            avatar_path = res.path;
+          }
+        } catch (e) {
+          setLoading(false);
+          return;
+        }
+
+        const payload = {
+          id: uid,
+          name: nameEl.value.trim(),
+          email: emailEl.value.trim(),
+          prn: prnEl.value.trim(),
+          batch: batchEl.value.trim()
+          // role remains as-is (admin-managed)
+        };
+
+        if (!payload.name || !payload.prn || !payload.batch) {
+          show(statusWarn, 'Please fill in Name, PRN, and Batch.');
+          setLoading(false);
+          return;
+        }
+
+        // Attach avatar fields if uploaded
+        if (avatar_url && avatar_path) {
+          payload.avatar_url = avatar_url;
+          payload.avatar_path = avatar_path;
+        }
+
+        const { data, error } = await sb
+          .from('profiles')
+          .upsert(payload, { onConflict: 'id' })
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.error('Profile save error:', error);
+          show(statusError, 'Could not save profile. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // If we replaced the avatar successfully, delete the previous one
+        if (avatar_path && previousAvatarPath && previousAvatarPath !== avatar_path) {
+          await deleteAvatar(sb, previousAvatarPath);
+          previousAvatarPath = avatar_path;
+        }
+
+        if (avatar_url) {
+          setAvatarPreview(avatar_url);
+          selectedFile = null;
+        }
+
+        show(statusInfo, 'Profile saved successfully.');
+        updateProgress(data);
+
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get('next') || (goNext ? 'assessments.html' : '');
+        const completeNow = !!(data && data.name && data.email && data.role && data.prn && data.batch);
+
+        if (completeNow && next) {
+          setTimeout(() => { window.location.href = next; }, 700);
+        }
+
+        setLoading(false);
       }
 
-      // Update profile in Supabase DB
-      const updateFields = {
-        role,
-        name,
-        schoolName,
-        prn,
-        batch,
-        email,
-        id
-      };
-      if (profilePicUrl) {
-        updateFields.profilePicUrl = profilePicUrl;
+      // UI bindings
+      pickAvatarBtn.addEventListener('click', () => avatarInput.click());
+      avatarInput.addEventListener('change', () => {
+        const file = avatarInput.files && avatarInput.files[0];
+        if (!file) return;
+        const errText = validateFile(file);
+        if (errText) { show(statusWarn, errText); avatarInput.value = ''; return; }
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = () => setAvatarPreview(reader.result);
+        reader.readAsDataURL(file);
+      });
+      clearAvatarBtn.addEventListener('click', () => {
+        selectedFile = null;
+        avatarInput.value = '';
+        // Keep current saved avatar preview; this only clears new selection
+        show(statusInfo, 'Cleared new image selection.');
+        setTimeout(() => hide(statusInfo), 1200);
+      });
+      deleteAvatarBtn.addEventListener('click', async () => {
+        const sb = window.sb;
+        if (!sb || !previousAvatarPath) return;
+        setLoading(true);
+        try {
+          await deleteAvatar(sb, previousAvatarPath);
+          previousAvatarPath = null;
+          // Remove avatar from profile row
+          await sb.from('profiles').update({ avatar_url: null, avatar_path: null }).eq('id', currentUserId);
+          setAvatarPreview('');
+          show(statusInfo, 'Saved avatar deleted.');
+        } catch (e) {
+          show(statusError, 'Could not delete avatar. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const sb = window.sb;
+        await saveProfile(sb, false);
+      });
+      saveContinueBtn.addEventListener('click', async () => {
+        const sb = window.sb;
+        await saveProfile(sb, true);
+      });
+      reloadBtn.addEventListener('click', async () => {
+        const sb = window.sb;
+        await loadProfile(sb);
+      });
+
+      // Protect Assessments link if logged out
+      if (assessTab) {
+        assessTab.addEventListener('click', async (e) => {
+          const sb = window.sb;
+          if (!sb) return;
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session || !session.user) {
+            e.preventDefault();
+            window.location.href = 'login_Version4.html';
+          }
+        });
       }
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .upsert([updateFields], { onConflict: ['id'] });
+      // Initialize
+      (async () => {
+        try {
+          const sb = await initSupabase();
 
-      if (updateError) {
-        document.getElementById('error').textContent = "Error saving profile: " + updateError.message;
-        document.getElementById('msg').textContent = "";
-        return;
+          // Auth UI
+          const { data: { session } } = await sb.auth.getSession();
+          setNav(!!(session && session.user));
+          sb.auth.onAuthStateChange((_event, newSession) => setNav(!!(newSession && newSession.user)));
+
+          const p = await loadProfile(sb);
+
+          // Show delete saved avatar button only if we have one
+          if (p && p.avatar_url) {
+            deleteAvatarBtn.classList.remove('hidden');
+          } else {
+            deleteAvatarBtn.classList.add('hidden');
+          }
+        } catch (err) {
+          console.error('Profile init error:', err);
+          show(statusError, 'Unexpected error initializing profile page.');
+        }
+      })();
+
+      // Warn on navigation if unsaved changes (simple heuristic)
+      let pristineSnapshot = '';
+      function snapshot() {
+        return [
+          nameEl.value, emailEl.value, roleEl.value, prnEl.value, batchEl.value,
+          selectedFile ? selectedFile.name : ''
+        ].join('|');
       }
-
-      document.getElementById('msg').textContent = "Profile updated successfully!";
-      document.getElementById('error').textContent = "";
-      setTimeout(function() {
-        window.location.reload();
-      }, 1200);
-    };
-
-    async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    }
+      const track = () => { pristineSnapshot = snapshot(); };
+      window.addEventListener('load', track);
+      form.addEventListener('input', () => {
+        window.onbeforeunload = (snapshot() !== pristineSnapshot) ? () => true : null;
+      });
+      form.addEventListener('submit', () => { window.onbeforeunload = null; });
+    });
   </script>
 </body>
 </html>
