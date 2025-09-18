@@ -40,7 +40,7 @@
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
-      <a id="login-btn" href="login.html" style="display:inline;">Login</a>
+      <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
       <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
@@ -49,6 +49,8 @@
 
   <div class="assess-list hidden" id="assess-list">
     <ul>
+      <!-- IMPORTANT: Confirm your folder name here.
+           If your folder is actually "assessments", change "assesments/" below to "assessments/". -->
       <li><a href="assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html">1. Study of Compound Microscope</a></li>
       <li><a href="assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html">2. Identification of Axial Bones</a></li>
       <li><a href="assesments/assessments_assessment-3-identification-of-appendicular-bones_Version7.html">3. Identification of Appendicular Bones</a></li>
@@ -69,12 +71,12 @@
 
   <div id="not-logged-in-message" class="hidden">
     You must be logged in to view assessment questions.<br>
-    <a id="login-direct" href="login.html">Go to Login Page</a>
+    <a id="login-direct" href="login_Version4.html">Go to Login Page</a>
   </div>
 
   <div id="access-denied-message" class="hidden">
     Access denied. You are not authorized for this portal.<br>
-    <a id="login-direct" href="login.html">Go to Login Page</a>
+    <a id="login-direct" href="login_Version4.html">Go to Login Page</a>
   </div>
 
   <!-- Supabase SDK -->
@@ -97,7 +99,7 @@
           if (logoutBtn) logoutBtn.style.display = 'inline';
         } else {
           if (logoutBtn) logoutBtn.style.display = 'none';
-          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login.html'; }
+          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
         }
       }
       function setState(state) {
