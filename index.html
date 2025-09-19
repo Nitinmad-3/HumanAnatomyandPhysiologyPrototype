@@ -258,7 +258,7 @@
       </p>
     </div>
 
-    <!-- Admin-only: Storage Tester (integrated result.html, reusing existing Supabase client) -->
+    <!-- Admin-only: Storage Tester (integrated) -->
     <section id="storage-tester" aria-hidden="true">
       <h2>Supabase Storage Tester <span class="st-badge">Admin-only</span></h2>
       <div class="st-grid">
@@ -683,8 +683,8 @@
         });
 
         // Nav link behavior: reveal section and scroll into view
+        const storageTesterTab = document.getElementById('storage-tester-tab');
         storageTesterTab?.addEventListener('click', (e) => {
-          // allow anchor but ensure section is visible
           if (storageTesterSection) {
             storageTesterSection.style.display = 'block';
             storageTesterSection.removeAttribute('aria-hidden');
@@ -695,7 +695,7 @@
 
       async function refreshUI() {
         try {
-          const { data: { session } } = await sb.auth.getSession();
+          const { data: { session) } } = await sb.auth.getSession();
           currentUser = session?.user || null;
 
           if (currentUser) {
@@ -802,7 +802,6 @@
       window.addEventListener('focus', refreshUI);
 
       // Protect Assessments link: require login
-      const assessmentTab = document.getElementById('assessment-tab');
       if (assessmentTab) {
         assessmentTab.addEventListener('click', async (e) => {
           const { data: { session } } = await sb.auth.getSession();
