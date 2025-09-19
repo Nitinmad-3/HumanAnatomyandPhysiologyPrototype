@@ -39,6 +39,7 @@
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
+      <a id="results-tab" href="results.html" style="display:none;">Results</a>
       <a href="references.html">References</a>
       <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
       <button id="logout-btn" style="display:none;">Logout</button>
@@ -90,6 +91,7 @@
       const errorMsg = document.getElementById('error-message');
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
+      const resultsTab = document.getElementById('results-tab');
 
       function show(el) { el.classList.remove('hidden'); }
       function hide(el) { el.classList.add('hidden'); }
@@ -97,9 +99,11 @@
         if (loggedIn) {
           if (loginBtn) loginBtn.style.display = 'none';
           if (logoutBtn) logoutBtn.style.display = 'inline';
+          if (resultsTab) resultsTab.style.display = 'inline'; // show Results when logged in
         } else {
           if (logoutBtn) logoutBtn.style.display = 'none';
           if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
+          if (resultsTab) resultsTab.style.display = 'none'; // hide Results when logged out
         }
       }
       function setState(state) {
@@ -162,6 +166,17 @@
               }
             }
           });
+
+          // Protect Results link: require login
+          if (resultsTab) {
+            resultsTab.addEventListener('click', async (e) => {
+              const { data: { session } } = await sb.auth.getSession();
+              if (!session?.user) {
+                e.preventDefault();
+                window.location.href = 'login_Version4.html';
+              }
+            });
+          }
 
           // Logout handler
           if (logoutBtn) {
