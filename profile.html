@@ -158,7 +158,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const AVATAR_BUCKET = 'Avatar'; // private bucket
+      const AVATAR_BUCKET = 'Avatar';
 
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
@@ -195,57 +195,50 @@
       const progressBar = document.getElementById('progress-bar');
       const progressHint = document.getElementById('progress-hint');
 
-      let selectedFile = null;          // new file chosen but not saved yet
-      let previousAvatarPath = null;    // stored path in DB for deletion if replaced
+      let selectedFile = null;
+      let previousAvatarPath = null;
       let currentUserId = null;
       let profileSub = null;
 
-      // Signed URL refresh state
-      let avatarRefreshTimerId = null;
-      function stopAvatarAutoRefresh() {
-        if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
+      function setLoading(isLoading) {
+        const card = document.getElementById('profile-card');
+        if (card) card.classList.toggle('loading', !!isLoading);
+        [saveBtn, saveContinueBtn, reloadBtn, pickAvatarBtn, clearAvatarBtn, deleteAvatarBtn].forEach(b => {
+          if (b) b.disabled = !!isLoading;
+        });
       }
+
+      // Signed URL refresh
+      let avatarRefreshTimerId = null;
+      function stopAvatarAutoRefresh() { if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; } }
       function startAvatarAutoRefresh(sb, path) {
         stopAvatarAutoRefresh();
         if (!path) return;
-        avatarRefreshTimerId = setInterval(() => setSignedAvatar(sb, path), 50 * 1000); // refresh before 60s expiry
+        avatarRefreshTimerId = setInterval(() => setSignedAvatar(sb, path), 50 * 1000);
       }
 
-      function show(el, msg) {
-        if (!el) return;
-        if (typeof msg === 'string') el.textContent = msg;
-        el.classList.remove('hidden');
-      }
+      function show(el, msg) { if (!el) return; if (typeof msg === 'string') el.textContent = msg; el.classList.remove('hidden'); }
       function hide(el) { if (el) el.classList.add('hidden'); }
       function clearStatuses() { hide(statusInfo); hide(statusWarn); hide(statusError); }
 
       function setNav(loggedIn) {
-        if (loggedIn) {
-          if (loginBtn) loginBtn.style.display = 'none';
-          if (logoutBtn) logoutBtn.style.display = 'inline';
-        } else {
-          if (logoutBtn) logoutBtn.style.display = 'none';
-          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
-        }
+        if (loggedIn) { if (loginBtn) loginBtn.style.display = 'none'; if (logoutBtn) logoutBtn.style.display = 'inline'; }
+        else { if (logoutBtn) logoutBtn.style.display = 'none'; if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; } }
       }
 
       function toggleFieldsForRole(role) {
         const isAdmin = (role || '').toLowerCase() === 'admin';
-        // Admin: show department, hide PRN/Batch
         if (departmentRow) departmentRow.style.display = isAdmin ? '' : 'none';
         if (prnRow) prnRow.style.display = isAdmin ? 'none' : '';
         if (batchRow) batchRow.style.display = isAdmin ? 'none' : '';
-        // Required attributes
         if (prnEl) prnEl.required = !isAdmin;
         if (batchEl) batchEl.required = !isAdmin;
-        if (departmentEl) departmentEl.required = false; // make required=true if you want to enforce for admins
+        if (departmentEl) departmentEl.required = false;
       }
 
       function computeCompleteness(p) {
         const isAdmin = (p?.role || '').toLowerCase() === 'admin';
-        const fields = isAdmin
-          ? ['name', 'email', 'role'] // add 'department' here if you want it to count
-          : ['name', 'email', 'role', 'prn', 'batch'];
+        const fields = isAdmin ? ['name', 'email', 'role'] : ['name', 'email', 'role', 'prn', 'batch'];
         const done = fields.reduce((acc, f) => acc + (p && p[f] ? 1 : 0), 0);
         return Math.round((done / fields.length) * 100);
       }
@@ -256,21 +249,14 @@
       }
 
       function setAvatarPreviewUrl(url) {
-        if (url) {
-          avatarImg.src = url;
-          avatarImg.classList.remove('hidden');
-          hide(avatarPlaceholder);
-        } else {
-          avatarImg.src = '';
-          avatarImg.classList.add('hidden');
-          show(avatarPlaceholder);
-        }
+        if (url) { avatarImg.src = url; avatarImg.classList.remove('hidden'); hide(avatarPlaceholder); }
+        else { avatarImg.src = ''; avatarImg.classList.add('hidden'); show(avatarPlaceholder); }
       }
 
       function validateFile(file) {
         if (!file) return 'No file selected.';
         const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        const maxBytes = 5 * 1024 * 1024; // 5MB
+        const maxBytes = 5 * 1024 * 1024;
         if (!validTypes.includes(file.type)) return 'Please select a JPG, PNG, or WEBP image.';
         if (file.size > maxBytes) return 'Image is too large. Max 5 MB.';
         return '';
@@ -290,10 +276,7 @@
       }
 
       function subscribeToProfile(sb, uid) {
-        // Live reflect role/department/avatar if updated elsewhere
-        if (profileSub) {
-          try { sb.removeChannel(profileSub); } catch {}
-        }
+        if (profileSub) { try { sb.removeChannel(profileSub); } catch {} }
         profileSub = sb
           .channel('profiles_live_' + uid)
           .on(
@@ -303,9 +286,9 @@
               const p = payload.new || {};
               roleEl.value = p.role || '';
               if (!nameEl.value) nameEl.value = p.name || '';
-              if (!prnEl.value) prnEl.value = p.prn || '';
-              if (!batchEl.value) batchEl.value = p.batch || '';
               if (departmentEl) departmentEl.value = p.department || '';
+              if (prnEl && !prnEl.value) prnEl.value = p.prn || '';
+              if (batchEl && !batchEl.value) batchEl.value = p.batch || '';
               toggleFieldsForRole(p.role);
               if (p.avatar_path !== previousAvatarPath) {
                 previousAvatarPath = p.avatar_path || null;
@@ -321,12 +304,8 @@
           .subscribe();
       }
 
-      // Generate and set a short-lived signed URL from a storage path
       async function setSignedAvatar(sb, path) {
-        if (!path) {
-          setAvatarPreviewUrl('');
-          return;
-        }
+        if (!path) { setAvatarPreviewUrl(''); return; }
         try {
           const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
           if (error) throw error;
@@ -345,21 +324,23 @@
           .maybeSingle();
         if (error) throw error;
 
-        if (!profile) {
-          const { data: inserted, error: upErr } = await sb
+        let p = profile;
+        if (!p) {
+          const { data: inserted, error: insErr } = await sb
             .from('profiles')
-            .upsert({ id: uid, email: authEmail }, { onConflict: 'id' })
+            .insert({ id: uid, email: authEmail })
             .select()
             .maybeSingle();
-          if (upErr) throw upErr;
-          return inserted;
-        } else {
-          if (!profile.email && authEmail) {
-            await sb.from('profiles').update({ email: authEmail }).eq('id', uid);
-            profile.email = authEmail;
-          }
-          return profile;
+          if (insErr) throw insErr;
+          p = inserted;
         }
+
+        // Always sync email with auth email
+        if (authEmail && p.email !== authEmail) {
+          const { error: upEmailErr } = await sb.from('profiles').update({ email: authEmail }).eq('id', uid);
+          if (!upEmailErr) p.email = authEmail;
+        }
+        return p;
       }
 
       async function loadProfile(sb) {
@@ -385,21 +366,20 @@
           p = await ensureProfile(sb, currentUserId, authEmail);
         } catch (e) {
           console.error('Profile load error:', e);
-          show(statusError, 'Failed to load profile. Please refresh.');
+          show(statusError, 'Failed to load profile: ' + (e?.message || 'Please refresh.'));
           setLoading(false);
           return null;
         }
 
-        // Populate UI
+        // Populate UI (email from auth)
         nameEl.value = p.name || '';
-        emailEl.value = p.email || authEmail || '';
+        emailEl.value = authEmail;
         roleEl.value = p.role || '';
         prnEl.value = p.prn || '';
         batchEl.value = p.batch || '';
         if (departmentEl) departmentEl.value = p.department || '';
         previousAvatarPath = p.avatar_path || null;
 
-        // Show/hide fields based on role
         toggleFieldsForRole(p.role);
 
         if (!p.role) {
@@ -408,47 +388,35 @@
           hide(statusWarn);
         }
 
-        // Signed avatar preview
         await setSignedAvatar(sb, previousAvatarPath);
         startAvatarAutoRefresh(sb, previousAvatarPath);
         deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
 
         updateProgress(p);
-
-        // Subscribe to live changes so role/avatar reflect automatically
         subscribeToProfile(sb, currentUserId);
 
         setLoading(false);
         return p;
       }
 
-      // Storage helpers for "Avatar" bucket (private)
       async function uploadAvatar(sb, uid, file) {
         if (!file) return { path: null };
         const errText = validateFile(file);
-        if (errText) {
-          show(statusWarn, errText);
-          throw new Error(errText);
-        }
-
+        if (errText) { show(statusWarn, errText); throw new Error(errText); }
         const cleanName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-        const path = `${uid}/${Date.now()}_${cleanName}`; // path within bucket
+        const path = `${uid}/${Date.now()}_${cleanName}`;
         const { error: upErr } = await sb.storage.from(AVATAR_BUCKET).upload(path, file, {
           upsert: true,
           contentType: file.type || 'image/*'
         });
         if (upErr) throw upErr;
-
         return { path };
       }
 
       async function deleteAvatar(sb, path) {
         if (!path) return;
-        try {
-          await sb.storage.from(AVATAR_BUCKET).remove([path]);
-        } catch (e) {
-          console.warn('Avatar delete warning:', e);
-        }
+        try { await sb.storage.from(AVATAR_BUCKET).remove([path]); }
+        catch (e) { console.warn('Avatar delete warning:', e); }
       }
 
       async function saveProfile(sb, goNext = false) {
@@ -481,8 +449,7 @@
         const payload = {
           id: uid,
           name: nameEl.value.trim(),
-          email: emailEl.value.trim()
-          // role remains as-is (admin-managed)
+          email: (session.user.email || '').trim()
         };
 
         if (isAdmin) {
@@ -636,11 +603,11 @@
           }
         } catch (err) {
           console.error('Profile init error:', err);
-          show(statusError, 'Unexpected error initializing profile page.');
+          show(statusError, 'Unexpected error initializing profile page: ' + (err?.message || ''));
         }
       })();
 
-      // Warn on navigation if unsaved changes (simple heuristic)
+      // Unsaved changes warning
       let pristineSnapshot = '';
       function snapshot() {
         return [
