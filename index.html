@@ -94,6 +94,25 @@
       margin-bottom: 1em;
       margin-top: 0;
     }
+    /* Avatar card (private, signed URL preview) */
+    #avatar-card {
+      display: none;
+      max-width: 700px;
+      margin: 1rem auto 0 auto;
+      padding: 1rem;
+      border-radius: 12px;
+      background: #f5faff;
+      box-shadow: 0 1px 8px #e3f2fd;
+      text-align: left;
+    }
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #f3f3f3;
+      box-shadow: 0 0 0 2px #e3f2fd inset;
+    }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
       nav { flex-direction: column; gap: 1rem; }
@@ -118,6 +137,22 @@
         <button id="logout-btn" style="display:none;">Logout</button>
       </nav>
     </header>
+
+    <!-- Private avatar preview + upload (signed URL) -->
+    <div id="avatar-card">
+      <div class="dashboard-title" style="margin-bottom: 0.75rem;">Your Avatar</div>
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <img id="avatar-preview" class="avatar" alt="Avatar preview" />
+        <div>
+          <label for="avatar-input" style="display:block; font-weight:600; color:#1565c0;">Update your avatar</label>
+          <input id="avatar-input" type="file" accept="image/*" />
+          <div style="font-size:0.9rem; color:#555; margin-top:0.25rem;">
+            Private preview: only you and admins can access this image.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Dashboard Features FIRST -->
     <div id="admin-features">
       <div class="dashboard-title">Admin Dashboard</div>
@@ -172,6 +207,8 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
+      const AVATAR_BUCKET = 'Avatar'; // case-sensitive
+
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const profileTab = document.getElementById('profile-tab');
@@ -181,15 +218,30 @@
       const welcomeStudent = document.getElementById('dashboard-welcome-student');
       const assessmentTab = document.getElementById('assessment-tab');
 
+      // Avatar elements
+      const avatarCard = document.getElementById('avatar-card');
+      const avatarImg = document.getElementById('avatar-preview');
+      const avatarInput = document.getElementById('avatar-input');
+
+      // State to avoid duplicate listeners/refresh timers
+      let avatarListenerBound = false;
+      let avatarRefreshTimerId = null;
+      let currentAvatarPath = null;
+
       function setNav(loggedIn) {
         if (loggedIn) {
           if (loginBtn) loginBtn.style.display = 'none';
           if (logoutBtn) logoutBtn.style.display = 'inline';
           if (profileTab) profileTab.style.display = 'inline';
+          if (avatarCard) avatarCard.style.display = 'block';
         } else {
           if (logoutBtn) logoutBtn.style.display = 'none';
           if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
           if (profileTab) profileTab.style.display = 'none';
+          if (avatarCard) avatarCard.style.display = 'none';
+          if (avatarImg) avatarImg.removeAttribute('src');
+          if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
+          currentAvatarPath = null;
         }
       }
 
@@ -218,6 +270,80 @@
         }
       }
 
+      // Create and set a signed URL for the avatar image
+      async function setSignedAvatar(path) {
+        if (!avatarImg) return;
+        if (!path) {
+          avatarImg.removeAttribute('src');
+          return;
+        }
+        try {
+          const { data, error } = await sb
+            .storage
+            .from(AVATAR_BUCKET)
+            .createSignedUrl(path, 60); // valid for 60 seconds
+
+          if (error) {
+            console.error('createSignedUrl error:', error);
+            return;
+          }
+          avatarImg.src = data.signedUrl;
+        } catch (err) {
+          console.error('setSignedAvatar error:', err);
+        }
+      }
+
+      // Keep the signed URL fresh while the page is open
+      function startAvatarAutoRefresh(path) {
+        if (avatarRefreshTimerId) clearInterval(avatarRefreshTimerId);
+        if (!path) return;
+        avatarRefreshTimerId = setInterval(() => setSignedAvatar(path), 50 * 1000); // refresh a bit before expiry
+      }
+
+      // Bind upload handler once
+      function ensureAvatarUploadHandler(userId) {
+        if (!avatarInput || avatarListenerBound) return;
+        avatarInput.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          // Local preview while upload occurs
+          if (avatarImg) avatarImg.src = URL.createObjectURL(file);
+
+          const filePath = `${userId}/${Date.now()}_${file.name}`;
+
+          // Upload to private bucket (RLS must allow insert for owner/admin)
+          const { error: upErr } = await sb
+            .storage
+            .from(AVATAR_BUCKET)
+            .upload(filePath, file, {
+              upsert: true,
+              contentType: file.type || 'image/*'
+            });
+
+          if (upErr) {
+            console.error('Upload error:', upErr);
+            return;
+          }
+
+          // Save storage path (NOT a public URL) to profile
+          const { error: updErr } = await sb
+            .from('profiles')
+            .update({ avatar_path: filePath })
+            .eq('id', userId);
+
+          if (updErr) {
+            console.error('Update profile error:', updErr);
+            return;
+          }
+
+          currentAvatarPath = filePath;
+          await setSignedAvatar(currentAvatarPath);
+          startAvatarAutoRefresh(currentAvatarPath);
+        });
+        avatarListenerBound = true;
+      }
+
       async function refreshUI() {
         try {
           const { data: { session } } = await sb.auth.getSession();
@@ -242,10 +368,10 @@
               if (welcomeStudent) welcomeStudent.textContent = '';
             }
 
-            // Profile completeness check
+            // Profile completeness + avatar (note: added avatar_path here)
             const { data: profile, error: profErr } = await sb
               .from('profiles')
-              .select('name, role, email, prn, batch')
+              .select('name, role, email, prn, batch, avatar_path')
               .eq('id', userId)
               .maybeSingle();
 
@@ -254,7 +380,15 @@
             const incomplete = !profile || !profile.name || !profile.role || !profile.email || !profile.prn || !profile.batch;
             if (incomplete && !window.location.pathname.endsWith('profile.html')) {
               window.location.href = 'profile.html';
+              return; // stop further logic if redirecting
             }
+
+            // Signed avatar preview (private)
+            currentAvatarPath = profile?.avatar_path || null;
+            await setSignedAvatar(currentAvatarPath);
+            startAvatarAutoRefresh(currentAvatarPath);
+            ensureAvatarUploadHandler(userId);
+
           } else {
             // Logged out
             setNav(false);
