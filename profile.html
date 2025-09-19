@@ -115,14 +115,26 @@
             <input id="role" name="role" type="text" readonly />
           </div>
 
-          <div class="row">
-            <label for="prn">PRN</label>
-            <input id="prn" name="prn" type="text" placeholder="Your PRN" required maxlength="32" pattern="[A-Za-z0-9\\-/]{3,32}" />
+          <!-- Admin-only: Department -->
+          <div class="row" id="department-row" style="display:none;">
+            <label for="department">Department</label>
+            <select id="department" name="department">
+              <option value="">Select department</option>
+              <option value="Phamacology">Phamacology</option>
+              <option value="Pharmaceutics">Pharmaceutics</option>
+              <option value="Pharmaceutical chemistry">Pharmaceutical chemistry</option>
+            </select>
           </div>
 
-          <div class="row">
+          <!-- Student-only: PRN and Batch -->
+          <div class="row" id="prn-row">
+            <label for="prn">PRN</label>
+            <input id="prn" name="prn" type="text" placeholder="Your PRN" maxlength="32" pattern="[A-Za-z0-9\\-/]{3,32}" />
+          </div>
+
+          <div class="row" id="batch-row">
             <label for="batch">Batch</label>
-            <input id="batch" name="batch" type="text" placeholder="e.g., B1, 2024, etc." required maxlength="32" pattern="[A-Za-z0-9\\-/ ]{1,32}" />
+            <input id="batch" name="batch" type="text" placeholder="e.g., B1, 2024, etc." maxlength="32" pattern="[A-Za-z0-9\\-/ ]{1,32}" />
           </div>
 
           <div class="actions">
@@ -164,6 +176,12 @@
       const nameEl = document.getElementById('name');
       const emailEl = document.getElementById('email');
       const roleEl = document.getElementById('role');
+
+      const departmentRow = document.getElementById('department-row');
+      const departmentEl = document.getElementById('department');
+
+      const prnRow = document.getElementById('prn-row');
+      const batchRow = document.getElementById('batch-row');
       const prnEl = document.getElementById('prn');
       const batchEl = document.getElementById('batch');
 
@@ -211,19 +229,23 @@
         }
       }
 
-      function setLoading(loading) {
-        const card = document.getElementById('profile-card');
-        if (loading) card.classList.add('loading'); else card.classList.remove('loading');
-        if (saveBtn) saveBtn.disabled = loading;
-        if (saveContinueBtn) saveContinueBtn.disabled = loading;
-        if (reloadBtn) reloadBtn.disabled = loading;
-        if (pickAvatarBtn) pickAvatarBtn.disabled = loading;
-        if (clearAvatarBtn) clearAvatarBtn.disabled = loading;
-        if (deleteAvatarBtn) deleteAvatarBtn.disabled = loading;
+      function toggleFieldsForRole(role) {
+        const isAdmin = (role || '').toLowerCase() === 'admin';
+        // Admin: show department, hide PRN/Batch
+        if (departmentRow) departmentRow.style.display = isAdmin ? '' : 'none';
+        if (prnRow) prnRow.style.display = isAdmin ? 'none' : '';
+        if (batchRow) batchRow.style.display = isAdmin ? 'none' : '';
+        // Required attributes
+        if (prnEl) prnEl.required = !isAdmin;
+        if (batchEl) batchEl.required = !isAdmin;
+        if (departmentEl) departmentEl.required = false; // make required=true if you want to enforce for admins
       }
 
       function computeCompleteness(p) {
-        const fields = ['name', 'email', 'role', 'prn', 'batch'];
+        const isAdmin = (p?.role || '').toLowerCase() === 'admin';
+        const fields = isAdmin
+          ? ['name', 'email', 'role'] // add 'department' here if you want it to count
+          : ['name', 'email', 'role', 'prn', 'batch'];
         const done = fields.reduce((acc, f) => acc + (p && p[f] ? 1 : 0), 0);
         return Math.round((done / fields.length) * 100);
       }
@@ -268,7 +290,7 @@
       }
 
       function subscribeToProfile(sb, uid) {
-        // Live reflect role and avatar if admin updates the row
+        // Live reflect role/department/avatar if updated elsewhere
         if (profileSub) {
           try { sb.removeChannel(profileSub); } catch {}
         }
@@ -283,7 +305,8 @@
               if (!nameEl.value) nameEl.value = p.name || '';
               if (!prnEl.value) prnEl.value = p.prn || '';
               if (!batchEl.value) batchEl.value = p.batch || '';
-              // If avatar_path changed, refresh signed preview
+              if (departmentEl) departmentEl.value = p.department || '';
+              toggleFieldsForRole(p.role);
               if (p.avatar_path !== previousAvatarPath) {
                 previousAvatarPath = p.avatar_path || null;
                 await setSignedAvatar(sb, previousAvatarPath);
@@ -298,10 +321,26 @@
           .subscribe();
       }
 
+      // Generate and set a short-lived signed URL from a storage path
+      async function setSignedAvatar(sb, path) {
+        if (!path) {
+          setAvatarPreviewUrl('');
+          return;
+        }
+        try {
+          const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
+          if (error) throw error;
+          setAvatarPreviewUrl(data.signedUrl);
+        } catch (e) {
+          console.error('createSignedUrl error:', e);
+          setAvatarPreviewUrl('');
+        }
+      }
+
       async function ensureProfile(sb, uid, authEmail) {
         const { data: profile, error } = await sb
           .from('profiles')
-          .select('id, name, email, role, prn, batch, avatar_path')
+          .select('id, name, email, role, prn, batch, department, avatar_path')
           .eq('id', uid)
           .maybeSingle();
         if (error) throw error;
@@ -320,23 +359,6 @@
             profile.email = authEmail;
           }
           return profile;
-        }
-      }
-
-      // Generate and set a short-lived signed URL from a storage path
-      async function setSignedAvatar(sb, path) {
-        if (!path) {
-          setAvatarPreviewUrl('');
-          return;
-        }
-        try {
-          const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
-          if (error) throw error;
-          setAvatarPreviewUrl(data.signedUrl);
-        } catch (e) {
-          console.error('createSignedUrl error:', e);
-          // If we fail to sign, clear preview to avoid broken images
-          setAvatarPreviewUrl('');
         }
       }
 
@@ -374,7 +396,11 @@
         roleEl.value = p.role || '';
         prnEl.value = p.prn || '';
         batchEl.value = p.batch || '';
+        if (departmentEl) departmentEl.value = p.department || '';
         previousAvatarPath = p.avatar_path || null;
+
+        // Show/hide fields based on role
+        toggleFieldsForRole(p.role);
 
         if (!p.role) {
           show(statusWarn, 'Your role is not set yet. Please contact an administrator to get access.');
@@ -451,26 +477,35 @@
           return;
         }
 
+        const isAdmin = (roleEl.value || '').toLowerCase() === 'admin';
         const payload = {
           id: uid,
           name: nameEl.value.trim(),
-          email: emailEl.value.trim(),
-          prn: prnEl.value.trim(),
-          batch: batchEl.value.trim()
+          email: emailEl.value.trim()
           // role remains as-is (admin-managed)
         };
 
-        if (!payload.name || !payload.prn || !payload.batch) {
-          show(statusWarn, 'Please fill in Name, PRN, and Batch.');
-          setLoading(false);
-          return;
+        if (isAdmin) {
+          payload.department = departmentEl ? (departmentEl.value || null) : null;
+          if (!payload.name) {
+            show(statusWarn, 'Please fill in Name.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          payload.prn = prnEl.value.trim();
+          payload.batch = batchEl.value.trim();
+          payload.department = null; // clear on student save
+          if (!payload.name || !payload.prn || !payload.batch) {
+            show(statusWarn, 'Please fill in Name, PRN, and Batch.');
+            setLoading(false);
+            return;
+          }
         }
 
-        // If we uploaded a new avatar, store only the storage path (private bucket)
         if (newAvatarPath) {
           payload.avatar_path = newAvatarPath;
-          // Optional: clear any legacy public URL field
-          payload.avatar_url = null;
+          payload.avatar_url = null; // legacy cleanup if present
         }
 
         const { data, error } = await sb
@@ -486,13 +521,11 @@
           return;
         }
 
-        // If we replaced the avatar successfully, delete the previous one
         if (newAvatarPath && previousAvatarPath && previousAvatarPath !== newAvatarPath) {
           await deleteAvatar(sb, previousAvatarPath);
           previousAvatarPath = newAvatarPath;
         }
 
-        // Refresh signed preview if we uploaded a new one
         if (newAvatarPath) {
           await setSignedAvatar(sb, newAvatarPath);
           startAvatarAutoRefresh(sb, newAvatarPath);
@@ -505,7 +538,8 @@
 
         const params = new URLSearchParams(window.location.search);
         const next = params.get('next') || (goNext ? 'assessments.html' : '');
-        const completeNow = !!(data && data.name && data.email && data.role && data.prn && data.batch);
+        const completeNow = (data && data.name && data.email && data.role &&
+          ((data.role || '').toLowerCase() === 'admin' ? true : (data.prn && data.batch)));
 
         if (completeNow && next) {
           setTimeout(() => { window.location.href = next; }, 700);
@@ -522,14 +556,12 @@
         const errText = validateFile(file);
         if (errText) { show(statusWarn, errText); avatarInput.value = ''; return; }
         selectedFile = file;
-        // Instant local preview while waiting for save
         const objUrl = URL.createObjectURL(file);
         setAvatarPreviewUrl(objUrl);
       });
       clearAvatarBtn.addEventListener('click', () => {
         selectedFile = null;
         avatarInput.value = '';
-        // Revert to saved avatar (signed) if exists, otherwise placeholder
         if (previousAvatarPath) {
           const sb = window.sb;
           if (sb) setSignedAvatar(sb, previousAvatarPath);
@@ -597,7 +629,6 @@
 
           const p = await loadProfile(sb);
 
-          // Show delete saved avatar button only if we have one
           if (p && p.avatar_path) {
             deleteAvatarBtn.classList.remove('hidden');
           } else {
@@ -613,7 +644,7 @@
       let pristineSnapshot = '';
       function snapshot() {
         return [
-          nameEl.value, emailEl.value, roleEl.value, prnEl.value, batchEl.value,
+          nameEl.value, emailEl.value, roleEl.value, prnEl.value, batchEl.value, (departmentEl ? departmentEl.value : ''),
           selectedFile ? selectedFile.name : ''
         ].join('|');
       }
@@ -625,8 +656,9 @@
       form.addEventListener('submit', () => { window.onbeforeunload = null; });
 
       // Logout handler
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async (e) => {
+      const logoutBtnEl = document.getElementById('logout-btn');
+      if (logoutBtnEl) {
+        logoutBtnEl.addEventListener('click', async (e) => {
           e.preventDefault();
           try { await window.sb?.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
           window.location.href = 'index.html';
