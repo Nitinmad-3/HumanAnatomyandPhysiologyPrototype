@@ -44,7 +44,6 @@
       justify-content: center;
       gap: 2rem;
       margin-bottom: 2rem;
-      flex-wrap: wrap;
     }
     nav a, nav button {
       font-size: 1.2rem;
@@ -114,71 +113,6 @@
       background: #f3f3f3;
       box-shadow: 0 0 0 2px #e3f2fd inset;
     }
-    /* Storage Tester panel */
-    #storage-tester {
-      display: none; /* shown to admins */
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 1rem 1.25rem;
-      border-radius: 12px;
-      background: #f5faff;
-      box-shadow: 0 1px 8px #e3f2fd;
-    }
-    #storage-tester h2 {
-      margin: 0 0 .75rem 0;
-      color: #1565c0;
-      font-size: 1.5rem;
-    }
-    .st-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .st-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-    .st-input, .st-select {
-      width: 100%;
-      padding: 10px;
-      background: #fff;
-      color: #222;
-      border: 1px solid #cfe0ff;
-      border-radius: 8px;
-      outline: none;
-    }
-    .st-btn {
-      background: #1565c0;
-      color: white;
-      border: 0;
-      padding: 9px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .st-btn.ghost { background: transparent; border: 1px solid #cfe0ff; color: #1565c0; }
-    .st-btn.success { background: #2ea043; }
-    .st-btn.warning { background: #d29922; }
-    .st-btn.danger { background: #f85149; }
-    .st-btn:disabled { opacity: .6; cursor: not-allowed; }
-    .st-hr { height: 1px; background: #cfe0ff; margin: 10px 0; }
-    .st-muted { color: #375a9e; font-size: 0.95rem; }
-    .st-status { color: #375a9e; margin-top: .5rem; }
-    .st-list { margin-top: 10px; border-top: 1px dashed #cfe0ff; padding-top: 8px; }
-    .st-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px dashed #cfe0ff;
-    }
-    .st-item:last-child { border-bottom: 0; }
-    .st-path {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      word-break: break-all;
-    }
-    .st-badge {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px solid #cfe0ff;
-      color: #375a9e;
-      margin-left: 6px;
-    }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
       nav { flex-direction: column; gap: 1rem; }
@@ -199,7 +133,6 @@
         <a id="assessment-tab" href="assessments.html">Assessments</a>
         <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
         <a href="references.html">References</a>
-        <a id="storage-tester-tab" href="#storage-tester" style="display:none;">Storage Tester</a>
         <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
         <button id="logout-btn" style="display:none;">Logout</button>
       </nav>
@@ -239,7 +172,6 @@
         <li>See references and learning material</li>
       </ul>
     </div>
-
     <!-- Welcome/Intro Message AFTER dashboard -->
     <div class="intro">
       <p>
@@ -257,49 +189,6 @@
         <em>Start exploring and build your knowledge of the amazing human body!</em>
       </p>
     </div>
-
-    <!-- Admin-only: Storage Tester (integrated) -->
-    <section id="storage-tester" aria-hidden="true">
-      <h2>Supabase Storage Tester <span class="st-badge">Admin-only</span></h2>
-      <div class="st-grid">
-        <div>
-          <label class="st-muted">Bucket Name (default: assignments — change to assessments if needed)</label>
-          <input id="st-bucket" class="st-input" type="text" placeholder="assignments" />
-        </div>
-        <div>
-          <label class="st-muted">Current Prefix (folder)</label>
-          <input id="st-prefix" class="st-input" type="text" placeholder="submissions/{uid}/" />
-        </div>
-      </div>
-      <div class="st-row" style="margin-top:10px">
-        <button id="st-list" class="st-btn">List</button>
-        <button id="st-up" class="st-btn ghost">Go up</button>
-        <button id="st-root" class="st-btn ghost">Root</button>
-        <span class="st-status" id="st-status">Ready.</span>
-      </div>
-
-      <div class="st-hr"></div>
-
-      <div class="st-grid">
-        <div>
-          <label class="st-muted">Upload / Replace file</label>
-          <input id="st-file" class="st-input" type="file" />
-          <div class="st-row" style="margin-top:8px">
-            <button id="st-upload" class="st-btn success">Upload (no overwrite)</button>
-            <button id="st-replace" class="st-btn warning">Replace (overwrite)</button>
-          </div>
-        </div>
-        <div>
-          <label class="st-muted">Admin helpers</label>
-          <div class="st-row" style="margin-top:8px">
-            <button id="st-list-all" class="st-btn ghost">List entire bucket</button>
-            <button id="st-check-admin" class="st-btn ghost">Check admin via RPC</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="st-list" id="st-list-container"></div>
-    </section>
   </div>
 
   <!-- Supabase SDK -->
@@ -329,22 +218,6 @@
       const welcomeStudent = document.getElementById('dashboard-welcome-student');
       const assessmentTab = document.getElementById('assessment-tab');
 
-      // Storage tester elements
-      const storageTesterTab = document.getElementById('storage-tester-tab');
-      const storageTesterSection = document.getElementById('storage-tester');
-      const stBucket = document.getElementById('st-bucket');
-      const stPrefix = document.getElementById('st-prefix');
-      const stFile = document.getElementById('st-file');
-      const stBtnList = document.getElementById('st-list');
-      const stBtnUp = document.getElementById('st-up');
-      const stBtnRoot = document.getElementById('st-root');
-      const stBtnUpload = document.getElementById('st-upload');
-      const stBtnReplace = document.getElementById('st-replace');
-      const stBtnListAll = document.getElementById('st-list-all');
-      const stBtnCheckAdmin = document.getElementById('st-check-admin');
-      const stListContainer = document.getElementById('st-list-container');
-      const stStatusEl = document.getElementById('st-status');
-
       // Avatar elements
       const avatarCard = document.getElementById('avatar-card');
       const avatarImg = document.getElementById('avatar-preview');
@@ -354,11 +227,6 @@
       let avatarListenerBound = false;
       let avatarRefreshTimerId = null;
       let currentAvatarPath = null;
-
-      // Storage tester state
-      let stBound = false;
-      let isAdmin = false;
-      let currentUser = null;
 
       function setNav(loggedIn) {
         if (loggedIn) {
@@ -374,9 +242,6 @@
           if (avatarImg) avatarImg.removeAttribute('src');
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
           currentAvatarPath = null;
-          // Hide storage tester if logged out
-          if (storageTesterTab) storageTesterTab.style.display = 'none';
-          if (storageTesterSection) { storageTesterSection.style.display = 'none'; storageTesterSection.setAttribute('aria-hidden','true'); }
         }
       }
 
@@ -387,6 +252,7 @@
           .eq('id', userId)
           .maybeSingle();
         if (error) console.warn('Role fetch error:', error);
+        // Normalize role to avoid casing/whitespace issues like 'Admin'/'ADMIN'
         return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
@@ -464,7 +330,7 @@
           // Save storage path (NOT a public URL) to profile
           const { error: updErr } = await sb
             .from('profiles')
-            .update({ avatar_path: filePath })
+          .update({ avatar_path: filePath })
             .eq('id', userId);
 
           if (updErr) {
@@ -482,262 +348,29 @@
       // Helper for robust "has value" checks
       const has = (v) => typeof v === 'string' ? v.trim().length > 0 : !!v;
 
-      function stSetStatus(msg) { if (stStatusEl) stStatusEl.textContent = msg; }
-      function stBusy(el, busy = true) {
-        if (!el) return;
-        el.disabled = busy;
-        if (busy) { el.dataset._txt = el.textContent; el.textContent = 'Working…'; }
-        else if (el.dataset._txt) { el.textContent = el.dataset._txt; delete el.dataset._txt; }
-      }
-      function stJoin(prefix, name) {
-        if (!prefix) return name;
-        return prefix.endsWith('/') ? prefix + name : prefix + '/' + name;
-      }
-      function stDirname(path) {
-        if (!path) return '';
-        const p = path.endsWith('/') ? path.slice(0, -1) : path;
-        const idx = p.lastIndexOf('/');
-        if (idx <= 0) return '';
-        return p.slice(0, idx + 1);
-      }
-      function stRenderList(prefix, entries = []) {
-        const parts = [];
-        if (!entries.length) {
-          parts.push('<div class="st-muted">No entries.</div>');
-        } else {
-          for (const e of entries) {
-            const isFolder = e.id === null && !e.metadata?.size;
-            const fullPath = stJoin(prefix, e.name);
-            const when = e.updated_at || e.created_at || '';
-            const size = e.metadata?.size ? `${e.metadata.size} B` : '';
-            parts.push(`
-              <div class="st-item">
-                <div>
-                  <div class="st-path">${fullPath} ${isFolder ? '<span class="st-badge">folder</span>' : ''}</div>
-                  <div class="st-muted" style="font-size:12px">${size} ${when ? '• ' + new Date(when).toLocaleString() : ''}</div>
-                </div>
-                <div class="st-row">
-                  ${isFolder ? `
-                    <button class="st-btn ghost" data-st-action="enter" data-st-path="${fullPath}">Open</button>
-                  ` : `
-                    <button class="st-btn ghost" data-st-action="signed" data-st-path="${fullPath}">Signed URL</button>
-                    <button class="st-btn warning" data-st-action="replace-one" data-st-path="${fullPath}">Replace</button>
-                    <button class="st-btn danger" data-st-action="delete" data-st-path="${fullPath}">Delete</button>
-                  `}
-                </div>
-              </div>
-            `);
-          }
-        }
-        stListContainer.innerHTML = parts.join('');
-        stListContainer.querySelectorAll('button').forEach(btn => btn.addEventListener('click', stOnListAction));
-      }
-      async function stOnListAction(ev) {
-        const btn = ev.currentTarget;
-        const action = btn.dataset.stAction;
-        const path = btn.dataset.stPath;
-        const bucket = (stBucket.value.trim() || 'assignments');
-        if (!bucket) return;
-
-        if (action === 'enter') {
-          stPrefix.value = path.endsWith('/') ? path : path + '/';
-          await stListPrefix();
-          return;
-        }
-
-        if (action === 'signed') {
-          stBusy(btn, true);
-          try {
-            const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 300);
-            if (error) throw error;
-            const url = data?.signedUrl;
-            if (url) window.open(url, '_blank', 'noopener');
-          } catch (e) {
-            alert('Signed URL failed: ' + (e?.message || e));
-          } finally {
-            stBusy(btn, false);
-          }
-          return;
-        }
-
-        if (action === 'replace-one') {
-          const file = await new Promise((resolve) => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = () => resolve(input.files?.[0] || null);
-            input.click();
-          });
-          if (!file) return;
-          stBusy(btn, true);
-          try {
-            const { error } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
-            if (error) throw error;
-            await stListPrefix();
-          } catch (e) {
-            alert('Replace failed: ' + (e?.message || e));
-          } finally {
-            stBusy(btn, false);
-          }
-          return;
-        }
-
-        if (action === 'delete') {
-          if (!confirm(`Delete ${path}?`)) return;
-          stBusy(btn, true);
-          try {
-            const { error } = await sb.storage.from(bucket).remove([path]);
-            if (error) throw error;
-            await stListPrefix();
-          } catch (e) {
-            alert('Delete failed: ' + (e?.message || e));
-          } finally {
-            stBusy(btn, false);
-          }
-          return;
-        }
-      }
-      async function stListPrefix(prefix = stPrefix.value.trim()) {
-        const bucket = (stBucket.value.trim() || 'assignments');
-        if (!prefix) { alert('Prefix is empty.'); return; }
-        stSetStatus('Listing…');
-        stBusy(stBtnList, true);
-        try {
-          const { data, error } = await sb.storage.from(bucket).list(prefix, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
-          if (error) throw error;
-          stRenderList(prefix, data || []);
-          stSetStatus('Listed.');
-        } catch (e) {
-          stRenderList(prefix, []);
-          stSetStatus('List failed.');
-          alert('List failed: ' + (e?.message || e));
-        } finally {
-          stBusy(stBtnList, false);
-        }
-      }
-      async function stListAll() {
-        const bucket = (stBucket.value.trim() || 'assignments');
-        stBusy(stBtnListAll, true);
-        try {
-          const { data, error } = await sb.storage.from(bucket).list('', { limit: 50, sortBy: { column: 'name', order: 'asc' } });
-          if (error) throw error;
-          stRenderList('', data || []);
-          stSetStatus('Listed bucket root (admin policy required).');
-        } catch (e) {
-          stSetStatus('List-all failed (likely due to RLS).');
-          alert('List-all failed: ' + (e?.message || e));
-        } finally {
-          stBusy(stBtnListAll, false);
-        }
-      }
-      async function stUpload({ upsert = false } = {}) {
-        const bucket = (stBucket.value.trim() || 'assignments');
-        const prefix = stPrefix.value.trim();
-        const file = stFile.files?.[0];
-        if (!file) { alert('Choose a file first.'); return; }
-        if (!prefix) { alert('Set a prefix first.'); return; }
-        stSetStatus(upsert ? 'Replacing…' : 'Uploading…');
-        stBusy(upsert ? stBtnReplace : stBtnUpload, true);
-        const path = stJoin(prefix, file.name);
-        try {
-          const { error } = await sb.storage.from(bucket).upload(path, file, { upsert });
-          if (error) throw error;
-          await stListPrefix(prefix);
-          stSetStatus(upsert ? 'Replaced.' : 'Uploaded.');
-        } catch (e) {
-          stSetStatus('Upload failed.');
-          alert('Upload failed: ' + (e?.message || e));
-        } finally {
-          stBusy(upsert ? stBtnReplace : stBtnUpload, false);
-        }
-      }
-
-      function bindStorageTesterUI() {
-        if (stBound) return;
-        stBound = true;
-
-        // Click handlers
-        stBtnList?.addEventListener('click', () => stListPrefix());
-        stBtnUp?.addEventListener('click', async () => {
-          const up = stDirname(stPrefix.value.trim());
-          if (!up) return;
-          stPrefix.value = up;
-          await stListPrefix();
-        });
-        stBtnRoot?.addEventListener('click', async () => {
-          stPrefix.value = '';
-          await stListPrefix('');
-        });
-        stBtnUpload?.addEventListener('click', () => stUpload({ upsert: false }));
-        stBtnReplace?.addEventListener('click', () => stUpload({ upsert: true }));
-        stBtnListAll?.addEventListener('click', () => stListAll());
-        stBtnCheckAdmin?.addEventListener('click', async () => {
-          if (!currentUser) { alert('Sign in first.'); return; }
-          try {
-            const { data, error } = await sb.rpc('is_admin', { uid: currentUser.id });
-            if (error) throw error;
-            isAdmin = !!data;
-            alert('is_admin: ' + isAdmin);
-          } catch (e) {
-            alert('RPC failed (ensure public.is_admin exists): ' + (e?.message || e));
-          }
-        });
-
-        // Nav link behavior: reveal section and scroll into view
-        const storageTesterTab = document.getElementById('storage-tester-tab');
-        storageTesterTab?.addEventListener('click', (e) => {
-          if (storageTesterSection) {
-            storageTesterSection.style.display = 'block';
-            storageTesterSection.removeAttribute('aria-hidden');
-            setTimeout(() => storageTesterSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
-          }
-        });
-      }
-
       async function refreshUI() {
         try {
-          const { data: { session) } } = await sb.auth.getSession();
-          currentUser = session?.user || null;
-
-          if (currentUser) {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session?.user) {
             setNav(true);
 
-            const userId = currentUser.id;
-            const role = await getUserRole(userId); // normalized lower-case
+            const userId = session.user.id;
+            const role = await getUserRole(userId); // normalized lower-case: 'admin' | 'student' | 'unknown'
 
             // Toggle dashboards by role (case-insensitive)
             if (role === 'admin') {
               if (adminFeatures) adminFeatures.style.display = 'block';
               if (studentFeatures) studentFeatures.style.display = 'none';
               await setDashboardWelcome(userId, 'admin');
-
-              // Expose Storage Tester to admins
-              if (storageTesterTab) storageTesterTab.style.display = 'inline';
-              if (storageTesterSection) storageTesterSection.style.display = 'block', storageTesterSection.removeAttribute('aria-hidden');
-              bindStorageTesterUI();
-
-              // Defaults for tester
-              if (stBucket && !stBucket.value) stBucket.value = 'assignments'; // change to 'assessments' if needed
-              if (stPrefix && !stPrefix.value) stPrefix.value = `submissions/${userId}/`;
-              isAdmin = true;
             } else if (role === 'student') {
               if (adminFeatures) adminFeatures.style.display = 'none';
               if (studentFeatures) studentFeatures.style.display = 'block';
               await setDashboardWelcome(userId, 'student');
-
-              // Hide Storage Tester for students
-              if (storageTesterTab) storageTesterTab.style.display = 'none';
-              if (storageTesterSection) storageTesterSection.style.display = 'none', storageTesterSection.setAttribute('aria-hidden','true');
-              isAdmin = false;
             } else {
               if (adminFeatures) adminFeatures.style.display = 'none';
               if (studentFeatures) studentFeatures.style.display = 'none';
               if (welcomeAdmin) welcomeAdmin.textContent = '';
               if (welcomeStudent) welcomeStudent.textContent = '';
-
-              // Hide Storage Tester if unknown role
-              if (storageTesterTab) storageTesterTab.style.display = 'none';
-              if (storageTesterSection) storageTesterSection.style.display = 'none', storageTesterSection.setAttribute('aria-hidden','true');
-              isAdmin = false;
             }
 
             // Profile completeness + avatar
@@ -749,6 +382,7 @@
 
             if (profErr) console.warn('Profile fetch error:', profErr);
 
+            // Use role from earlier fetch, fall back to profile.role if needed
             const roleVal = (role || profile?.role || 'unknown').toString().trim().toLowerCase();
 
             // Required fields:
@@ -761,6 +395,7 @@
             const isComplete = (roleVal === 'admin') ? adminComplete : studentComplete;
 
             if (!isComplete && !window.location.pathname.includes('profile.html')) {
+              // Optional debug to see which fields are missing for affected users
               console.warn('Profile incomplete; redirecting to profile.html', {
                 role: roleVal,
                 baseComplete,
@@ -772,7 +407,7 @@
                 batchOK: has(profile?.batch)
               });
               window.location.href = 'profile.html';
-              return;
+              return; // stop further logic if redirecting
             }
 
             // Signed avatar preview (private)
