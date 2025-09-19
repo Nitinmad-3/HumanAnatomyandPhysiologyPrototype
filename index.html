@@ -252,7 +252,8 @@
           .eq('id', userId)
           .maybeSingle();
         if (error) console.warn('Role fetch error:', error);
-        return data?.role || 'unknown';
+        // Normalize role to avoid casing/whitespace issues like 'Admin'/'ADMIN'
+        return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
       async function setDashboardWelcome(userId, role) {
@@ -329,7 +330,7 @@
           // Save storage path (NOT a public URL) to profile
           const { error: updErr } = await sb
             .from('profiles')
-            .update({ avatar_path: filePath })
+          .update({ avatar_path: filePath })
             .eq('id', userId);
 
           if (updErr) {
@@ -344,6 +345,9 @@
         avatarListenerBound = true;
       }
 
+      // Helper for robust "has value" checks
+      const has = (v) => typeof v === 'string' ? v.trim().length > 0 : !!v;
+
       async function refreshUI() {
         try {
           const { data: { session } } = await sb.auth.getSession();
@@ -351,8 +355,9 @@
             setNav(true);
 
             const userId = session.user.id;
-            const role = await getUserRole(userId);
+            const role = await getUserRole(userId); // normalized lower-case: 'admin' | 'student' | 'unknown'
 
+            // Toggle dashboards by role (case-insensitive)
             if (role === 'admin') {
               if (adminFeatures) adminFeatures.style.display = 'block';
               if (studentFeatures) studentFeatures.style.display = 'none';
@@ -368,17 +373,39 @@
               if (welcomeStudent) welcomeStudent.textContent = '';
             }
 
-            // Profile completeness + avatar (note: added avatar_path here)
+            // Profile completeness + avatar
             const { data: profile, error: profErr } = await sb
               .from('profiles')
-              .select('name, role, email, prn, batch, avatar_path')
+              .select('name, role, prn, batch, avatar_path')
               .eq('id', userId)
               .maybeSingle();
 
             if (profErr) console.warn('Profile fetch error:', profErr);
 
-            const incomplete = !profile || !profile.name || !profile.role || !profile.email || !profile.prn || !profile.batch;
-            if (incomplete && !window.location.pathname.endsWith('profile.html')) {
+            // Use role from earlier fetch, fall back to profile.role if needed
+            const roleVal = (role || profile?.role || 'unknown').toString().trim().toLowerCase();
+
+            // Required fields:
+            // - For everyone: name + role
+            // - For students: PRN + batch as well
+            const baseComplete = !!profile && has(profile.name) && has(profile.role);
+            const studentComplete = baseComplete && has(profile.prn) && has(profile.batch);
+            const adminComplete = baseComplete; // admins do NOT need PRN/batch
+
+            const isComplete = (roleVal === 'admin') ? adminComplete : studentComplete;
+
+            if (!isComplete && !window.location.pathname.includes('profile.html')) {
+              // Optional debug to see which fields are missing for affected users
+              console.warn('Profile incomplete; redirecting to profile.html', {
+                role: roleVal,
+                baseComplete,
+                studentComplete,
+                adminComplete,
+                nameOK: has(profile?.name),
+                roleOK: has(profile?.role),
+                prnOK: has(profile?.prn),
+                batchOK: has(profile?.batch)
+              });
               window.location.href = 'profile.html';
               return; // stop further logic if redirecting
             }
