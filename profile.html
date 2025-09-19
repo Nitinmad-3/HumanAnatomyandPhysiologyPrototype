@@ -93,7 +93,7 @@
           <button type="button" class="btn secondary" id="pick-avatar-btn">Choose Image</button>
           <button type="button" class="btn muted" id="clear-avatar-btn">Remove Selected</button>
           <button type="button" class="btn danger hidden" id="delete-avatar-btn">Delete Saved Avatar</button>
-          <div class="hint">JPG/PNG, up to 5 MB</div>
+          <div class="hint">JPG/PNG/WEBP, up to 5 MB. Private: only you and admins can view.</div>
         </div>
       </aside>
 
@@ -146,6 +146,8 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const AVATAR_BUCKET = 'Avatar'; // private bucket
+
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const assessTab = document.getElementById('assessment-tab');
@@ -179,6 +181,17 @@
       let previousAvatarPath = null;    // stored path in DB for deletion if replaced
       let currentUserId = null;
       let profileSub = null;
+
+      // Signed URL refresh state
+      let avatarRefreshTimerId = null;
+      function stopAvatarAutoRefresh() {
+        if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
+      }
+      function startAvatarAutoRefresh(sb, path) {
+        stopAvatarAutoRefresh();
+        if (!path) return;
+        avatarRefreshTimerId = setInterval(() => setSignedAvatar(sb, path), 50 * 1000); // refresh before 60s expiry
+      }
 
       function show(el, msg) {
         if (!el) return;
@@ -220,7 +233,7 @@
         progressHint.textContent = 'Profile completeness: ' + pct + '%';
       }
 
-      function setAvatarPreview(url) {
+      function setAvatarPreviewUrl(url) {
         if (url) {
           avatarImg.src = url;
           avatarImg.classList.remove('hidden');
@@ -255,25 +268,30 @@
       }
 
       function subscribeToProfile(sb, uid) {
-        // Live reflect role (and other fields) if admin updates the row
+        // Live reflect role and avatar if admin updates the row
         if (profileSub) {
           try { sb.removeChannel(profileSub); } catch {}
         }
         profileSub = sb
-          .channel('profiles_role_reflect_' + uid)
+          .channel('profiles_live_' + uid)
           .on(
             'postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'profiles', filter: 'id=eq.' + uid },
-            (payload) => {
+            async (payload) => {
               const p = payload.new || {};
               roleEl.value = p.role || '';
-              // Update other fields only if empty (avoid clobbering user input)
               if (!nameEl.value) nameEl.value = p.name || '';
               if (!prnEl.value) prnEl.value = p.prn || '';
               if (!batchEl.value) batchEl.value = p.batch || '';
-              if (p.avatar_url) setAvatarPreview(p.avatar_url);
+              // If avatar_path changed, refresh signed preview
+              if (p.avatar_path !== previousAvatarPath) {
+                previousAvatarPath = p.avatar_path || null;
+                await setSignedAvatar(sb, previousAvatarPath);
+                startAvatarAutoRefresh(sb, previousAvatarPath);
+                deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
+              }
               updateProgress(p);
-              show(statusInfo, 'Profile updated by server. Role reflected automatically.');
+              show(statusInfo, 'Profile updated by server.');
               setTimeout(() => hide(statusInfo), 2000);
             }
           )
@@ -283,7 +301,7 @@
       async function ensureProfile(sb, uid, authEmail) {
         const { data: profile, error } = await sb
           .from('profiles')
-          .select('id, name, email, role, prn, batch, avatar_url, avatar_path')
+          .select('id, name, email, role, prn, batch, avatar_path')
           .eq('id', uid)
           .maybeSingle();
         if (error) throw error;
@@ -302,6 +320,23 @@
             profile.email = authEmail;
           }
           return profile;
+        }
+      }
+
+      // Generate and set a short-lived signed URL from a storage path
+      async function setSignedAvatar(sb, path) {
+        if (!path) {
+          setAvatarPreviewUrl('');
+          return;
+        }
+        try {
+          const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
+          if (error) throw error;
+          setAvatarPreviewUrl(data.signedUrl);
+        } catch (e) {
+          console.error('createSignedUrl error:', e);
+          // If we fail to sign, clear preview to avoid broken images
+          setAvatarPreviewUrl('');
         }
       }
 
@@ -347,19 +382,23 @@
           hide(statusWarn);
         }
 
-        setAvatarPreview(p.avatar_url || '');
+        // Signed avatar preview
+        await setSignedAvatar(sb, previousAvatarPath);
+        startAvatarAutoRefresh(sb, previousAvatarPath);
+        deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
+
         updateProgress(p);
 
-        // Subscribe to live changes so role reflects automatically
+        // Subscribe to live changes so role/avatar reflect automatically
         subscribeToProfile(sb, currentUserId);
 
         setLoading(false);
         return p;
       }
 
-      // Storage helpers for "Avatar" bucket
+      // Storage helpers for "Avatar" bucket (private)
       async function uploadAvatar(sb, uid, file) {
-        if (!file) return { url: null, path: null };
+        if (!file) return { path: null };
         const errText = validateFile(file);
         if (errText) {
           show(statusWarn, errText);
@@ -367,21 +406,20 @@
         }
 
         const cleanName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-        const path = `${uid}/${Date.now()}_${cleanName}`; // NOTE: no bucket name in the key
-        console.log('Uploading avatar to bucket "Avatar" with key:', path);
-        const { error: upErr } = await sb.storage.from('Avatar').upload(path, file, { upsert: false, contentType: file.type });
+        const path = `${uid}/${Date.now()}_${cleanName}`; // path within bucket
+        const { error: upErr } = await sb.storage.from(AVATAR_BUCKET).upload(path, file, {
+          upsert: true,
+          contentType: file.type || 'image/*'
+        });
         if (upErr) throw upErr;
 
-        // Public URL (make sure your bucket has a public policy for reads, or you use signed URLs)
-        const { data: pub } = sb.storage.from('Avatar').getPublicUrl(path);
-        const url = pub?.publicUrl || '';
-        return { url, path };
+        return { path };
       }
 
       async function deleteAvatar(sb, path) {
         if (!path) return;
         try {
-          await sb.storage.from('Avatar').remove([path]);
+          await sb.storage.from(AVATAR_BUCKET).remove([path]);
         } catch (e) {
           console.warn('Avatar delete warning:', e);
         }
@@ -401,13 +439,11 @@
         const uid = session.user.id;
 
         // Upload new avatar if selected
-        let avatar_url = null;
-        let avatar_path = null;
+        let newAvatarPath = null;
         try {
           if (selectedFile) {
             const res = await uploadAvatar(sb, uid, selectedFile);
-            avatar_url = res.url;
-            avatar_path = res.path;
+            newAvatarPath = res.path;
           }
         } catch (e) {
           show(statusError, 'Avatar upload failed: ' + (e?.message || 'Please try again.'));
@@ -430,10 +466,11 @@
           return;
         }
 
-        // Attach avatar fields if uploaded
-        if (avatar_url && avatar_path) {
-          payload.avatar_url = avatar_url;
-          payload.avatar_path = avatar_path;
+        // If we uploaded a new avatar, store only the storage path (private bucket)
+        if (newAvatarPath) {
+          payload.avatar_path = newAvatarPath;
+          // Optional: clear any legacy public URL field
+          payload.avatar_url = null;
         }
 
         const { data, error } = await sb
@@ -450,13 +487,15 @@
         }
 
         // If we replaced the avatar successfully, delete the previous one
-        if (avatar_path && previousAvatarPath && previousAvatarPath !== avatar_path) {
+        if (newAvatarPath && previousAvatarPath && previousAvatarPath !== newAvatarPath) {
           await deleteAvatar(sb, previousAvatarPath);
-          previousAvatarPath = avatar_path;
+          previousAvatarPath = newAvatarPath;
         }
 
-        if (avatar_url) {
-          setAvatarPreview(avatar_url);
+        // Refresh signed preview if we uploaded a new one
+        if (newAvatarPath) {
+          await setSignedAvatar(sb, newAvatarPath);
+          startAvatarAutoRefresh(sb, newAvatarPath);
           selectedFile = null;
           deleteAvatarBtn.classList.remove('hidden');
         }
@@ -483,14 +522,20 @@
         const errText = validateFile(file);
         if (errText) { show(statusWarn, errText); avatarInput.value = ''; return; }
         selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = () => setAvatarPreview(reader.result);
-        reader.readAsDataURL(file);
+        // Instant local preview while waiting for save
+        const objUrl = URL.createObjectURL(file);
+        setAvatarPreviewUrl(objUrl);
       });
       clearAvatarBtn.addEventListener('click', () => {
         selectedFile = null;
         avatarInput.value = '';
-        // Keep current saved avatar preview; this only clears new selection
+        // Revert to saved avatar (signed) if exists, otherwise placeholder
+        if (previousAvatarPath) {
+          const sb = window.sb;
+          if (sb) setSignedAvatar(sb, previousAvatarPath);
+        } else {
+          setAvatarPreviewUrl('');
+        }
         show(statusInfo, 'Cleared new image selection.');
         setTimeout(() => hide(statusInfo), 1200);
       });
@@ -501,9 +546,9 @@
         try {
           await deleteAvatar(sb, previousAvatarPath);
           previousAvatarPath = null;
-          // Remove avatar from profile row
-          await sb.from('profiles').update({ avatar_url: null, avatar_path: null }).eq('id', currentUserId);
-          setAvatarPreview('');
+          stopAvatarAutoRefresh();
+          await sb.from('profiles').update({ avatar_path: null, avatar_url: null }).eq('id', currentUserId);
+          setAvatarPreviewUrl('');
           deleteAvatarBtn.classList.add('hidden');
           show(statusInfo, 'Saved avatar deleted.');
         } catch (e) {
@@ -553,7 +598,7 @@
           const p = await loadProfile(sb);
 
           // Show delete saved avatar button only if we have one
-          if (p && p.avatar_url) {
+          if (p && p.avatar_path) {
             deleteAvatarBtn.classList.remove('hidden');
           } else {
             deleteAvatarBtn.classList.add('hidden');
@@ -578,6 +623,15 @@
         window.onbeforeunload = (snapshot() !== pristineSnapshot) ? () => true : null;
       });
       form.addEventListener('submit', () => { window.onbeforeunload = null; });
+
+      // Logout handler
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await window.sb?.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+          window.location.href = 'index.html';
+        });
+      }
     });
   </script>
 </body>
