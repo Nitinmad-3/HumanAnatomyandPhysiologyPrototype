@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Assignments Storage Tester (Supabase)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b0c10;
+      --panel: #15171c;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --success: #2ea043;
+      --danger: #f85149;
+      --warning: #d29922;
+      --text: #c9d1d9;
+      --text-invert: #0b0c10;
+      --border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(15, 17, 22, 0.8);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 6px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin: 14px;
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    input[type="text"], input[type="password"], input[type="email"], select {
+      width: 100%;
+      padding: 10px;
+      background: #0f1117;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+    }
+    input::placeholder { color: #6b7280; }
+    button {
+      background: var(--accent);
+      color: white;
+      border: 0;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.success { background: var(--success); }
+    button.danger { background: var(--danger); }
+    button.warning { background: var(--warning); }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 10px; align-items: center; }
+    .muted { color: var(--muted); }
+    code.inline { background: #0f1117; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; }
+    .list { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 8px; }
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .item:last-child { border-bottom: 0; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; word-break: break-all; }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      margin-left: 6px;
+    }
+    a.link { color: #7aa2ff; text-decoration: none; }
+    .stack { display: flex; flex-direction: column; gap: 8px; }
+    .row-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .hr { height: 1px; background: var(--border); margin: 10px 0; }
+    footer { color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Supabase Storage Tester <span class="badge">Assignments bucket</span></h1>
+    <div class="row muted" id="statusBar">Initializing…</div>
+  </header>
+
+  <main>
+    <!-- Configuration -->
+    <section class="panel">
+      <h2 style="margin-top:0">Configuration</h2>
+      <div class="grid">
+        <div>
+          <label>Supabase URL</label>
+          <input id="cfg-url" type="text" placeholder="https://YOUR-PROJECT.supabase.co" />
+        </div>
+        <div>
+          <label>Anon Key</label>
+          <input id="cfg-key" type="text" placeholder="eyJhbGciOi..." />
+        </div>
+        <div>
+          <label>Bucket Name (default: assignments)</label>
+          <input id="cfg-bucket" type="text" placeholder="assignments" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="cfg-save">Save & Connect</button>
+        <button class="ghost" id="cfg-reset">Reset</button>
+        <span class="muted">Values are stored locally in your browser only.</span>
+      </div>
+    </section>
+
+    <!-- Auth -->
+    <section class="panel" id="auth-panel">
+      <h2 style="margin-top:0">Authentication</h2>
+      <div class="grid">
+        <div>
+          <label>Email</label>
+          <input id="auth-email" type="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="auth-password" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="btn-signin">Sign in (email + password)</button>
+        <button class="ghost" id="btn-signup">Sign up</button>
+        <button class="ghost" id="btn-magic">Send magic link</button>
+        <button class="danger" id="btn-signout" disabled>Sign out</button>
+      </div>
+      <div class="hr"></div>
+      <div class="kv">
+        <div class="muted">User</div><div id="kv-user">—</div>
+        <div class="muted">UID</div><div id="kv-uid">—</div>
+        <div class="muted">Admin</div><div id="kv-admin">—</div>
+        <div class="muted">Default Prefix</div><div id="kv-prefix">—</div>
+      </div>
+    </section>
+
+    <!-- Bucket ops -->
+    <section class="panel" id="ops-panel">
+      <h2 style="margin-top:0">Bucket Operations</h2>
+      <div class="grid">
+        <div class="stack">
+          <label>Current prefix (folder)</label>
+          <input id="inp-prefix" type="text" placeholder="submissions/{uid}/" />
+          <div class="row-wrap">
+            <button id="btn-list">List</button>
+            <button id="btn-up">Go up</button>
+            <button class="ghost" id="btn-root">Root</button>
+            <span class="muted">Use forward slashes. Example: <code class="inline">submissions/USER_ID/</code></span>
+          </div>
+        </div>
+
+        <div class="stack">
+          <label>Upload / Replace file</label>
+          <input id="file-input" type="file" />
+          <div class="row-wrap">
+            <button id="btn-upload" class="success">Upload (no overwrite)</button>
+            <button id="btn-replace" class="warning">Replace (overwrite)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row-wrap">
+        <button id="btn-list-all" class="ghost">Try list entire bucket (admin)</button>
+        <button id="btn-check-admin" class="ghost">Check admin via RPC</button>
+      </div>
+
+      <div class="list" id="list"></div>
+    </section>
+  </main>
+
+  <footer>
+    Tip: For students, keep files under <code class="inline">submissions/{auth.uid()}/...</code>. Admins can access all files if your bucket policies allow it.
+  </footer>
+
+  <script type="module">
+    // CDN: supabase-js v2
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+
+    // Persistent config in localStorage
+    const store = {
+      get url()   { return localStorage.getItem("sb:url") || ""; },
+      set url(v)  { localStorage.setItem("sb:url", v || ""); },
+      get key()   { return localStorage.getItem("sb:key") || ""; },
+      set key(v)  { localStorage.setItem("sb:key", v || ""); },
+      get bucket(){ return localStorage.getItem("sb:bucket") || "assignments"; }, // Change to 'assessments' if that's your bucket
+      set bucket(v){ localStorage.setItem("sb:bucket", v || "assignments"); },
+      reset(){ localStorage.removeItem("sb:url"); localStorage.removeItem("sb:key"); localStorage.removeItem("sb:bucket"); }
+    };
+
+    // DOM helpers
+    const $ = (sel) => document.querySelector(sel);
+    const statusBar = $("#statusBar");
+    const cfgUrl = $("#cfg-url");
+    const cfgKey = $("#cfg-key");
+    const cfgBucket = $("#cfg-bucket");
+    const btnCfgSave = $("#cfg-save");
+    const btnCfgReset = $("#cfg-reset");
+
+    const authEmail = $("#auth-email");
+    const authPassword = $("#auth-password");
+    const btnSignIn = $("#btn-signin");
+    const btnSignUp = $("#btn-signup");
+    const btnMagic = $("#btn-magic");
+    const btnSignOut = $("#btn-signout");
+
+    const kvUser = $("#kv-user");
+    const kvUid = $("#kv-uid");
+    const kvAdmin = $("#kv-admin");
+    const kvPrefix = $("#kv-prefix");
+
+    const inpPrefix = $("#inp-prefix");
+    const btnList = $("#btn-list");
+    const btnUp = $("#btn-up");
+    const btnRoot = $("#btn-root");
+    const fileInput = $("#file-input");
+    const btnUpload = $("#btn-upload");
+    const btnReplace = $("#btn-replace");
+    const btnListAll = $("#btn-list-all");
+    const btnCheckAdmin = $("#btn-check-admin");
+    const listEl = $("#list");
+
+    // App state
+    let supabase = null;
+    let currentUser = null;
+    let isAdmin = false;
+
+    function setStatus(msg) { statusBar.textContent = msg; }
+    function setBusy(el, busy = true) {
+      if (!el) return;
+      el.disabled = busy;
+      if (busy) el.dataset._txt = el.textContent, el.textContent = "Working…";
+      else if (el.dataset._txt) el.textContent = el.dataset._txt, delete el.dataset._txt;
+    }
+
+    function ensureClient() {
+      if (!store.url || !store.key) {
+        setStatus("Please configure Supabase URL and Anon Key, then Save & Connect.");
+        return null;
+      }
+      if (!supabase) {
+        supabase = createClient(store.url, store.key, { auth: { persistSession: true, autoRefreshToken: true } });
+        // auth state changes
+        supabase.auth.onAuthStateChange(async () => {
+          await refreshSession();
+        });
+      }
+      return supabase;
+    }
+
+    function hydrateConfigUI() {
+      cfgUrl.value = store.url;
+      cfgKey.value = store.key;
+      cfgBucket.value = store.bucket;
+    }
+
+    async function refreshSession() {
+      if (!ensureClient()) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUser = session?.user || null;
+
+      kvUser.textContent = currentUser?.email || "—";
+      kvUid.textContent = currentUser?.id || "—";
+      btnSignOut.disabled = !currentUser;
+
+      // Default prefix for students
+      const defaultPrefix = currentUser ? `submissions/${currentUser.id}/` : "";
+      inpPrefix.value = inpPrefix.value || defaultPrefix;
+      kvPrefix.textContent = inpPrefix.value || "—";
+
+      // Try checking admin via RPC first; if it fails, we'll infer later
+      isAdmin = false;
+      if (currentUser) {
+        try {
+          const { data, error } = await supabase.rpc("is_admin", { uid: currentUser.id });
+          if (!error && typeof data === "boolean") isAdmin = data;
+        } catch (e) {
+          // ignore; function might be protected by RLS
+        }
+      }
+      kvAdmin.textContent = isAdmin ? "true" : "false";
+
+      setStatus(currentUser ? `Signed in as ${currentUser.email}` : "Not signed in");
+    }
+
+    function joinPath(prefix, name) {
+      if (!prefix) return name;
+      return prefix.endsWith("/") ? prefix + name : prefix + "/" + name;
+    }
+
+    function renderList(prefix, entries = []) {
+      const parts = [];
+      if (!entries.length) {
+        parts.push(`<div class="muted">No entries.</div>`);
+      } else {
+        for (const e of entries) {
+          const isFolder = e.id === null && !e.metadata?.size; // heuristics for supabase-js list
+          const fullPath = joinPath(prefix, e.name);
+          const when = e.updated_at || e.created_at || "";
+          const size = e.metadata?.size ? `${e.metadata.size} B` : "";
+          parts.push(`
+            <div class="item">
+              <div>
+                <div class="path">${fullPath} ${isFolder ? '<span class="badge">folder</span>' : ''}</div>
+                <div class="muted" style="font-size:12px">${size} ${when ? "• " + new Date(when).toLocaleString() : ""}</div>
+              </div>
+              <div class="row-wrap">
+                ${isFolder ? `
+                  <button class="ghost" data-action="enter" data-path="${fullPath}">Open</button>
+                ` : `
+                  <button class="ghost" data-action="signed" data-path="${fullPath}">Signed URL</button>
+                  <button class="warning" data-action="replace-one" data-path="${fullPath}">Replace</button>
+                  <button class="danger" data-action="delete" data-path="${fullPath}">Delete</button>
+                `}
+              </div>
+            </div>
+          `);
+        }
+      }
+      listEl.innerHTML = parts.join("");
+      listEl.querySelectorAll("button").forEach(btn => btn.addEventListener("click", onListAction));
+    }
+
+    async function onListAction(ev) {
+      const btn = ev.currentTarget;
+      const action = btn.dataset.action;
+      const path = btn.dataset.path;
+      if (!ensureClient()) return;
+
+      if (action === "enter") {
+        inpPrefix.value = path.endsWith("/") ? path : path + "/";
+        kvPrefix.textContent = inpPrefix.value;
+        await listPrefix();
+        return;
+      }
+
+      if (action === "signed") {
+        setBusy(btn, true);
+        try {
+          const { data, error } = await supabase.storage.from(store.bucket).createSignedUrl(path, 300);
+          if (error) throw error;
+          const url = data?.signedUrl;
+          if (url) window.open(url, "_blank", "noopener");
+        } catch (e) {
+          alert("Signed URL failed: " + (e?.message || e));
+        } finally {
+          setBusy(btn, false);
+        }
+        return;
+      }
+
+      if (action === "replace-one") {
+        const file = await pickFile();
+        if (!file) return;
+        setBusy(btn, true);
+        try {
+          const { error } = await supabase.storage.from(store.bucket).upload(path, file, { upsert: true });
+          if (error) throw error;
+          await listPrefix();
+        } catch (e) {
+          alert("Replace failed: " + (e?.message || e));
+        } finally {
+          setBusy(btn, false);
+        }
+        return;
+      }
+
+      if (action === "delete") {
+        if (!confirm(`Delete ${path}?`)) return;
+        setBusy(btn, true);
+        try {
+          const { error } = await supabase.storage.from(store.bucket).remove([path]);
+          if (error) throw error;
+          await listPrefix();
+        } catch (e) {
+          alert("Delete failed: " + (e?.message || e));
+        } finally {
+          setBusy(btn, false);
+        }
+        return;
+      }
+    }
+
+    async function listPrefix(prefix = inpPrefix.value.trim()) {
+      if (!ensureClient()) return;
+      if (!prefix) {
+        alert("Prefix is empty.");
+        return;
+      }
+      setStatus("Listing…");
+      setBusy(btnList, true);
+      try {
+        const { data, error } = await supabase.storage.from(store.bucket).list(prefix, { limit: 100, sortBy: { column: "name", order: "asc" } });
+        if (error) throw error;
+        renderList(prefix, data || []);
+        setStatus("Listed.");
+      } catch (e) {
+        renderList(prefix, []);
+        setStatus("List failed.");
+        alert("List failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnList, false);
+      }
+    }
+
+    function dirname(path) {
+      if (!path) return "";
+      const p = path.endsWith("/") ? path.slice(0, -1) : path;
+      const idx = p.lastIndexOf("/");
+      if (idx <= 0) return "";
+      return p.slice(0, idx + 1);
+    }
+
+    function pickFile() {
+      return new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.onchange = () => resolve(input.files?.[0] || null);
+        input.click();
+      });
+    }
+
+    async function uploadCurrent({ upsert = false } = {}) {
+      if (!ensureClient()) return;
+      const file = fileInput.files?.[0];
+      const prefix = inpPrefix.value.trim();
+      if (!file) { alert("Choose a file first."); return; }
+      if (!prefix) { alert("Set a prefix first."); return; }
+      setStatus(upsert ? "Replacing…" : "Uploading…");
+      setBusy(upsert ? btnReplace : btnUpload, true);
+      const path = joinPath(prefix, file.name);
+      try {
+        const { error } = await supabase.storage.from(store.bucket).upload(path, file, { upsert });
+        if (error) throw error;
+        await listPrefix(prefix);
+        setStatus(upsert ? "Replaced." : "Uploaded.");
+      } catch (e) {
+        setStatus("Upload failed.");
+        alert("Upload failed: " + (e?.message || e));
+      } finally {
+        setBusy(upsert ? btnReplace : btnUpload, false);
+      }
+    }
+
+    async function tryListAll() {
+      if (!ensureClient()) return;
+      setBusy(btnListAll, true);
+      try {
+        const { data, error } = await supabase.storage.from(store.bucket).list("", { limit: 50, sortBy: { column: "name", order: "asc" } });
+        if (error) throw error;
+        renderList("", data || []);
+        setStatus("Listed bucket root (admin policy required).");
+      } catch (e) {
+        setStatus("List-all failed (likely due to RLS).");
+        alert("List-all failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnListAll, false);
+      }
+    }
+
+    async function checkAdminRpc() {
+      if (!ensureClient()) return;
+      if (!currentUser) { alert("Sign in first."); return; }
+      setBusy(btnCheckAdmin, true);
+      try {
+        const { data, error } = await supabase.rpc("is_admin", { uid: currentUser.id });
+        if (error) throw error;
+        isAdmin = !!data;
+        kvAdmin.textContent = isAdmin ? "true" : "false";
+        alert("is_admin: " + isAdmin);
+      } catch (e) {
+        alert("RPC failed (ensure public.is_admin exists and is callable): " + (e?.message || e));
+      } finally {
+        setBusy(btnCheckAdmin, false);
+      }
+    }
+
+    // Wire up UI
+    btnCfgSave.addEventListener("click", async () => {
+      store.url = cfgUrl.value.trim();
+      store.key = cfgKey.value.trim();
+      store.bucket = (cfgBucket.value.trim() || "assignments");
+      supabase = null; // re-init client with new config
+      ensureClient();
+      await refreshSession();
+      setStatus("Configuration saved.");
+    });
+
+    btnCfgReset.addEventListener("click", async () => {
+      store.reset();
+      hydrateConfigUI();
+      supabase = null;
+      setStatus("Reset. Enter config and connect.");
+    });
+
+    btnSignIn.addEventListener("click", async () => {
+      if (!ensureClient()) return;
+      setBusy(btnSignIn, true);
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.value.trim(),
+          password: authPassword.value
+        });
+        if (error) throw error;
+        await refreshSession();
+      } catch (e) {
+        alert("Sign in failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnSignIn, false);
+      }
+    });
+
+    btnSignUp.addEventListener("click", async () => {
+      if (!ensureClient()) return;
+      setBusy(btnSignUp, true);
+      try {
+        const { error } = await supabase.auth.signUp({
+          email: authEmail.value.trim(),
+          password: authPassword.value
+        });
+        if (error) throw error;
+        alert("Sign up successful. Check your inbox for verification email (if enabled), then sign in.");
+      } catch (e) {
+        alert("Sign up failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnSignUp, false);
+      }
+    });
+
+    btnMagic.addEventListener("click", async () => {
+      if (!ensureClient()) return;
+      setBusy(btnMagic, true);
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: authEmail.value.trim(),
+          options: { emailRedirectTo: window.location.href }
+        });
+        if (error) throw error;
+        alert("Magic link sent. Check your email.");
+      } catch (e) {
+        alert("Magic link failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnMagic, false);
+      }
+    });
+
+    btnSignOut.addEventListener("click", async () => {
+      if (!ensureClient()) return;
+      setBusy(btnSignOut, true);
+      try {
+        await supabase.auth.signOut();
+        await refreshSession();
+      } catch (e) {
+        alert("Sign out failed: " + (e?.message || e));
+      } finally {
+        setBusy(btnSignOut, false);
+      }
+    });
+
+    btnList.addEventListener("click", () => listPrefix());
+    btnUp.addEventListener("click", async () => {
+      const up = dirname(inpPrefix.value.trim());
+      if (!up) return;
+      inpPrefix.value = up;
+      kvPrefix.textContent = inpPrefix.value;
+      await listPrefix();
+    });
+    btnRoot.addEventListener("click", async () => {
+      inpPrefix.value = "";
+      kvPrefix.textContent = inpPrefix.value;
+      await listPrefix("");
+    });
+
+    btnUpload.addEventListener("click", () => uploadCurrent({ upsert: false }));
+    btnReplace.addEventListener("click", () => uploadCurrent({ upsert: true }));
+    btnListAll.addEventListener("click", () => tryListAll());
+    btnCheckAdmin.addEventListener("click", () => checkAdminRpc());
+
+    // Init on load
+    (async function init() {
+      hydrateConfigUI();
+      ensureClient();
+      await refreshSession();
+      setStatus("Ready.");
+    })();
+  </script>
+</body>
+</html>
