@@ -131,7 +131,7 @@
         <a href="index.html">Home</a>
         <a href="experiments.html">Experiments</a>
         <a id="assessment-tab" href="assessments.html">Assessments</a>
-        <a id="results-tab" href="result.html" style="display:none;">Results</a>
+        <a id="results-tab" href="results.html" style="display:none;">Results</a>
         <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
         <a href="references.html">References</a>
         <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
@@ -218,7 +218,7 @@
       const welcomeAdmin = document.getElementById('dashboard-welcome-admin');
       const welcomeStudent = document.getElementById('dashboard-welcome-student');
       const assessmentTab = document.getElementById('assessment-tab');
-      const resultsTab = document.getElementById('results-tab'); // NEW
+      const resultsTab = document.getElementById('results-tab'); // Results link
 
       // Avatar elements
       const avatarCard = document.getElementById('avatar-card');
@@ -334,7 +334,7 @@
           // Save storage path (NOT a public URL) to profile
           const { error: updErr } = await sb
             .from('profiles')
-          .update({ avatar_path: filePath })
+            .update({ avatar_path: filePath })
             .eq('id', userId);
 
           if (updErr) {
@@ -462,12 +462,24 @@
         });
       }
 
-      // Logout handler
+      // Hardened Logout handler (fixes "stuck session" on some browsers)
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
           e.preventDefault();
-          try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
-          window.location.href = 'index.html';
+          try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { console.warn('global signOut error:', err); }
+          try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { console.warn('local signOut error:', err); }
+          try {
+            for (const k of Object.keys(localStorage)) {
+              const key = k.toLowerCase();
+              if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
+            }
+            for (const k of Object.keys(sessionStorage)) {
+              const key = k.toLowerCase();
+              if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
+            }
+          } catch (e2) { console.warn('storage cleanup error:', e2); }
+          try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
+          window.location.replace('index.html');
         });
       }
     });
