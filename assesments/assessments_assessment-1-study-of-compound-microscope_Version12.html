@@ -24,6 +24,7 @@
     .assignment-upload input[type="file"] { margin-top: 0.5em; }
     .assignment-status { font-size: 1em; margin-top: 0.5em; color: #388e3c; }
     @media (max-width: 600px) { .container { padding: 1rem; } }
+    .note { font-size: 0.9em; color: #6a1b9a; margin-bottom: 0.5rem; }
   </style>
   <!-- Supabase for authentication, storage, and database -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -38,6 +39,7 @@
     </nav>
   </header>
   <div class="container">
+    <div id="debugStatus" class="note"></div>
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
         <h2>Student Information</h2>
@@ -79,11 +81,27 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // ---------- Constants and Supabase client ----------
-      const sb = window.supabase.createClient(
-        'https://hunlistfklwvpivfjmbk.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-      );
+      const debugStatus = document.getElementById('debugStatus');
+
+      // ---------- Supabase availability (don't block rendering if unavailable) ----------
+      let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
+      let sb = null;
+      if (!supabaseAvailable) {
+        debugStatus.textContent = 'Note: Supabase library not loaded yet. Questions will show; profile autofill and upload will run when online.';
+      } else {
+        try {
+          sb = window.supabase.createClient(
+            'https://hunlistfklwvpivfjmbk.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+          );
+        } catch (e) {
+          console.warn('Supabase init failed:', e);
+          supabaseAvailable = false;
+          debugStatus.textContent = 'Note: Supabase init failed. Questions will show, but profile autofill and upload are disabled.';
+        }
+      }
+
+      // ---------- Constants ----------
       const EXPERIMENT_ID = 'assessment-1-study-of-compound-microscope';
       const ASSESSMENT_TITLE = 'Study of Compound Microscope';
       const ASSIGNMENT_BUCKET = 'assignments';
@@ -111,151 +129,28 @@
 
       // ---------- Assessment Questions Data ----------
       const questions = [
-        {
-          type: "mcq",
-          text: "1. Which part of the compound microscope connects the base to the body tube?",
-          options: ["Arm", "Stage", "Pillar", "Draw tube"],
-          answer: "Arm"
-        },
-        {
-          type: "mcq",
-          text: "2. The function of the diaphragm in a compound microscope is to:",
-          options: [
-            "Magnify the image",
-            "Adjust the amount of light passing through the specimen",
-            "Hold the slide in place",
-            "Focus the image"
-          ],
-          answer: "Adjust the amount of light passing through the specimen"
-        },
-        {
-          type: "mcq",
-          text: "3. Which lens offers the highest magnification in a compound microscope?",
-          options: [
-            "Low power objective",
-            "High power objective",
-            "Oil immersion objective",
-            "Eyepiece lens"
-          ],
-          answer: "Oil immersion objective"
-        },
-        {
-          type: "mcq",
-          text: "4. Which adjustment knob is used for precise focusing?",
-          options: [
-            "Coarse adjustment",
-            "Fine adjustment",
-            "Stage adjustment",
-            "Condenser adjustment"
-          ],
-          answer: "Fine adjustment"
-        },
-        {
-          type: "dropdown",
-          text: "5. Name the lens through which you observe the specimen in a microscope.",
-          options: [
-            "Eyepiece lens",
-            "Objective lens",
-            "Mirror",
-            "Stage"
-          ],
-          answer: "Eyepiece lens"
-        },
-        {
-          type: "dropdown",
-          text: "6. What is the recommended material for cleaning microscope lenses?",
-          options: [
-            "Lens paper",
-            "Tissue paper",
-            "Cloth",
-            "Hands"
-          ],
-          answer: "Lens paper"
-        },
-        {
-          type: "dropdown",
-          text: "7. Which mirror is used when the light source is weak?",
-          options: [
-            "Concave mirror",
-            "Plane mirror",
-            "Convex mirror",
-            "No mirror"
-          ],
-          answer: "Concave mirror"
-        },
-        {
-          type: "dropdown",
-          text: "8. What is the usual magnification power of a standard eyepiece lens?",
-          options: [
-            "10x",
-            "5x",
-            "40x",
-            "100x"
-          ],
-          answer: "10x"
-        },
-        {
-          type: "image-labels",
-          text: "9. Identify the labelled parts of the microscope in the image below.",
-          image: "../assets/images/experiment-1/Assessment/labelquestion.jpg",
+        { type: "mcq", text: "1. Which part of the compound microscope connects the base to the body tube?", options: ["Arm","Stage","Pillar","Draw tube"], answer: "Arm" },
+        { type: "mcq", text: "2. The function of the diaphragm in a compound microscope is to:", options: ["Magnify the image","Adjust the amount of light passing through the specimen","Hold the slide in place","Focus the image"], answer: "Adjust the amount of light passing through the specimen" },
+        { type: "mcq", text: "3. Which lens offers the highest magnification in a compound microscope?", options: ["Low power objective","High power objective","Oil immersion objective","Eyepiece lens"], answer: "Oil immersion objective" },
+        { type: "mcq", text: "4. Which adjustment knob is used for precise focusing?", options: ["Coarse adjustment","Fine adjustment","Stage adjustment","Condenser adjustment"], answer: "Fine adjustment" },
+        { type: "dropdown", text: "5. Name the lens through which you observe the specimen in a microscope.", options: ["Eyepiece lens","Objective lens","Mirror","Stage"], answer: "Eyepiece lens" },
+        { type: "dropdown", text: "6. What is the recommended material for cleaning microscope lenses?", options: ["Lens paper","Tissue paper","Cloth","Hands"], answer: "Lens paper" },
+        { type: "dropdown", text: "7. Which mirror is used when the light source is weak?", options: ["Concave mirror","Plane mirror","Convex mirror","No mirror"], answer: "Concave mirror" },
+        { type: "dropdown", text: "8. What is the usual magnification power of a standard eyepiece lens?", options: ["10x","5x","40x","100x"], answer: "10x" },
+        { type: "image-labels", text: "9. Identify the labelled parts of the microscope in the image below.", image: "../assets/images/experiment-1/Assessment/labelquestion.jpg",
           labels: [
-            {
-              name: "1",
-              answer: "Eye Piece",
-              options: [
-                "Eye Piece",
-                "Objective Lens",
-                "Fine adjustment Screw",
-                "Condenser",
-                "Stage"
-              ]
-            },
-            {
-              name: "2",
-              answer: "Objective Lens",
-              options: [
-                "Objective Lens",
-                "Eye Piece",
-                "Mirror",
-                "Condenser",
-                "Base"
-              ]
-            },
-            {
-              name: "3",
-              answer: "Condenser",
-              options: [
-                "Condenser",
-                "Stage",
-                "Objective Lens",
-                "Base",
-                "Fine adjustment Screw"
-              ]
-            },
-            {
-              name: "4",
-              answer: "Fine adjustment Screw",
-              options: [
-                "Fine adjustment Screw",
-                "Coarse adjustment",
-                "Mirror",
-                "Arm",
-                "Condenser"
-              ]
-            }
+            { name: "1", answer: "Eye Piece", options: ["Eye Piece","Objective Lens","Fine adjustment Screw","Condenser","Stage"] },
+            { name: "2", answer: "Objective Lens", options: ["Objective Lens","Eye Piece","Mirror","Condenser","Base"] },
+            { name: "3", answer: "Condenser", options: ["Condenser","Stage","Objective Lens","Base","Fine adjustment Screw"] },
+            { name: "4", answer: "Fine adjustment Screw", options: ["Fine adjustment Screw","Coarse adjustment","Mirror","Arm","Condenser"] }
           ]
         },
-        {
-          type: "mcq",
-          text: "10. Which of the following statements is NOT true?",
-          options: [
-            "When focusing the slide, care should be taken not to crack the glass slide",
-            "The slide should be placed on the stage with the cover slip on the upper surface",
-            "When setting up, adjust the eye pieces to the dimension of your eyes",
-            "Always view your specimen using the highest magnification lens first"
-          ],
-          answer: "Always view your specimen using the highest magnification lens first"
-        }
+        { type: "mcq", text: "10. Which of the following statements is NOT true?", options: [
+          "When focusing the slide, care should be taken not to crack the glass slide",
+          "The slide should be placed on the stage with the cover slip on the upper surface",
+          "When setting up, adjust the eye pieces to the dimension of your eyes",
+          "Always view your specimen using the highest magnification lens first"
+        ], answer: "Always view your specimen using the highest magnification lens first" }
       ];
 
       // Shuffle options on load
@@ -264,30 +159,26 @@
         if (q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
       });
 
-      // ---------- Render Questions ----------
+      // ---------- Render Questions (always runs) ----------
       function renderQuestions() {
         const questionsSection = document.getElementById("questionsSection");
         questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
         questions.forEach((q, idx) => {
           let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-          if(q.type === "mcq") {
+          if (q.type === "mcq") {
             q.options.forEach((opt) => {
-              html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+              html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
             });
-          } else if(q.type === "dropdown") {
+          } else if (q.type === "dropdown") {
             html += `<select name="q${idx}" required><option value="">Select...</option>`;
-            q.options.forEach(opt => {
-              html += `<option value="${opt}">${opt}</option>`;
-            });
+            q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
             html += `</select>`;
-          } else if(q.type === "image-labels") {
+          } else if (q.type === "image-labels") {
             html += `<img src="${q.image}" alt="Labelled microscope diagram" style="max-width:400px; display:block; margin-bottom:1em;"><br>`;
             q.labels.forEach((label, lid) => {
               html += `<label>Label ${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
               html += `<option value="">Select...</option>`;
-              label.options.forEach(opt => {
-                html += `<option value="${opt}">${opt}</option>`;
-              });
+              label.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
               html += `</select><br>`;
             });
           }
@@ -295,16 +186,15 @@
           questionsSection.innerHTML += html;
         });
       }
+      renderQuestions();
 
       // ---------- Auto-fill Student Information from Supabase profile ----------
       async function autofillFromProfile() {
+        if (!supabaseAvailable || !sb) return;
         try {
           const { data: { session }, error: sessErr } = await sb.auth.getSession();
           if (sessErr) console.warn('getSession error:', sessErr);
-          if (!session?.user) {
-            console.info('No session found; autofill skipped.');
-            return;
-          }
+          if (!session?.user) return;
 
           const uid = session.user.id;
           const { data: profile, error } = await sb
@@ -331,19 +221,18 @@
           if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
           if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
           if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
-          if (batchEl && !batchEl.value && profile.batch) {
-            ensureOption(batchEl, String(profile.batch));
-          }
+          if (batchEl && !batchEl.value && profile.batch) ensureOption(batchEl, String(profile.batch));
           if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
         } catch (e) {
           console.warn('autofillFromProfile error:', e);
         }
       }
-
-      // React to auth state changes (e.g., user logs in elsewhere)
-      sb.auth.onAuthStateChange((_evt, _session) => {
+      if (supabaseAvailable && sb) {
+        sb.auth.onAuthStateChange((_evt, _session) => {
+          autofillFromProfile();
+        });
         autofillFromProfile();
-      });
+      }
 
       // ---------- Assignment Upload (PDF only) ----------
       let uploadedAssignmentUrl = null;
@@ -351,13 +240,18 @@
       let uploadingAssignment = false;
 
       document.getElementById('assignmentFile').addEventListener('change', async function(e) {
-        const file = e.target.files[0];
         const statusEl = document.getElementById('assignmentStatus');
+        const file = e.target.files[0];
         uploadedAssignmentUrl = null;
         uploadedAssignmentPath = null;
         statusEl.textContent = '';
 
         if (!file) return;
+        if (!supabaseAvailable || !sb) {
+          statusEl.textContent = 'Supabase not available in preview. Upload disabled.';
+          e.target.value = '';
+          return;
+        }
 
         const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
         if (!isPdf) {
@@ -397,10 +291,6 @@
         uploadingAssignment = false;
       });
 
-      // ---------- Render and Autofill ----------
-      renderQuestions();
-      autofillFromProfile();
-
       // ---------- Submission Handler ----------
       document.getElementById("assessmentForm").onsubmit = async function(e) {
         e.preventDefault();
@@ -410,27 +300,27 @@
         const form = e.target;
         let allAnswered = true;
         let answers = [];
-        for(let i=0; i<questions.length; i++) {
+        for (let i = 0; i < questions.length; i++) {
           let val;
-          if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
+          if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
             val = form[`q${i}`]?.value?.trim() || "";
-            if(val === "") allAnswered = false;
+            if (val === "") allAnswered = false;
             answers.push(val);
-          } else if(questions[i].type === "image-labels") {
+          } else if (questions[i].type === "image-labels") {
             let labelAnswers = [];
-            for(let lid=0; lid<questions[i].labels.length; lid++) {
+            for (let lid = 0; lid < questions[i].labels.length; lid++) {
               let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
-              if(v === "") allAnswered = false;
+              if (v === "") allAnswered = false;
               labelAnswers.push(v);
             }
             answers.push(labelAnswers.join("; "));
           }
         }
-        if(!allAnswered) {
+        if (!allAnswered) {
           document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
           return;
         }
-        if(!form.declaration.checked) {
+        if (!form.declaration.checked) {
           document.getElementById("errorMsg").textContent = "You must agree to the declaration to submit.";
           return;
         }
@@ -443,13 +333,13 @@
 
         // Calculate marks
         let marks = 0;
-        for(let i=0; i<questions.length; i++) {
-          if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-            if(answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
-          } else if(questions[i].type === "image-labels") {
+        for (let i = 0; i < questions.length; i++) {
+          if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
+            if (answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
+          } else if (questions[i].type === "image-labels") {
             const input = answers[i].split(";").map(s => s.trim());
             questions[i].labels.forEach((label, lid) => {
-              if(input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
+              if (input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
             });
           }
         }
@@ -512,6 +402,11 @@
         document.getElementById("submitBtn").disabled = true;
 
         // ---------- Supabase Save ----------
+        if (!supabaseAvailable || !sb) {
+          alert('Supabase is not available in this preview. Your answers were recorded to Google Sheet, but result cannot be saved to the portal.');
+          return;
+        }
+
         const { data: { session } } = await sb.auth.getSession();
         if (!session?.user) {
           alert('Please log in to save your result.');
@@ -525,46 +420,37 @@
         for (let i = 0; i < questions.length; i++) {
           const q = questions[i];
           if (q.type === "mcq" || q.type === "dropdown") {
-            detail.push({
-              question: q.text,
-              type: q.type,
-              answer: answers[i],
-              correct: q.answer,
-              isCorrect: answers[i].toLowerCase() === q.answer.toLowerCase()
-            });
+            detail.push({ question: q.text, type: q.type, answer: answers[i], correct: q.answer, isCorrect: answers[i].toLowerCase() === q.answer.toLowerCase() });
           } else if (q.type === "image-labels") {
             const input = answers[i].split(";").map(s => s.trim());
             q.labels.forEach((label, lid) => {
-              detail.push({
-                question: `${q.text} (Label ${label.name})`,
-                type: "image-label",
-                answer: input[lid],
-                correct: label.answer,
-                isCorrect: input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()
-              });
+              detail.push({ question: `${q.text} (Label ${label.name})`, type: "image-label", answer: input[lid], correct: label.answer, isCorrect: input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase() });
             });
           }
         }
-        detail.push({
-          type: "meta",
-          assignment: { bucket: ASSIGNMENT_BUCKET, path: uploadedAssignmentPath, publicUrl: uploadedAssignmentUrl || null }
-        });
+        detail.push({ type: "meta", assignment: { bucket: ASSIGNMENT_BUCKET, path: uploadedAssignmentPath, publicUrl: uploadedAssignmentUrl || null } });
 
         const durationSec = Math.round((Date.now() - pageStartTime) / 1000);
+
         const row = {
           user_id: uid,
           user_name: document.getElementById('studentName').value.trim(),
-          email: document.getElementById('emailId').value.trim(),
-          prn: document.getElementById('prnNumber').value.trim(),
-          batch: document.getElementById('batchNumber').value.trim(),
           experiment_id: EXPERIMENT_ID,
-          assessment_title: ASSESSMENT_TITLE,
           score: marks,
           total: maxMarks,
-          percent: maxMarks ? (marks / maxMarks) * 100 : 0,
+          percentage: maxMarks ? (marks / maxMarks) * 100 : 0,
           submitted_at: new Date().toISOString(),
           duration_sec: durationSec,
-          detail
+          breakdown: detail,
+          meta: {
+            email: document.getElementById('emailId').value.trim(),
+            prn: document.getElementById('prnNumber').value.trim(),
+            batch: document.getElementById('batchNumber').value.trim(),
+            assessment_title: ASSESSMENT_TITLE,
+            school_name: document.getElementById('schoolName').value.trim()
+          },
+          assignment_bucket: ASSIGNMENT_BUCKET,
+          assignment_path: uploadedAssignmentPath
         };
 
         const { error } = await sb.from('assessment_results').insert(row);
