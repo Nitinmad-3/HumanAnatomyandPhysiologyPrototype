@@ -126,10 +126,15 @@
             </select>
           </div>
 
-          <!-- Student-only: PRN and Batch -->
+          <!-- Student-only: School Name, PRN and Batch -->
+          <div class="row" id="school-row">
+            <label for="school_name">School Name</label>
+            <input id="school_name" name="school_name" type="text" placeholder="Your school/institution" maxlength="120" />
+          </div>
+
           <div class="row" id="prn-row">
             <label for="prn">PRN</label>
-            <input id="prn" name="prn" type="text" placeholder="Your PRN" maxlength="32" pattern="[A-Za-z0-9\\-/]{3,32}" />
+            <input id="prn" name="prn" type="text" placeholder="Your PRN" maxlength="32" pattern="[A-Za-z0-9\\-/ ]{3,32}" />
           </div>
 
           <div class="row" id="batch-row">
@@ -180,6 +185,9 @@
       const departmentRow = document.getElementById('department-row');
       const departmentEl = document.getElementById('department');
 
+      const schoolRow = document.getElementById('school-row');
+      const schoolEl = document.getElementById('school_name');
+
       const prnRow = document.getElementById('prn-row');
       const batchRow = document.getElementById('batch-row');
       const prnEl = document.getElementById('prn');
@@ -229,16 +237,19 @@
       function toggleFieldsForRole(role) {
         const isAdmin = (role || '').toLowerCase() === 'admin';
         if (departmentRow) departmentRow.style.display = isAdmin ? '' : 'none';
+        if (schoolRow) schoolRow.style.display = isAdmin ? 'none' : '';
         if (prnRow) prnRow.style.display = isAdmin ? 'none' : '';
         if (batchRow) batchRow.style.display = isAdmin ? 'none' : '';
         if (prnEl) prnEl.required = !isAdmin;
         if (batchEl) batchEl.required = !isAdmin;
+        if (schoolEl) schoolEl.required = !isAdmin;
         if (departmentEl) departmentEl.required = false;
       }
 
       function computeCompleteness(p) {
         const isAdmin = (p?.role || '').toLowerCase() === 'admin';
-        const fields = isAdmin ? ['name', 'email', 'role'] : ['name', 'email', 'role', 'prn', 'batch'];
+        const fields = isAdmin ? ['name', 'email', 'role']
+                               : ['name', 'email', 'role', 'school_name', 'prn', 'batch'];
         const done = fields.reduce((acc, f) => acc + (p && p[f] ? 1 : 0), 0);
         return Math.round((done / fields.length) * 100);
       }
@@ -287,6 +298,7 @@
               roleEl.value = p.role || '';
               if (!nameEl.value) nameEl.value = p.name || '';
               if (departmentEl) departmentEl.value = p.department || '';
+              if (schoolEl && !schoolEl.value) schoolEl.value = p.school_name || '';
               if (prnEl && !prnEl.value) prnEl.value = p.prn || '';
               if (batchEl && !batchEl.value) batchEl.value = p.batch || '';
               toggleFieldsForRole(p.role);
@@ -319,7 +331,7 @@
       async function ensureProfile(sb, uid, authEmail) {
         const { data: profile, error } = await sb
           .from('profiles')
-          .select('id, name, email, role, prn, batch, department, avatar_path')
+          .select('id, name, email, role, prn, batch, department, avatar_path, school_name')
           .eq('id', uid)
           .maybeSingle();
         if (error) throw error;
@@ -375,6 +387,7 @@
         nameEl.value = p.name || '';
         emailEl.value = authEmail;
         roleEl.value = p.role || '';
+        schoolEl.value = p.school_name || '';
         prnEl.value = p.prn || '';
         batchEl.value = p.batch || '';
         if (departmentEl) departmentEl.value = p.department || '';
@@ -454,17 +467,19 @@
 
         if (isAdmin) {
           payload.department = departmentEl ? (departmentEl.value || null) : null;
+          payload.school_name = null; // admins don't use school_name
           if (!payload.name) {
             show(statusWarn, 'Please fill in Name.');
             setLoading(false);
             return;
           }
         } else {
+          payload.school_name = schoolEl.value.trim();
           payload.prn = prnEl.value.trim();
           payload.batch = batchEl.value.trim();
           payload.department = null; // clear on student save
-          if (!payload.name || !payload.prn || !payload.batch) {
-            show(statusWarn, 'Please fill in Name, PRN, and Batch.');
+          if (!payload.name || !payload.school_name || !payload.prn || !payload.batch) {
+            show(statusWarn, 'Please fill in Name, School Name, PRN, and Batch.');
             setLoading(false);
             return;
           }
@@ -506,7 +521,7 @@
         const params = new URLSearchParams(window.location.search);
         const next = params.get('next') || (goNext ? 'assessments.html' : '');
         const completeNow = (data && data.name && data.email && data.role &&
-          ((data.role || '').toLowerCase() === 'admin' ? true : (data.prn && data.batch)));
+          ((data.role || '').toLowerCase() === 'admin' ? true : (data.prn && data.batch && data.school_name)));
 
         if (completeNow && next) {
           setTimeout(() => { window.location.href = next; }, 700);
@@ -611,7 +626,7 @@
       let pristineSnapshot = '';
       function snapshot() {
         return [
-          nameEl.value, emailEl.value, roleEl.value, prnEl.value, batchEl.value, (departmentEl ? departmentEl.value : ''),
+          nameEl.value, emailEl.value, roleEl.value, schoolEl.value, prnEl.value, batchEl.value, (departmentEl ? departmentEl.value : ''),
           selectedFile ? selectedFile.name : ''
         ].join('|');
       }
