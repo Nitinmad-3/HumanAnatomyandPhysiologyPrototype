@@ -178,11 +178,23 @@
             });
           }
 
-          // Logout handler
+          // Hardened Logout handler (Edge "stuck session" safe)
           if (logoutBtn) {
             logoutBtn.onclick = async (e) => {
               e.preventDefault();
-              try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+              try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { console.warn('global signOut error:', err); }
+              try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { console.warn('local signOut error:', err); }
+              try {
+                for (const k of Object.keys(localStorage)) {
+                  const key = k.toLowerCase();
+                  if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
+                }
+                for (const k of Object.keys(sessionStorage)) {
+                  const key = k.toLowerCase();
+                  if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
+                }
+              } catch (e2) { console.warn('storage cleanup error:', e2); }
+              try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
               setState('loggedOut');
               window.location.href = 'index.html';
             };
