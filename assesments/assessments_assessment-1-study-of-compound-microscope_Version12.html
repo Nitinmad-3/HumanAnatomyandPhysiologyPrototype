@@ -83,7 +83,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       const debugStatus = document.getElementById('debugStatus');
 
-      // ---------- Supabase availability (don't block rendering if unavailable) ----------
+      // ---------- Supabase availability ----------
       let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
       let sb = null;
       if (!supabaseAvailable) {
@@ -159,7 +159,7 @@
         if (q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
       });
 
-      // ---------- Render Questions (always runs) ----------
+      // ---------- Render Questions ----------
       function renderQuestions() {
         const questionsSection = document.getElementById("questionsSection");
         questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
@@ -432,13 +432,13 @@
 
         const durationSec = Math.round((Date.now() - pageStartTime) / 1000);
 
+        // ---------- IMPORTANT: DO NOT SEND 'percentage' ----------
         const row = {
           user_id: uid,
           user_name: document.getElementById('studentName').value.trim(),
           experiment_id: EXPERIMENT_ID,
           score: marks,
           total: maxMarks,
-          percentage: maxMarks ? (marks / maxMarks) * 100 : 0,
           submitted_at: new Date().toISOString(),
           duration_sec: durationSec,
           breakdown: detail,
