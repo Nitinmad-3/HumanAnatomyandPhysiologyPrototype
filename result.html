@@ -286,6 +286,10 @@
 
       await loadExperiments();
 
+      // Auto-select experiment from URL like ?exp=ABC123
+      const urlExp = new URLSearchParams(location.search).get('exp');
+      if (urlExp) filterExperiment.value = urlExp;
+
       btnApply.addEventListener('click', () => applyFilters());
       btnReset.addEventListener('click', () => {
         filterExperiment.value = '';
