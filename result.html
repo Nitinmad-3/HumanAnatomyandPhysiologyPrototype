@@ -33,12 +33,17 @@
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; font-weight:600; }
     .assignment-link { color: #0d47a1; text-decoration: underline; }
     .assignment-mark-btn { color: #fff; background: #43a047; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
-    .mark-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.2); justify-content: center; align-items: center; z-index: 99;}
-    .mark-modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 350px; }
-    .mark-modal input { width: 80px; margin-right: 12px;}
+    .assignment-edit-btn { color: #fff; background: #fbc02d; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+    .assignment-reupload-btn { color: #fff; background: #1976d2; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+    .assignment-reupload-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
     .feedback-correct { color: #388e3c; }
     .feedback-wrong { color: #d32f2f; }
     .feedback-explanation { color: #6a1b9a; font-size: 0.98em; }
+    .details-btn { color: #fff; background: #1565c0; border:none; border-radius:5px; padding:6px 10px; cursor:pointer;}
+    .details-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    .modal-bg { display:none; position:fixed; top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);justify-content:center;align-items:center;z-index:99;}
+    .modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 600px; max-height: 80vh; overflow:auto;}
+    .close-modal-btn { float:right; background:#cfe0ff; color:#1565c0; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; margin-left:8px;}
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -53,7 +58,6 @@
   </header>
 
   <main>
-    <!-- Student summary -->
     <section id="student-summary" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Your performance summary</div>
@@ -65,8 +69,6 @@
         <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
     </section>
-
-    <!-- Filters -->
     <section id="filters" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Filters</div>
@@ -92,8 +94,6 @@
         <button id="reset" class="btn ghost">Reset</button>
       </div>
     </section>
-
-    <!-- Results table -->
     <section class="panel">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Results</div>
@@ -113,38 +113,60 @@
               <th>Submitted</th>
               <th>Duration</th>
               <th>Assignment (PDF)</th>
-              <th>Admin Mark</th>
+              <th>Marks</th>
+              <th>Details</th>
+              <th>Reupload Assignment</th>
+              <th>Edit</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="10" class="muted">Loading…</td></tr>
+            <tr><td colspan="13" class="muted">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </section>
-
     <section id="legend" class="panel">
-      <div class="muted">Tip: Click “Details” where available to view per-question breakdown.</div>
+      <div class="muted">Tip: Click “Details” for per-question breakdown, and “Reupload” to change assignment if allowed.</div>
     </section>
   </main>
 
-  <!-- Mark Assignment Modal (stub for backend integration) -->
-  <div id="markModal" class="mark-modal">
-    <div class="mark-modal-content">
-      <h3>Mark Assignment</h3>
-      <form id="markForm">
-        <label>Assign Marks:
-          <input type="number" id="assignMarks" min="0" max="100" required />
-        </label>
-        <button type="submit" class="btn">Save</button>
-        <button type="button" class="btn ghost" id="closeMarkModal">Cancel</button>
-      </form>
-      <div class="muted" style="margin-top:10px;">(TODO: Save marks to backend and update editability)</div>
+  <!-- Details Modal -->
+  <div id="detailsModalBg" class="modal-bg">
+    <div class="modal-content" id="detailsModalContent">
+      <button class="close-modal-btn" onclick="closeDetailsModal()">Close</button>
+      <div id="detailsModalBody"></div>
     </div>
   </div>
-
+  <!-- Edit Modal (stub for backend integration) -->
+  <div id="editModalBg" class="modal-bg">
+    <div class="modal-content" id="editModalContent">
+      <button class="close-modal-btn" onclick="closeEditModal()">Close</button>
+      <h3>Edit Assignment Editability</h3>
+      <form id="editForm">
+        <label>
+          <input type="checkbox" id="editCheckbox"> Allow student to reupload assignment
+        </label>
+        <button type="submit" class="btn">Save</button>
+      </form>
+      <div class="muted" style="margin-top:10px;">(TODO: Save editability to backend)</div>
+    </div>
+  </div>
+  <!-- Reupload Modal (student) -->
+  <div id="reuploadModalBg" class="modal-bg">
+    <div class="modal-content" id="reuploadModalContent">
+      <button class="close-modal-btn" onclick="closeReuploadModal()">Close</button>
+      <h3>Reupload Assignment</h3>
+      <form id="reuploadForm">
+        <input type="file" id="reuploadFile" accept="application/pdf" required>
+        <button type="submit" class="btn">Upload</button>
+      </form>
+      <div id="reuploadStatus" class="muted" style="margin-top:10px;"></div>
+      <div class="muted" style="margin-top:10px;">(TODO: Save new assignment PDF to backend)</div>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
+    // Supabase setup
     const sb = window.sb || (window.sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
@@ -153,13 +175,11 @@
     const $ = (s) => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
-
     const studentSummary = $('#student-summary');
     const sumAttempts = $('#sum-attempts');
     const sumAvg = $('#sum-avg');
     const sumBest = $('#sum-best');
     const sumLast = $('#sum-last');
-
     const filters = $('#filters');
     const filterExperiment = $('#filter-experiment');
     const adminSearchWrap = $('#admin-search-wrap');
@@ -168,41 +188,32 @@
     const filterBatch = $('#filter-batch');
     const btnApply = $('#apply');
     const btnReset = $('#reset');
-
     const who = $('#who');
     const tbody = $('#tbody');
     const count = $('#count');
 
+    // Modals
+    let detailsModalBg = $('#detailsModalBg');
+    let detailsModalBody = $('#detailsModalBody');
+    let editModalBg = $('#editModalBg');
+    let editCheckbox = $('#editCheckbox');
+    let editForm = $('#editForm');
+    let reuploadModalBg = $('#reuploadModalBg');
+    let reuploadStatus = $('#reuploadStatus');
+    let reuploadForm = $('#reuploadForm');
+    let reuploadFile = $('#reuploadFile');
+
+    // State
     let currentUser = null;
     let isAdmin = false;
-
-    // Modal handling
-    let markModal = $('#markModal');
-    let closeMarkModal = $('#closeMarkModal');
-    let markForm = $('#markForm');
-    let currentMarkingRowId = null; // For backend integration
+    let currentEditRow = null; // For edit modal
+    let currentReuploadRow = null; // For reupload modal
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){ if (n == null) return '—'; const v = Math.round(n * 100) / 100; return v.toFixed(2) + '%'; }
     function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
     function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
     function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
-
-    // Modal logic (stub: backend integration needed)
-    function openMarkModal(rowId) {
-      currentMarkingRowId = rowId;
-      $('#assignMarks').value = '';
-      markModal.style.display = 'flex';
-    }
-    closeMarkModal.onclick = () => {
-      markModal.style.display = 'none';
-    };
-    markForm.onsubmit = (e) => {
-      e.preventDefault();
-      // TODO: Integrate with backend to save marks and update assignment editability
-      alert('Marks assigned: ' + $('#assignMarks').value + '\n(TODO: Save to backend)');
-      markModal.style.display = 'none';
-    };
 
     async function requireLogin() {
       const { data: { session } } = await sb.auth.getSession();
@@ -213,13 +224,11 @@
       currentUser = session.user;
       return true;
     }
-
     async function getRole(userId) {
       const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
       if (error) console.warn('role error', error);
       return (data?.role || 'unknown').toString().trim().toLowerCase();
     }
-
     async function loadExperiments() {
       try {
         const { data, error } = await sb.rpc('list_experiments_for_results');
@@ -233,7 +242,6 @@
         }
       } catch (e) { console.warn('loadExperiments', e); }
     }
-
     async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
       const args = {
         exp_id: has(exp_id) ? exp_id : null,
@@ -244,7 +252,6 @@
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
-
     function renderSummaryForStudent(rows) {
       const attempts = rows.length;
       const percents = rows.map(r => Number(r.percent)).filter(n => !Number.isNaN(n));
@@ -258,8 +265,7 @@
       sumLast.textContent = fmtDate(last);
       studentSummary.style.display = 'block';
     }
-
-    // Use explanations if available from your assessment (stub: you can expand this object)
+    // Explanations for questions (stub, expand as needed)
     const questionExplanations = {
       "1. Which part of the compound microscope connects the base to the body tube?": "The arm connects the base to the body tube.",
       "2. The function of the diaphragm in a compound microscope is to:": "Diaphragm adjusts the amount of light passing through the specimen.",
@@ -271,23 +277,104 @@
       "8. What is the usual magnification power of a standard eyepiece lens?": "Standard eyepiece lens is usually 10x.",
       "10. Which of the following statements is NOT true?": "Highest magnification lens should NOT be used first."
     };
+    // Details Modal logic
+    function openDetailsModal(row) {
+      detailsModalBg.style.display = "flex";
+      detailsModalBody.innerHTML = renderDetailsBreakdown(row);
+    }
+    function closeDetailsModal() {
+      detailsModalBg.style.display = "none";
+      detailsModalBody.innerHTML = "";
+    }
+    window.closeDetailsModal = closeDetailsModal;
+
+    function renderDetailsBreakdown(row) {
+      // row.breakdown is array [{question, type, answer, correct, isCorrect}]
+      if (!row.breakdown || !Array.isArray(row.breakdown)) return "<div>No breakdown data found.</div>";
+      let html = `<h3>Question Breakdown</h3>`;
+      row.breakdown.forEach((q, idx) => {
+        if (q.type === "meta") return;
+        let qText = q.question;
+        let answer = q.answer || '';
+        let correct = q.correct || '';
+        let isCorrect = q.isCorrect;
+        let explanation = questionExplanations[qText] ? `<div class="feedback-explanation">Explanation: ${questionExplanations[qText]}</div>` : '';
+        let feedbackClass = isCorrect ? "feedback-correct" : "feedback-wrong";
+        html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
+          <b>Q${idx+1}:</b> ${qText}<br>
+          <div style="margin-left:1em;">
+            <span class="${feedbackClass}">Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b></span><br>
+            ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
+          </div>
+        </div>`;
+      });
+      return html;
+    }
+    // Edit Modal logic
+    function openEditModal(row) {
+      editModalBg.style.display = "flex";
+      currentEditRow = row;
+      editCheckbox.checked = row.assignment_editable ?? false;
+    }
+    function closeEditModal() {
+      editModalBg.style.display = "none";
+      currentEditRow = null;
+    }
+    window.closeEditModal = closeEditModal;
+    editForm.onsubmit = (e) => {
+      e.preventDefault();
+      // TODO: Save currentEditRow.assignment_editable = editCheckbox.checked to backend
+      alert('Assignment editability set to: ' + editCheckbox.checked + '\n(TODO: Save to backend)');
+      closeEditModal();
+    };
+    // Reupload Modal logic (student)
+    function openReuploadModal(row) {
+      reuploadModalBg.style.display = "flex";
+      currentReuploadRow = row;
+      reuploadStatus.textContent = "";
+      reuploadForm.reset();
+    }
+    function closeReuploadModal() {
+      reuploadModalBg.style.display = "none";
+      currentReuploadRow = null;
+    }
+    window.closeReuploadModal = closeReuploadModal;
+    reuploadForm.onsubmit = async (e) => {
+      e.preventDefault();
+      let file = reuploadFile.files[0];
+      if (!file) {
+        reuploadStatus.textContent = "Please select a PDF file.";
+        return;
+      }
+      if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
+        reuploadStatus.textContent = "Only PDF files allowed.";
+        return;
+      }
+      // TODO: Save file to backend, update assignment_path etc.
+      reuploadStatus.textContent = "PDF uploaded (stub; integrate backend).";
+      setTimeout(closeReuploadModal, 1000);
+    };
 
     function renderRows(rows) {
       count.textContent = rows.length;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="muted">No results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="muted">No results.</td></tr>';
         return;
       }
       const parts = [];
-      for (const r of rows) {
+      rows.forEach((r, rowIdx) => {
         const student = r.user_name || r.email || r.user_id;
         const prn = r.meta?.prn || r.prn || '—';
         const batch = r.meta?.batch || r.batch || '—';
         const scoreTxt = (r.score != null && r.total != null) ? `${r.score}/${r.total}` : (r.score ?? '—');
         const assignmentUrl = r.assignment_path ? sb.storage.from(r.assignment_bucket || "assignments").getPublicUrl(r.assignment_path).data?.publicUrl : null;
-        // TODO: Pull assignment_marks and editable status from backend when available
         const assignmentMarks = r.assignment_marks ?? '—';
         const assignmentEditable = r.assignment_editable ?? true; // Assume true if not set
+
+        // Student can reupload if assignment_editable is true and marks not assigned
+        let canReupload = assignmentEditable && (!r.assignment_marks || r.assignment_marks === '—');
+        // Admin can edit assignment_editable flag
+        let canEdit = isAdmin;
 
         parts.push(`
           <tr>
@@ -304,57 +391,24 @@
                 ? `<a href="${assignmentUrl}" target="_blank" class="assignment-link">Download</a>`
                 : '<span class="muted">Not uploaded</span>'}
             </td>
+            <td>${assignmentMarks}</td>
             <td>
-              ${
-                isAdmin && assignmentUrl
-                  ? `<button class="assignment-mark-btn" onclick="openMarkModal('${r.user_id}')">Mark Assignment</button>`
-                  : assignmentMarks
-              }
+              <button class="details-btn" onclick="window.openDetailsModalRow(${rowIdx})">Details</button>
+            </td>
+            <td>
+              <button class="assignment-reupload-btn" onclick="window.openReuploadModalRow(${rowIdx})" ${canReupload ? "" : "disabled"}>Reupload</button>
+            </td>
+            <td>
+              ${canEdit ? `<button class="assignment-edit-btn" onclick="window.openEditModalRow(${rowIdx})">Edit</button>` : ""}
             </td>
           </tr>
-          ${r.breakdown && Array.isArray(r.breakdown) ? `
-            <tr>
-              <td colspan="10">
-                <div>
-                  <b>Question Breakdown:</b><br>
-                  ${r.breakdown.map((q, idx) => {
-                    if(q.type === "meta") return '';
-                    let qText = q.question;
-                    let answer = q.answer || '';
-                    let correct = q.correct || '';
-                    let isCorrect = q.isCorrect;
-                    let explanation = questionExplanations[qText] ? `<span class="feedback-explanation">Explanation: ${questionExplanations[qText]}</span>` : '';
-                    let feedbackClass = isCorrect ? "feedback-correct" : "feedback-wrong";
-                    if (q.type === "mcq" || q.type === "dropdown") {
-                      return `
-                        <div style="margin-bottom:1em;">
-                          <b>Q${idx+1}:</b> ${qText}<br>
-                          <span class="${feedbackClass}">
-                            Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-                          </span><br>
-                          ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
-                        </div>
-                      `;
-                    } else if (q.type === "image-label") {
-                      return `
-                        <div style="margin-bottom:1em;">
-                          <b>${qText}</b><br>
-                          <span class="${feedbackClass}">
-                            Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-                          </span>
-                          ${!isCorrect ? `<span class="feedback-correct"> Correct: ${correct}</span>` : ""}
-                        </div>
-                      `;
-                    }
-                    return '';
-                  }).join('')}
-                </div>
-              </td>
-            </tr>
-          ` : ''}
         `);
-      }
+      });
       tbody.innerHTML = parts.join('');
+      // Bind modal openers after rendering
+      window.openDetailsModalRow = (rowIdx) => openDetailsModal(rows[rowIdx]);
+      window.openEditModalRow = (rowIdx) => openEditModal(rows[rowIdx]);
+      window.openReuploadModalRow = (rowIdx) => openReuploadModal(rows[rowIdx]);
     }
 
     async function applyFilters() {
@@ -369,7 +423,7 @@
         setStatus('Ready.');
       } catch (e) {
         console.error('applyFilters error', e);
-        tbody.innerHTML = '<tr><td colspan="10" class="muted">Failed to load results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
@@ -393,7 +447,6 @@
         who.textContent = 'Viewing: your attempts';
         studentSummary.style.display = 'block';
       }
-
       await loadExperiments();
 
       // Auto-select experiment from URL like ?exp=ABC123
@@ -407,12 +460,9 @@
         if (filterBatch) filterBatch.value = '';
         applyFilters();
       });
-
       await applyFilters();
       setStatus('Ready.');
     }
-
-    window.openMarkModal = openMarkModal; // so inline onclick works
 
     init();
   </script>
