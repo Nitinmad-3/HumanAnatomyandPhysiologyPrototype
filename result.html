@@ -25,12 +25,20 @@
     .stat .label { font-size:12px; color:#375a9e; }
     .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
     table { width:100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; border-right: 1px solid #cfe0ff;}
+    th:last-child, td:last-child { border-right: none;}
     th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
     tbody tr:hover { background: #f9fbff; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace; }
-    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; font-weight:600; }
+    .assignment-link { color: #0d47a1; text-decoration: underline; }
+    .assignment-mark-btn { color: #fff; background: #43a047; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+    .mark-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.2); justify-content: center; align-items: center; z-index: 99;}
+    .mark-modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 350px; }
+    .mark-modal input { width: 80px; margin-right: 12px;}
+    .feedback-correct { color: #388e3c; }
+    .feedback-wrong { color: #d32f2f; }
+    .feedback-explanation { color: #6a1b9a; font-size: 0.98em; }
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -98,15 +106,18 @@
             <tr>
               <th>Student</th>
               <th>Assessment</th>
-              <th>PRN/Batch</th>
+              <th>PRN</th>
+              <th>Batch</th>
               <th>Score</th>
               <th>%</th>
               <th>Submitted</th>
               <th>Duration</th>
+              <th>Assignment (PDF)</th>
+              <th>Admin Mark</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="7" class="muted">Loading…</td></tr>
+            <tr><td colspan="10" class="muted">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -116,6 +127,21 @@
       <div class="muted">Tip: Click “Details” where available to view per-question breakdown.</div>
     </section>
   </main>
+
+  <!-- Mark Assignment Modal (stub for backend integration) -->
+  <div id="markModal" class="mark-modal">
+    <div class="mark-modal-content">
+      <h3>Mark Assignment</h3>
+      <form id="markForm">
+        <label>Assign Marks:
+          <input type="number" id="assignMarks" min="0" max="100" required />
+        </label>
+        <button type="submit" class="btn">Save</button>
+        <button type="button" class="btn ghost" id="closeMarkModal">Cancel</button>
+      </form>
+      <div class="muted" style="margin-top:10px;">(TODO: Save marks to backend and update editability)</div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
@@ -150,11 +176,33 @@
     let currentUser = null;
     let isAdmin = false;
 
+    // Modal handling
+    let markModal = $('#markModal');
+    let closeMarkModal = $('#closeMarkModal');
+    let markForm = $('#markForm');
+    let currentMarkingRowId = null; // For backend integration
+
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){ if (n == null) return '—'; const v = Math.round(n * 100) / 100; return v.toFixed(2) + '%'; }
     function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
     function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
     function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
+
+    // Modal logic (stub: backend integration needed)
+    function openMarkModal(rowId) {
+      currentMarkingRowId = rowId;
+      $('#assignMarks').value = '';
+      markModal.style.display = 'flex';
+    }
+    closeMarkModal.onclick = () => {
+      markModal.style.display = 'none';
+    };
+    markForm.onsubmit = (e) => {
+      e.preventDefault();
+      // TODO: Integrate with backend to save marks and update assignment editability
+      alert('Marks assigned: ' + $('#assignMarks').value + '\n(TODO: Save to backend)');
+      markModal.style.display = 'none';
+    };
 
     async function requireLogin() {
       const { data: { session } } = await sb.auth.getSession();
@@ -211,34 +259,96 @@
       studentSummary.style.display = 'block';
     }
 
+    // Use explanations if available from your assessment (stub: you can expand this object)
+    const questionExplanations = {
+      "1. Which part of the compound microscope connects the base to the body tube?": "The arm connects the base to the body tube.",
+      "2. The function of the diaphragm in a compound microscope is to:": "Diaphragm adjusts the amount of light passing through the specimen.",
+      "3. Which lens offers the highest magnification in a compound microscope?": "Oil immersion objective lens gives highest magnification.",
+      "4. Which adjustment knob is used for precise focusing?": "Fine adjustment knob is used for precise focusing.",
+      "5. Name the lens through which you observe the specimen in a microscope.": "Eyepiece lens is used for observing specimen.",
+      "6. What is the recommended material for cleaning microscope lenses?": "Lens paper is recommended for cleaning.",
+      "7. Which mirror is used when the light source is weak?": "Concave mirror is used for weak light sources.",
+      "8. What is the usual magnification power of a standard eyepiece lens?": "Standard eyepiece lens is usually 10x.",
+      "10. Which of the following statements is NOT true?": "Highest magnification lens should NOT be used first."
+    };
+
     function renderRows(rows) {
       count.textContent = rows.length;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="muted">No results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="muted">No results.</td></tr>';
         return;
       }
       const parts = [];
       for (const r of rows) {
         const student = r.user_name || r.email || r.user_id;
-        const prnbatch = [r.prn, r.batch].filter(Boolean).join(' • ');
+        const prn = r.meta?.prn || r.prn || '—';
+        const batch = r.meta?.batch || r.batch || '—';
         const scoreTxt = (r.score != null && r.total != null) ? `${r.score}/${r.total}` : (r.score ?? '—');
+        const assignmentUrl = r.assignment_path ? sb.storage.from(r.assignment_bucket || "assignments").getPublicUrl(r.assignment_path).data?.publicUrl : null;
+        // TODO: Pull assignment_marks and editable status from backend when available
+        const assignmentMarks = r.assignment_marks ?? '—';
+        const assignmentEditable = r.assignment_editable ?? true; // Assume true if not set
+
         parts.push(`
           <tr>
-            <td>${student || '—'}<div class="muted" style="font-size:12px">${r.email || ''}</div></td>
-            <td>${r.assessment_title || '—'}</td>
-            <td>${prnbatch || '—'}</td>
+            <td>${student || '—'}<div class="muted" style="font-size:12px">${r.meta?.email || r.email || ''}</div></td>
+            <td>${r.meta?.assessment_title || r.assessment_title || '—'}</td>
+            <td>${prn}</td>
+            <td>${batch}</td>
             <td>${scoreTxt}</td>
             <td>${fmtPct(r.percent)}</td>
             <td>${fmtDate(r.submitted_at)}</td>
             <td>${fmtDur(r.duration_sec)}</td>
+            <td>
+              ${assignmentUrl
+                ? `<a href="${assignmentUrl}" target="_blank" class="assignment-link">Download</a>`
+                : '<span class="muted">Not uploaded</span>'}
+            </td>
+            <td>
+              ${
+                isAdmin && assignmentUrl
+                  ? `<button class="assignment-mark-btn" onclick="openMarkModal('${r.user_id}')">Mark Assignment</button>`
+                  : assignmentMarks
+              }
+            </td>
           </tr>
-          ${r.detail ? `
+          ${r.breakdown && Array.isArray(r.breakdown) ? `
             <tr>
-              <td colspan="7">
-                <details>
-                  <summary>Details</summary>
-                  <pre class="mono" style="white-space:pre-wrap; margin:8px 0;">${JSON.stringify(r.detail, null, 2)}</pre>
-                </details>
+              <td colspan="10">
+                <div>
+                  <b>Question Breakdown:</b><br>
+                  ${r.breakdown.map((q, idx) => {
+                    if(q.type === "meta") return '';
+                    let qText = q.question;
+                    let answer = q.answer || '';
+                    let correct = q.correct || '';
+                    let isCorrect = q.isCorrect;
+                    let explanation = questionExplanations[qText] ? `<span class="feedback-explanation">Explanation: ${questionExplanations[qText]}</span>` : '';
+                    let feedbackClass = isCorrect ? "feedback-correct" : "feedback-wrong";
+                    if (q.type === "mcq" || q.type === "dropdown") {
+                      return `
+                        <div style="margin-bottom:1em;">
+                          <b>Q${idx+1}:</b> ${qText}<br>
+                          <span class="${feedbackClass}">
+                            Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
+                          </span><br>
+                          ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
+                        </div>
+                      `;
+                    } else if (q.type === "image-label") {
+                      return `
+                        <div style="margin-bottom:1em;">
+                          <b>${qText}</b><br>
+                          <span class="${feedbackClass}">
+                            Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
+                          </span>
+                          ${!isCorrect ? `<span class="feedback-correct"> Correct: ${correct}</span>` : ""}
+                        </div>
+                      `;
+                    }
+                    return '';
+                  }).join('')}
+                </div>
               </td>
             </tr>
           ` : ''}
@@ -259,7 +369,7 @@
         setStatus('Ready.');
       } catch (e) {
         console.error('applyFilters error', e);
-        tbody.innerHTML = '<tr><td colspan="7" class="muted">Failed to load results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
@@ -301,6 +411,8 @@
       await applyFilters();
       setStatus('Ready.');
     }
+
+    window.openMarkModal = openMarkModal; // so inline onclick works
 
     init();
   </script>
