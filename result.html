@@ -42,8 +42,12 @@
     .details-btn { color: #fff; background: #1565c0; border:none; border-radius:5px; padding:6px 10px; cursor:pointer;}
     .details-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
     .modal-bg { display:none; position:fixed; top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);justify-content:center;align-items:center;z-index:99;}
-    .modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 600px; max-height: 80vh; overflow:auto;}
+    .modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 700px; max-height: 90vh; overflow:auto;}
     .close-modal-btn { float:right; background:#cfe0ff; color:#1565c0; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; margin-left:8px;}
+    .options-list { margin-left: 1em; margin-bottom: 0.4em;}
+    .option-correct { font-weight: bold; color: #388e3c; }
+    .option-wrong { color: #d32f2f; }
+    .option-normal { color: #222; }
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -166,6 +170,32 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
+    // --- Assessment Questions & Options (for Details Modal) ---
+    const assessmentQuestions = [
+      { type: "mcq", text: "1. Which part of the compound microscope connects the base to the body tube?", options: ["Arm","Stage","Pillar","Draw tube"], answer: "Arm", explanation: "The arm connects the base to the body tube." },
+      { type: "mcq", text: "2. The function of the diaphragm in a compound microscope is to:", options: ["Magnify the image","Adjust the amount of light passing through the specimen","Hold the slide in place","Focus the image"], answer: "Adjust the amount of light passing through the specimen", explanation: "Diaphragm adjusts the amount of light passing through the specimen." },
+      { type: "mcq", text: "3. Which lens offers the highest magnification in a compound microscope?", options: ["Low power objective","High power objective","Oil immersion objective","Eyepiece lens"], answer: "Oil immersion objective", explanation: "Oil immersion objective lens gives highest magnification." },
+      { type: "mcq", text: "4. Which adjustment knob is used for precise focusing?", options: ["Coarse adjustment","Fine adjustment","Stage adjustment","Condenser adjustment"], answer: "Fine adjustment", explanation: "Fine adjustment knob is used for precise focusing." },
+      { type: "dropdown", text: "5. Name the lens through which you observe the specimen in a microscope.", options: ["Eyepiece lens","Objective lens","Mirror","Stage"], answer: "Eyepiece lens", explanation: "Eyepiece lens is used for observing specimen." },
+      { type: "dropdown", text: "6. What is the recommended material for cleaning microscope lenses?", options: ["Lens paper","Tissue paper","Cloth","Hands"], answer: "Lens paper", explanation: "Lens paper is recommended for cleaning." },
+      { type: "dropdown", text: "7. Which mirror is used when the light source is weak?", options: ["Concave mirror","Plane mirror","Convex mirror","No mirror"], answer: "Concave mirror", explanation: "Concave mirror is used for weak light sources." },
+      { type: "dropdown", text: "8. What is the usual magnification power of a standard eyepiece lens?", options: ["10x","5x","40x","100x"], answer: "10x", explanation: "Standard eyepiece lens is usually 10x." },
+      { type: "image-labels", text: "9. Identify the labelled parts of the microscope in the image below.", image: "../assets/images/experiment-1/Assessment/labelquestion.jpg",
+        labels: [
+          { name: "1", answer: "Eye Piece", options: ["Eye Piece","Objective Lens","Fine adjustment Screw","Condenser","Stage"], explanation: "Label 1 is Eye Piece." },
+          { name: "2", answer: "Objective Lens", options: ["Objective Lens","Eye Piece","Mirror","Condenser","Base"], explanation: "Label 2 is Objective Lens." },
+          { name: "3", answer: "Condenser", options: ["Condenser","Stage","Objective Lens","Base","Fine adjustment Screw"], explanation: "Label 3 is Condenser." },
+          { name: "4", answer: "Fine adjustment Screw", options: ["Fine adjustment Screw","Coarse adjustment","Mirror","Arm","Condenser"], explanation: "Label 4 is Fine adjustment Screw." }
+        ]
+      },
+      { type: "mcq", text: "10. Which of the following statements is NOT true?", options: [
+        "When focusing the slide, care should be taken not to crack the glass slide",
+        "The slide should be placed on the stage with the cover slip on the upper surface",
+        "When setting up, adjust the eye pieces to the dimension of your eyes",
+        "Always view your specimen using the highest magnification lens first"
+      ], answer: "Always view your specimen using the highest magnification lens first", explanation: "Highest magnification lens should NOT be used first." }
+    ];
+
     // Supabase setup
     const sb = window.sb || (window.sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
@@ -206,8 +236,8 @@
     // State
     let currentUser = null;
     let isAdmin = false;
-    let currentEditRow = null; // For edit modal
-    let currentReuploadRow = null; // For reupload modal
+    let currentEditRow = null;
+    let currentReuploadRow = null;
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){ if (n == null) return '—'; const v = Math.round(n * 100) / 100; return v.toFixed(2) + '%'; }
@@ -265,19 +295,8 @@
       sumLast.textContent = fmtDate(last);
       studentSummary.style.display = 'block';
     }
-    // Explanations for questions (stub, expand as needed)
-    const questionExplanations = {
-      "1. Which part of the compound microscope connects the base to the body tube?": "The arm connects the base to the body tube.",
-      "2. The function of the diaphragm in a compound microscope is to:": "Diaphragm adjusts the amount of light passing through the specimen.",
-      "3. Which lens offers the highest magnification in a compound microscope?": "Oil immersion objective lens gives highest magnification.",
-      "4. Which adjustment knob is used for precise focusing?": "Fine adjustment knob is used for precise focusing.",
-      "5. Name the lens through which you observe the specimen in a microscope.": "Eyepiece lens is used for observing specimen.",
-      "6. What is the recommended material for cleaning microscope lenses?": "Lens paper is recommended for cleaning.",
-      "7. Which mirror is used when the light source is weak?": "Concave mirror is used for weak light sources.",
-      "8. What is the usual magnification power of a standard eyepiece lens?": "Standard eyepiece lens is usually 10x.",
-      "10. Which of the following statements is NOT true?": "Highest magnification lens should NOT be used first."
-    };
-    // Details Modal logic
+
+    // --- Details Modal logic ---
     function openDetailsModal(row) {
       detailsModalBg.style.display = "flex";
       detailsModalBody.innerHTML = renderDetailsBreakdown(row);
@@ -288,28 +307,67 @@
     }
     window.closeDetailsModal = closeDetailsModal;
 
+    function getAssessmentQuestionDetails(qObj) {
+      // For MCQ/dropdown, match by question text.
+      for (let i = 0; i < assessmentQuestions.length; i++) {
+        let aq = assessmentQuestions[i];
+        if (aq.type === "image-labels") {
+          if (qObj.type === "image-label") {
+            // Handle label questions
+            let match = aq.labels.find(lab =>
+              qObj.question && qObj.question.indexOf(`Label ${lab.name}`) !== -1
+            );
+            if (match) return { ...match, parentText: aq.text, type: "image-label" };
+          }
+        } else if (aq.text === qObj.question) {
+          return aq;
+        }
+      }
+      return null;
+    }
+
     function renderDetailsBreakdown(row) {
-      // row.breakdown is array [{question, type, answer, correct, isCorrect}]
       if (!row.breakdown || !Array.isArray(row.breakdown)) return "<div>No breakdown data found.</div>";
       let html = `<h3>Question Breakdown</h3>`;
       row.breakdown.forEach((q, idx) => {
         if (q.type === "meta") return;
-        let qText = q.question;
-        let answer = q.answer || '';
-        let correct = q.correct || '';
-        let isCorrect = q.isCorrect;
-        let explanation = questionExplanations[qText] ? `<div class="feedback-explanation">Explanation: ${questionExplanations[qText]}</div>` : '';
-        let feedbackClass = isCorrect ? "feedback-correct" : "feedback-wrong";
-        html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
-          <b>Q${idx+1}:</b> ${qText}<br>
-          <div style="margin-left:1em;">
-            <span class="${feedbackClass}">Your answer: <i>${answer || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b></span><br>
-            ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
-          </div>
-        </div>`;
+        let aq = getAssessmentQuestionDetails(q);
+        let feedbackClass = q.isCorrect ? "feedback-correct" : "feedback-wrong";
+        let correct = q.correct || (aq && aq.answer) || "";
+        let explanation = (aq && aq.explanation) ? `<div class="feedback-explanation">Explanation: ${aq.explanation}</div>` : "";
+        let optionsHtml = "";
+        if (aq && aq.options) {
+          optionsHtml = `<div class="options-list">Options: `;
+          optionsHtml += aq.options.map(opt => {
+            if (opt === correct) return `<span class="option-correct">${opt}</span>`;
+            if (opt === q.answer && !q.isCorrect) return `<span class="option-wrong">${opt}</span>`;
+            return `<span class="option-normal">${opt}</span>`;
+          }).join(", ");
+          optionsHtml += `</div>`;
+        }
+        if (aq && aq.type === "image-label") {
+          html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
+            <b>Q${idx+1}:</b> ${aq.parentText} <span class="muted">(Label ${aq.name})</span><br>
+            ${optionsHtml}
+            <div style="margin-left:1em;">
+              <span class="${feedbackClass}">Your answer: <i>${q.answer || "(blank)"}</i> – <b>${q.isCorrect ? "Correct" : "Wrong"}</b></span><br>
+              ${!q.isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
+            </div>
+          </div>`;
+        } else {
+          html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
+            <b>Q${idx+1}:</b> ${q.question}<br>
+            ${optionsHtml}
+            <div style="margin-left:1em;">
+              <span class="${feedbackClass}">Your answer: <i>${q.answer || "(blank)"}</i> – <b>${q.isCorrect ? "Correct" : "Wrong"}</b></span><br>
+              ${!q.isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
+            </div>
+          </div>`;
+        }
       });
       return html;
     }
+
     // Edit Modal logic
     function openEditModal(row) {
       editModalBg.style.display = "flex";
@@ -371,9 +429,7 @@
         const assignmentMarks = r.assignment_marks ?? '—';
         const assignmentEditable = r.assignment_editable ?? true; // Assume true if not set
 
-        // Student can reupload if assignment_editable is true and marks not assigned
         let canReupload = assignmentEditable && (!r.assignment_marks || r.assignment_marks === '—');
-        // Admin can edit assignment_editable flag
         let canEdit = isAdmin;
 
         parts.push(`
@@ -405,7 +461,6 @@
         `);
       });
       tbody.innerHTML = parts.join('');
-      // Bind modal openers after rendering
       window.openDetailsModalRow = (rowIdx) => openDetailsModal(rows[rowIdx]);
       window.openEditModalRow = (rowIdx) => openEditModal(rows[rowIdx]);
       window.openReuploadModalRow = (rowIdx) => openReuploadModal(rows[rowIdx]);
@@ -437,7 +492,6 @@
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
       roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
-      // UI visibility
       filters.style.display = 'block';
       if (isAdmin) {
         adminSearchWrap.style.display = 'block';
@@ -449,7 +503,6 @@
       }
       await loadExperiments();
 
-      // Auto-select experiment from URL like ?exp=ABC123
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
 
