@@ -197,7 +197,7 @@
     ];
 
     // Supabase setup
-    const sb = window.sb || (window.sb = window.supabase.createClient(
+    const sb = window.sb || (window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     ));
@@ -313,7 +313,6 @@
         let aq = assessmentQuestions[i];
         if (aq.type === "image-labels") {
           if (qObj.type === "image-label") {
-            // Handle label questions
             let match = aq.labels.find(lab =>
               qObj.question && qObj.question.indexOf(`Label ${lab.name}`) !== -1
             );
@@ -327,7 +326,9 @@
     }
 
     function renderDetailsBreakdown(row) {
-      if (!row.breakdown || !Array.isArray(row.breakdown)) return "<div>No breakdown data found.</div>";
+      if (!row.breakdown || !Array.isArray(row.breakdown) || row.breakdown.length === 0) {
+        return "<div>No breakdown data found.<br><span class='muted'>Please check if the backend returns a <b>breakdown</b> array for each result row.</span></div>";
+      }
       let html = `<h3>Question Breakdown</h3>`;
       row.breakdown.forEach((q, idx) => {
         if (q.type === "meta") return;
@@ -381,11 +382,9 @@
     window.closeEditModal = closeEditModal;
     editForm.onsubmit = (e) => {
       e.preventDefault();
-      // TODO: Save currentEditRow.assignment_editable = editCheckbox.checked to backend
       alert('Assignment editability set to: ' + editCheckbox.checked + '\n(TODO: Save to backend)');
       closeEditModal();
     };
-    // Reupload Modal logic (student)
     function openReuploadModal(row) {
       reuploadModalBg.style.display = "flex";
       currentReuploadRow = row;
@@ -408,7 +407,6 @@
         reuploadStatus.textContent = "Only PDF files allowed.";
         return;
       }
-      // TODO: Save file to backend, update assignment_path etc.
       reuploadStatus.textContent = "PDF uploaded (stub; integrate backend).";
       setTimeout(closeReuploadModal, 1000);
     };
@@ -427,7 +425,7 @@
         const scoreTxt = (r.score != null && r.total != null) ? `${r.score}/${r.total}` : (r.score ?? '—');
         const assignmentUrl = r.assignment_path ? sb.storage.from(r.assignment_bucket || "assignments").getPublicUrl(r.assignment_path).data?.publicUrl : null;
         const assignmentMarks = r.assignment_marks ?? '—';
-        const assignmentEditable = r.assignment_editable ?? true; // Assume true if not set
+        const assignmentEditable = r.assignment_editable ?? true;
 
         let canReupload = assignmentEditable && (!r.assignment_marks || r.assignment_marks === '—');
         let canEdit = isAdmin;
