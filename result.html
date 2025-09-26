@@ -57,14 +57,6 @@
     .no-breakdown { color:var(--c-bad); font-size:13px; }
     .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; max-height:260px; }
     .meta-line { font-size:11px; margin-top:6px; color:#375a9e; }
-    .progress-wrap { width:100%; background:#e9f2ff; height:8px; border-radius:4px; overflow:hidden; }
-    .progress-bar { height:100%; background:linear-gradient(90deg,#2e7d32,#66bb6a); width:0%; transition:width .4s; }
-    .progress-cell { min-width:110px; }
-    .progress-label { font-size:11px; margin-top:2px; color:#0d47a1; }
-    .filters-adv { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .note { font-size:12px; color:#5c6f99; }
-    .tag-inline { font-size:11px; background:#eef5ff; padding:2px 6px; border-radius:6px; }
-    .q-index { position:absolute; top:4px; right:6px; font-size:11px; background:#eef5ff; padding:2px 6px; border-radius:12px; color:#344f80; }
     .toolbar-divider { width:1px; background:var(--c-border); height:30px; align-self:center; }
     @media (max-width: 960px){
       .questions-wrap { grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
@@ -128,18 +120,15 @@
         <input id="filter-min-pct" class="input" type="number" min="0" max="100" placeholder="e.g., 40">
       </div>
     </div>
-    <div class="filters-adv">
+    <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
       <label style="display:flex;align-items:center;gap:6px;">
         <input type="checkbox" id="toggle-hide-correct">
         <span class="muted">Hide correct questions</span>
       </label>
-      <div class="toolbar-divider"></div>
       <button id="apply" class="btn">Apply</button>
       <button id="reset" class="btn ghost">Reset</button>
-      <div class="toolbar-divider"></div>
       <button id="expand-all" class="btn small">Expand All</button>
       <button id="collapse-all" class="btn small ghost">Collapse All</button>
-      <div class="toolbar-divider"></div>
       <button id="export-csv" class="btn alt small">Export CSV</button>
       <span class="note">Server filters apply on fetch; min % & hide-correct are client-side.</span>
     </div>
@@ -164,7 +153,7 @@
             <th>%</th>
             <th>Submitted</th>
             <th>Duration</th>
-            <th style="min-width:120px;">Progress</th>
+            <th>Assignment</th>
           </tr>
         </thead>
         <tbody id="tbody">
@@ -176,27 +165,19 @@
 
   <section id="legend" class="panel">
     <div class="muted" style="margin-bottom:6px;">
-      Tip: Each attempt has a full-width Details block below it. Use “Hide correct questions” to focus on mistakes.
+      Tip: Each attempt has a full-width Details block below it. Click “Assignment” to view the uploaded PDF.
     </div>
-    <ul class="muted" style="margin:6px 0 0 18px; padding:0;">
-      <li>Expand/Collapse all affects only currently visible rows.</li>
-      <li>CSV export includes per-question breakdown (one row per question).</li>
-      <li>Progress bar = correct / total questions (excludes meta entries).</li>
-    </ul>
   </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script>
-/* ---- Supabase Client ---- */
 const sb = window.sb || (window.sb = window.supabase.createClient(
   'https://hunlistfklwvpivfjmbk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
 ));
 
-/* ---- DOM & State ---- */
 const $ = s => document.querySelector(s);
-
 const statusEl = $('#status');
 const roleBadge = $('#role-badge');
 const studentSummary = $('#student-summary');
@@ -204,7 +185,6 @@ const sumAttempts = $('#sum-attempts');
 const sumAvg = $('#sum-avg');
 const sumBest = $('#sum-best');
 const sumLast = $('#sum-last');
-
 const filters = $('#filters');
 const filterExperiment = $('#filter-experiment');
 const adminSearchWrap = $('#admin-search-wrap');
@@ -213,24 +193,18 @@ const filterSearch = $('#filter-search');
 const filterBatch = $('#filter-batch');
 const filterMinPct = $('#filter-min-pct');
 const toggleHideCorrect = $('#toggle-hide-correct');
-
 const btnApply = $('#apply');
 const btnReset = $('#reset');
 const btnExpandAll = $('#expand-all');
 const btnCollapseAll = $('#collapse-all');
 const btnExportCsv = $('#export-csv');
-
 const who = $('#who');
 const tbody = $('#tbody');
 const count = $('#count');
-
 let currentUser = null;
 let isAdmin = false;
-
-// Raw rows from server (post-fetch, pre client filters)
 window._allRows = [];
 
-/* ---- Utils ---- */
 function setStatus(msg){ statusEl.textContent = msg; }
 function fmtPct(n){
   if (n == null) return '—';
@@ -250,7 +224,6 @@ function escapeHTML(str){
     .replace(/'/g,'&#39;');
 }
 
-/* ---- Auth / Role ---- */
 async function requireLogin() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session?.user) {
@@ -265,8 +238,6 @@ async function getRole(userId) {
   if (error) console.warn('role error', error);
   return (data?.role || 'unknown').toString().trim().toLowerCase();
 }
-
-/* ---- Data Loaders ---- */
 async function loadExperiments() {
   try {
     const { data, error } = await sb.rpc('list_experiments_for_results');
@@ -280,7 +251,6 @@ async function loadExperiments() {
     }
   } catch (e) { console.warn('loadExperiments', e); }
 }
-
 async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
   const args = {
     exp_id: has(exp_id) ? exp_id : null,
@@ -291,8 +261,6 @@ async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
   if (error) throw error;
   return Array.isArray(data) ? data : [];
 }
-
-/* ---- Breakdown Handling ---- */
 function extractRawBreakdown(row) {
   return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
 }
@@ -312,8 +280,6 @@ function normalizeQuestionArray(parsed) {
   if (Array.isArray(parsed.questions)) return parsed.questions;
   return [];
 }
-
-/* ---- Summary ---- */
 function renderSummaryForStudent(rows) {
   const attempts = rows.length;
   const percents = rows
@@ -329,8 +295,6 @@ function renderSummaryForStudent(rows) {
   sumLast.textContent = fmtDate(last);
   studentSummary.style.display = 'block';
 }
-
-/* ---- Rendering ---- */
 function filteredClientRows() {
   const minPct = Number(filterMinPct.value);
   const applyMin = !Number.isNaN(minPct) && filterMinPct.value.trim() !== '';
@@ -342,7 +306,6 @@ function filteredClientRows() {
     return true;
   });
 }
-
 function buildQuestionsHTML(qArr, hideCorrect) {
   const usable = qArr.filter(q => q && q.type !== 'meta');
   if (!usable.length) return '<div class="no-breakdown">No question entries.</div>';
@@ -359,7 +322,6 @@ function buildQuestionsHTML(qArr, hideCorrect) {
     const correct = q.correct ?? '';
     html += `
       <div class="q-card">
-        <div class="q-index">#${i+1}</div>
         <div class="q-text">
           ${escapeHTML(q.question || '(no question text)')}
           ${q.type ? `<span class="question-type">${escapeHTML(q.type)}</span>` : ''}
@@ -377,7 +339,6 @@ function buildQuestionsHTML(qArr, hideCorrect) {
   html += '</div>';
   return html;
 }
-
 function buildDetailsBlock(row, hideCorrect) {
   const raw = extractRawBreakdown(row);
   const parsed = parseBreakdown(raw);
@@ -390,10 +351,6 @@ function buildDetailsBlock(row, hideCorrect) {
     return `
       <details>
         <summary>Details (${progressText})</summary>
-        <div style="margin:6px 0 10px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn small ghost" data-copy-attempt>Copy Attempt JSON</button>
-          <span class="tag-inline">Attempt ID: ${escapeHTML(row.id || '')}</span>
-        </div>
         ${buildQuestionsHTML(qArray, hideCorrect)}
       </details>
     `;
@@ -412,26 +369,6 @@ function buildDetailsBlock(row, hideCorrect) {
   }
   return '<div class="no-breakdown">No breakdown data.</div>';
 }
-
-function progressCellHTML(row) {
-  const raw = extractRawBreakdown(row);
-  const parsed = parseBreakdown(raw);
-  const qArray = normalizeQuestionArray(parsed).filter(q => q.type !== 'meta');
-  if (!qArray.length) {
-    return '<div class="progress-cell"><div class="progress-wrap"><div class="progress-bar" style="width:0%"></div></div><div class="progress-label">0 / 0</div></div>';
-  }
-  const correct = qArray.filter(q => q.isCorrect).length;
-  const pct = (correct / qArray.length) * 100;
-  return `
-    <div class="progress-cell">
-      <div class="progress-wrap">
-        <div class="progress-bar" style="width:${pct.toFixed(1)}%"></div>
-      </div>
-      <div class="progress-label">${correct} / ${qArray.length}</div>
-    </div>
-  `;
-}
-
 function renderRows(rows) {
   count.textContent = rows.length;
   if (!rows.length) {
@@ -440,7 +377,7 @@ function renderRows(rows) {
   }
   const hideCorrect = toggleHideCorrect.checked;
   const parts = [];
-  rows.forEach(r => {
+  rows.forEach((r, rowIdx) => {
     const email = r.meta?.email || r.email || '';
     const prn = r.meta?.prn || r.prn || '—';
     const batch = r.meta?.batch || r.batch || '—';
@@ -449,6 +386,16 @@ function renderRows(rows) {
     const scoreTxt = (r.score != null && r.total != null)
       ? `${r.score}/${r.total}`
       : (r.score ?? '—');
+    // Assignment button logic
+    let assignmentBtn = '<span class="muted" style="font-size:13px;">—</span>';
+    if (r.assignment_path) {
+      // Use bucket or default to "assignments"
+      const bucket = r.assignment_bucket || "assignments";
+      const url = sb.storage.from(bucket).getPublicUrl(r.assignment_path).data?.publicUrl;
+      if (url) {
+        assignmentBtn = `<button class="btn small" onclick="window.open('${url}','_blank')">View PDF</button>`;
+      }
+    }
     const detailsBlock = buildDetailsBlock(r, hideCorrect);
 
     parts.push(`
@@ -463,7 +410,7 @@ function renderRows(rows) {
         <td>${fmtPct(percentVal)}</td>
         <td>${fmtDate(r.submitted_at)}</td>
         <td>${fmtDur(r.duration_sec)}</td>
-        <td>${progressCellHTML(r)}</td>
+        <td>${assignmentBtn}</td>
       </tr>
       <tr class="details-row">
         <td colspan="9">
@@ -473,27 +420,12 @@ function renderRows(rows) {
     `);
   });
   tbody.innerHTML = parts.join('');
-
-  // Attach copy buttons
-  tbody.querySelectorAll('[data-copy-attempt]').forEach((btn, idx) => {
-    btn.addEventListener('click', () => {
-      const row = rows[idx];
-      const raw = extractRawBreakdown(row);
-      const toCopy = {
-        id: row.id,
-        user_id: row.user_id,
-        assessment: row.assessment_title || row.meta?.assessment_title,
-        percent: row.percent ?? row.percentage,
-        score: row.score,
-        total: row.total,
-        breakdown: raw
-      };
-      navigator.clipboard.writeText(JSON.stringify(toCopy, null, 2)).then(()=>{
-        btn.textContent = 'Copied!';
-        setTimeout(()=>btn.textContent = 'Copy Attempt JSON', 1500);
-      }).catch(()=> alert('Clipboard failed'));
-    });
-  });
+}
+function expandAllDetails() {
+  tbody.querySelectorAll('details').forEach(d => d.open = true);
+}
+function collapseAllDetails() {
+  tbody.querySelectorAll('details').forEach(d => d.open = false);
 }
 
 /* ---- CSV Export ---- */
@@ -504,7 +436,6 @@ function exportCSV() {
     return;
   }
   const lines = [];
-  // Header
   lines.push([
     'attempt_id','user_id','user_name','email','assessment_title','prn','batch',
     'score','total','percent','submitted_at','duration_sec',
@@ -531,7 +462,7 @@ function exportCSV() {
           csvEscape(email),
           csvEscape(assessmentTitle),
           csvEscape(prn),
-            csvEscape(batch),
+          csvEscape(batch),
           r.score ?? '',
           r.total ?? '',
           (r.percent ?? r.percentage) ?? '',
@@ -546,7 +477,6 @@ function exportCSV() {
         ].join(','));
       });
     } else {
-      // No breakdown; still export attempt line (blank question fields)
       lines.push([
         r.id, r.user_id, csvEscape(r.user_name || ''), csvEscape(email),
         csvEscape(assessmentTitle), csvEscape(prn), csvEscape(batch),
@@ -568,7 +498,6 @@ function exportCSV() {
   a.remove();
   URL.revokeObjectURL(url);
 }
-
 function csvEscape(v) {
   const s = String(v);
   if (/[",\n]/.test(s)) {
@@ -599,15 +528,6 @@ async function applyFilters(serverFetch = true) {
     alert('Error loading results: ' + (e?.message || e));
   }
 }
-
-function expandAllDetails() {
-  tbody.querySelectorAll('details').forEach(d => d.open = true);
-}
-function collapseAllDetails() {
-  tbody.querySelectorAll('details').forEach(d => d.open = false);
-}
-
-/* ---- Init ---- */
 async function init() {
   if (!(await requireLogin())) return;
   const role = await getRole(currentUser.id);
@@ -643,8 +563,8 @@ async function init() {
 
   filterMinPct.addEventListener('input', () => applyFilters(false));
   toggleHideCorrect.addEventListener('change', () => applyFilters(false));
-  btnExpandAll.addEventListener('click', expandAllDetails);
-  btnCollapseAll.addEventListener('click', collapseAllDetails);
+  btnExpandAll.addEventListener('click', () => tbody.querySelectorAll('details').forEach(d => d.open = true));
+  btnCollapseAll.addEventListener('click', () => tbody.querySelectorAll('details').forEach(d => d.open = false));
   btnExportCsv.addEventListener('click', exportCSV);
 
   await applyFilters(true);
