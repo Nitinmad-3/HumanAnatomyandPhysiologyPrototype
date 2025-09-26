@@ -34,19 +34,21 @@
     th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
     tbody tr:hover { background: #f9fbff; }
 
-    details { background:#f9fbff; border:1px solid #d9e7ff; border-radius:8px; padding:8px 10px; margin-top:6px; }
+    details { background:#f9fbff; border:1px solid #d9e7ff; border-radius:8px; padding:8px 10px; }
     details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
     details[open] { background:#f0f6ff; }
 
-    .q-item { border-bottom:1px solid #e3ecfa; padding:8px 4px; }
-    .q-item:last-child { border-bottom:none; }
-    .q-text { font-weight:600; margin-bottom:4px; }
-    .ans { margin-left:6px; }
+    .questions-wrap { margin-top:6px; }
+    .q-row { border-bottom:1px solid #e2ebf9; padding:6px 2px; }
+    .q-row:last-child { border-bottom:none; }
+    .q-text { font-weight:600; margin-bottom:2px; }
+    .ans-line { margin-left:8px; }
     .correct { color:#1b5e20; font-weight:600; }
     .wrong { color:#c62828; font-weight:600; }
-    .correct-answer { color:#2e7d32; }
+    .correct-answer { color:#2e7d32; margin-left:8px; }
     .your-answer { font-style: italic; }
     .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
+    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
     .no-breakdown { color:#c62828; font-size:13px; }
 
     @media (max-width: 760px) {
@@ -139,7 +141,7 @@
 
     <section id="legend" class="panel">
       <div class="muted">
-        Tip: Expand “Details” to view each question, your answer, and the correct answer (if you were wrong).
+        Tip: Expand “Details” to view each question, your answer, and (if wrong) the correct answer.
       </div>
     </section>
   </main>
@@ -152,7 +154,6 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     ));
 
-    // DOM helpers
     const $ = (s) => document.querySelector(s);
 
     const statusEl = $('#status');
@@ -177,7 +178,6 @@
     const tbody = $('#tbody');
     const count = $('#count');
 
-    // State
     let currentUser = null;
     let isAdmin = false;
 
@@ -191,6 +191,14 @@
     function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
     function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
     function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
 
     async function requireLogin() {
       const { data: { session } } = await sb.auth.getSession();
@@ -249,50 +257,57 @@
       studentSummary.style.display = 'block';
     }
 
-    function safeParseBreakdown(bd) {
-      if (!bd) return null;
-      if (Array.isArray(bd)) return bd;
-      if (typeof bd === 'string') {
+    // Attempt to locate breakdown (handles multiple field names)
+    function extractRawBreakdown(row) {
+      return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
+    }
+
+    function parseBreakdown(raw) {
+      if (!raw) return null;
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'object') return raw; // maybe already an array-like object
+      if (typeof raw === 'string') {
         try {
-          const parsed = JSON.parse(bd);
-            return Array.isArray(parsed) ? parsed : null;
-        } catch (e) {
-          console.warn('Failed to parse breakdown string', e);
+          const parsed = JSON.parse(raw);
+          return parsed;
+        } catch(e) {
+          console.warn('Failed to parse breakdown string:', e);
           return null;
         }
       }
       return null;
     }
 
-    function buildDetailsHTML(row) {
-      const breakdown = safeParseBreakdown(row.breakdown);
-      if (!breakdown || !breakdown.length) {
-        return '<div class="no-breakdown">No breakdown data found for this attempt.</div>';
+    function normalizeQuestionArray(rawParsed) {
+      if (!rawParsed) return [];
+      // If it's a plain object with a 'questions' property
+      if (!Array.isArray(rawParsed) && Array.isArray(rawParsed.questions)) {
+        return rawParsed.questions;
       }
-      // filter out any meta objects
-      const usable = breakdown.filter(q => q && q.type !== 'meta');
+      if (Array.isArray(rawParsed)) return rawParsed;
+      return [];
+    }
 
-      if (!usable.length) {
-        return '<div class="no-breakdown">No question entries in breakdown.</div>';
-      }
-
-      let html = '<div>';
-      usable.forEach((q, idx) => {
-        const isCorrect = !!q.isCorrect;
+    function buildQuestionsHTML(qArr) {
+      const usable = qArr.filter(q => q && q.type !== 'meta');
+      if (!usable.length) return '<div class="no-breakdown">No question entries.</div>';
+      let html = '<div class="questions-wrap">';
+      usable.forEach((q, i) => {
         const yourAns = (q.answer === '' || q.answer == null) ? '(blank)' : q.answer;
-        const correctAns = q.correct ?? '';
+        const isCorrect = !!q.isCorrect;
+        const correct = q.correct ?? '';
         html += `
-          <div class="q-item">
-            <div class="q-text">Q${idx+1}. ${q.question}
-              ${q.type ? `<span class="question-type">${q.type}</span>` : ''}
+          <div class="q-row">
+            <div class="q-text">Q${i+1}. ${escapeHTML(q.question || '(no question text)')}
+              ${q.type ? `<span class="question-type">${escapeHTML(q.type)}</span>` : ''}
             </div>
-            <div class="ans">
+            <div class="ans-line">
               <span class="${isCorrect ? 'correct' : 'wrong'}">
                 Your answer: <span class="your-answer">${escapeHTML(yourAns)}</span>
                 – ${isCorrect ? 'Correct' : 'Wrong'}
               </span>
-              ${!isCorrect && correctAns
-                ? `<div class="correct-answer">Correct answer: <strong>${escapeHTML(correctAns)}</strong></div>`
+              ${!isCorrect && correct
+                ? `<span class="correct-answer">Correct: <strong>${escapeHTML(correct)}</strong></span>`
                 : ''}
             </div>
           </div>
@@ -302,13 +317,24 @@
       return html;
     }
 
-    function escapeHTML(str){
-      return String(str)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#39;');
+    function buildDetailsBlock(row) {
+      const raw = extractRawBreakdown(row);
+      const parsed = parseBreakdown(raw);
+      const qArray = normalizeQuestionArray(parsed);
+      if (Array.isArray(qArray) && qArray.length) {
+        return buildQuestionsHTML(qArray);
+      }
+      // Fallback: show raw JSON (old behavior)
+      if (raw) {
+        let printable;
+        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
+        catch(e){ printable = '(unprintable breakdown)'; }
+        return `
+          <div class="no-breakdown" style="margin-bottom:6px;">Could not format questions, showing raw data:</div>
+          <pre class="fallback-json">${escapeHTML(printable)}</pre>
+        `;
+      }
+      return '<div class="no-breakdown">No breakdown data found.</div>';
     }
 
     function renderRows(rows) {
@@ -329,12 +355,15 @@
           ? `${r.score}/${r.total}`
           : (r.score ?? '—');
 
-        const breakdown = safeParseBreakdown(r.breakdown);
-        const hasBreakdown = breakdown && breakdown.length;
+        // Determine if there is any breakdown-like data
+        const raw = extractRawBreakdown(r);
+        const hasAny = !!raw;
 
         parts.push(`
           <tr>
-            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}<div class="muted" style="font-size:11px">${escapeHTML(email)}</div></td>
+            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
+              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
+            </td>
             <td>${escapeHTML(assessmentTitle)}</td>
             <td>${escapeHTML(prn)}</td>
             <td>${escapeHTML(batch)}</td>
@@ -343,9 +372,12 @@
             <td>${fmtDate(r.submitted_at)}</td>
             <td>${fmtDur(r.duration_sec)}</td>
             <td>
-              ${hasBreakdown
-                ? `<details><summary>Details</summary>${buildDetailsHTML(r)}</details>`
-                : '<span class="muted" style="font-size:12px;">No details</span>'}
+              ${hasAny ? `
+                <details>
+                  <summary>Details</summary>
+                  ${buildDetailsBlock(r)}
+                </details>
+              ` : '<span class="muted" style="font-size:12px;">No details</span>'}
             </td>
           </tr>
         `);
@@ -360,6 +392,10 @@
         const search = filterSearch?.value || '';
         const batch = filterBatch?.value || '';
         const rows = await fetchResults({ exp_id, search, batch });
+
+        // Expose for console debugging if needed
+        window.lastRows = rows;
+
         renderRows(rows);
         if (!isAdmin) renderSummaryForStudent(rows);
         setStatus('Ready.');
@@ -379,7 +415,6 @@
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
       roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
-      // UI visibility
       filters.style.display = 'block';
       if (isAdmin) {
         adminSearchWrap.style.display = 'block';
@@ -392,7 +427,6 @@
 
       await loadExperiments();
 
-      // Auto-select experiment from URL like ?exp=EXPERIMENT_ID
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
 
