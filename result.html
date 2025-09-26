@@ -44,7 +44,7 @@
     th { background:#f0f6ff; color:var(--c-accent); position:sticky; top:0; z-index:1; }
     tbody tr.data-row:hover { background:#f9fbff; }
     details { background:#f9fbff; border:1px solid #d9e7ff; border-radius:8px; padding:8px 10px; }
-    details summary { cursor:pointer; font-weight:600; color:var(--c-accent-alt); outline:none; }
+    details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
     details[open] { background:#f0f6ff; }
     .questions-wrap { margin-top:8px; display:grid; gap:6px; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
     .q-card { border:1px solid #e2ebf9; background:#fff; border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; gap:6px; position:relative; }
@@ -165,7 +165,7 @@
 
   <section id="legend" class="panel">
     <div class="muted" style="margin-bottom:6px;">
-      Tip: Each attempt has a full-width Details block below it. Click “Assignment” to view the uploaded PDF.
+      Tip: Each attempt has a full-width Details block below it. Click “Assignment” to view the uploaded PDF. Only the uploader and admin can access each assignment.
     </div>
   </section>
 </main>
@@ -386,15 +386,18 @@ function renderRows(rows) {
     const scoreTxt = (r.score != null && r.total != null)
       ? `${r.score}/${r.total}`
       : (r.score ?? '—');
-    // Assignment button logic
-    let assignmentBtn = '<span class="muted" style="font-size:13px;">—</span>';
-    if (r.assignment_path) {
-      // Use bucket or default to "assignments"
+    // Assignment button logic with access control
+    let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
+    // Only show if admin or uploader
+    const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
+    if (r.assignment_path && canViewAssignment) {
       const bucket = r.assignment_bucket || "assignments";
       const url = sb.storage.from(bucket).getPublicUrl(r.assignment_path).data?.publicUrl;
       if (url) {
         assignmentBtn = `<button class="btn small" onclick="window.open('${url}','_blank')">View PDF</button>`;
       }
+    } else if (r.assignment_path) {
+      assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
     }
     const detailsBlock = buildDetailsBlock(r, hideCorrect);
 
@@ -427,8 +430,6 @@ function expandAllDetails() {
 function collapseAllDetails() {
   tbody.querySelectorAll('details').forEach(d => d.open = false);
 }
-
-/* ---- CSV Export ---- */
 function exportCSV() {
   const rows = filteredClientRows();
   if (!rows.length) {
@@ -505,8 +506,6 @@ function csvEscape(v) {
   }
   return s;
 }
-
-/* ---- Actions ---- */
 async function applyFilters(serverFetch = true) {
   try {
     setStatus('Loading…');
