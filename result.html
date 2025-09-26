@@ -25,29 +25,12 @@
     .stat .label { font-size:12px; color:#375a9e; }
     .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
     table { width:100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; border-right: 1px solid #cfe0ff;}
-    th:last-child, td:last-child { border-right: none;}
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
     th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
     tbody tr:hover { background: #f9fbff; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace; }
+    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; font-weight:600; }
-    .assignment-link { color: #0d47a1; text-decoration: underline; }
-    .assignment-mark-btn { color: #fff; background: #43a047; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
-    .assignment-edit-btn { color: #fff; background: #fbc02d; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
-    .assignment-reupload-btn { color: #fff; background: #1976d2; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
-    .assignment-reupload-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
-    .feedback-correct { color: #388e3c; }
-    .feedback-wrong { color: #d32f2f; }
-    .feedback-explanation { color: #6a1b9a; font-size: 0.98em; }
-    .details-btn { color: #fff; background: #1565c0; border:none; border-radius:5px; padding:6px 10px; cursor:pointer;}
-    .details-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
-    .modal-bg { display:none; position:fixed; top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);justify-content:center;align-items:center;z-index:99;}
-    .modal-content { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 16px #cfe0ff; max-width: 700px; max-height: 90vh; overflow:auto;}
-    .close-modal-btn { float:right; background:#cfe0ff; color:#1565c0; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; margin-left:8px;}
-    .options-list { margin-left: 1em; margin-bottom: 0.4em;}
-    .option-correct { font-weight: bold; color: #388e3c; }
-    .option-wrong { color: #d32f2f; }
-    .option-normal { color: #222; }
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -62,6 +45,7 @@
   </header>
 
   <main>
+    <!-- Student summary -->
     <section id="student-summary" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Your performance summary</div>
@@ -73,6 +57,8 @@
         <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
     </section>
+
+    <!-- Filters -->
     <section id="filters" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Filters</div>
@@ -98,6 +84,8 @@
         <button id="reset" class="btn ghost">Reset</button>
       </div>
     </section>
+
+    <!-- Results table -->
     <section class="panel">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Results</div>
@@ -110,94 +98,28 @@
             <tr>
               <th>Student</th>
               <th>Assessment</th>
-              <th>PRN</th>
-              <th>Batch</th>
+              <th>PRN/Batch</th>
               <th>Score</th>
               <th>%</th>
               <th>Submitted</th>
               <th>Duration</th>
-              <th>Assignment (PDF)</th>
-              <th>Marks</th>
-              <th>Details</th>
-              <th>Reupload Assignment</th>
-              <th>Edit</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="13" class="muted">Loading…</td></tr>
+            <tr><td colspan="7" class="muted">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </section>
+
     <section id="legend" class="panel">
-      <div class="muted">Tip: Click “Details” for per-question breakdown, and “Reupload” to change assignment if allowed.</div>
+      <div class="muted">Tip: Click “Details” where available to view per-question breakdown.</div>
     </section>
   </main>
 
-  <!-- Details Modal -->
-  <div id="detailsModalBg" class="modal-bg">
-    <div class="modal-content" id="detailsModalContent">
-      <button class="close-modal-btn" onclick="closeDetailsModal()">Close</button>
-      <div id="detailsModalBody"></div>
-    </div>
-  </div>
-  <!-- Edit Modal (stub for backend integration) -->
-  <div id="editModalBg" class="modal-bg">
-    <div class="modal-content" id="editModalContent">
-      <button class="close-modal-btn" onclick="closeEditModal()">Close</button>
-      <h3>Edit Assignment Editability</h3>
-      <form id="editForm">
-        <label>
-          <input type="checkbox" id="editCheckbox"> Allow student to reupload assignment
-        </label>
-        <button type="submit" class="btn">Save</button>
-      </form>
-      <div class="muted" style="margin-top:10px;">(TODO: Save editability to backend)</div>
-    </div>
-  </div>
-  <!-- Reupload Modal (student) -->
-  <div id="reuploadModalBg" class="modal-bg">
-    <div class="modal-content" id="reuploadModalContent">
-      <button class="close-modal-btn" onclick="closeReuploadModal()">Close</button>
-      <h3>Reupload Assignment</h3>
-      <form id="reuploadForm">
-        <input type="file" id="reuploadFile" accept="application/pdf" required>
-        <button type="submit" class="btn">Upload</button>
-      </form>
-      <div id="reuploadStatus" class="muted" style="margin-top:10px;"></div>
-      <div class="muted" style="margin-top:10px;">(TODO: Save new assignment PDF to backend)</div>
-    </div>
-  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // --- Assessment Questions & Options (for Details Modal) ---
-    const assessmentQuestions = [
-      { type: "mcq", text: "1. Which part of the compound microscope connects the base to the body tube?", options: ["Arm","Stage","Pillar","Draw tube"], answer: "Arm", explanation: "The arm connects the base to the body tube." },
-      { type: "mcq", text: "2. The function of the diaphragm in a compound microscope is to:", options: ["Magnify the image","Adjust the amount of light passing through the specimen","Hold the slide in place","Focus the image"], answer: "Adjust the amount of light passing through the specimen", explanation: "Diaphragm adjusts the amount of light passing through the specimen." },
-      { type: "mcq", text: "3. Which lens offers the highest magnification in a compound microscope?", options: ["Low power objective","High power objective","Oil immersion objective","Eyepiece lens"], answer: "Oil immersion objective", explanation: "Oil immersion objective lens gives highest magnification." },
-      { type: "mcq", text: "4. Which adjustment knob is used for precise focusing?", options: ["Coarse adjustment","Fine adjustment","Stage adjustment","Condenser adjustment"], answer: "Fine adjustment", explanation: "Fine adjustment knob is used for precise focusing." },
-      { type: "dropdown", text: "5. Name the lens through which you observe the specimen in a microscope.", options: ["Eyepiece lens","Objective lens","Mirror","Stage"], answer: "Eyepiece lens", explanation: "Eyepiece lens is used for observing specimen." },
-      { type: "dropdown", text: "6. What is the recommended material for cleaning microscope lenses?", options: ["Lens paper","Tissue paper","Cloth","Hands"], answer: "Lens paper", explanation: "Lens paper is recommended for cleaning." },
-      { type: "dropdown", text: "7. Which mirror is used when the light source is weak?", options: ["Concave mirror","Plane mirror","Convex mirror","No mirror"], answer: "Concave mirror", explanation: "Concave mirror is used for weak light sources." },
-      { type: "dropdown", text: "8. What is the usual magnification power of a standard eyepiece lens?", options: ["10x","5x","40x","100x"], answer: "10x", explanation: "Standard eyepiece lens is usually 10x." },
-      { type: "image-labels", text: "9. Identify the labelled parts of the microscope in the image below.", image: "../assets/images/experiment-1/Assessment/labelquestion.jpg",
-        labels: [
-          { name: "1", answer: "Eye Piece", options: ["Eye Piece","Objective Lens","Fine adjustment Screw","Condenser","Stage"], explanation: "Label 1 is Eye Piece." },
-          { name: "2", answer: "Objective Lens", options: ["Objective Lens","Eye Piece","Mirror","Condenser","Base"], explanation: "Label 2 is Objective Lens." },
-          { name: "3", answer: "Condenser", options: ["Condenser","Stage","Objective Lens","Base","Fine adjustment Screw"], explanation: "Label 3 is Condenser." },
-          { name: "4", answer: "Fine adjustment Screw", options: ["Fine adjustment Screw","Coarse adjustment","Mirror","Arm","Condenser"], explanation: "Label 4 is Fine adjustment Screw." }
-        ]
-      },
-      { type: "mcq", text: "10. Which of the following statements is NOT true?", options: [
-        "When focusing the slide, care should be taken not to crack the glass slide",
-        "The slide should be placed on the stage with the cover slip on the upper surface",
-        "When setting up, adjust the eye pieces to the dimension of your eyes",
-        "Always view your specimen using the highest magnification lens first"
-      ], answer: "Always view your specimen using the highest magnification lens first", explanation: "Highest magnification lens should NOT be used first." }
-    ];
-
-    // Supabase setup
-    const sb = window.sb || (window.supabase.createClient(
+    const sb = window.sb || (window.sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     ));
@@ -205,11 +127,13 @@
     const $ = (s) => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
+
     const studentSummary = $('#student-summary');
     const sumAttempts = $('#sum-attempts');
     const sumAvg = $('#sum-avg');
     const sumBest = $('#sum-best');
     const sumLast = $('#sum-last');
+
     const filters = $('#filters');
     const filterExperiment = $('#filter-experiment');
     const adminSearchWrap = $('#admin-search-wrap');
@@ -218,26 +142,13 @@
     const filterBatch = $('#filter-batch');
     const btnApply = $('#apply');
     const btnReset = $('#reset');
+
     const who = $('#who');
     const tbody = $('#tbody');
     const count = $('#count');
 
-    // Modals
-    let detailsModalBg = $('#detailsModalBg');
-    let detailsModalBody = $('#detailsModalBody');
-    let editModalBg = $('#editModalBg');
-    let editCheckbox = $('#editCheckbox');
-    let editForm = $('#editForm');
-    let reuploadModalBg = $('#reuploadModalBg');
-    let reuploadStatus = $('#reuploadStatus');
-    let reuploadForm = $('#reuploadForm');
-    let reuploadFile = $('#reuploadFile');
-
-    // State
     let currentUser = null;
     let isAdmin = false;
-    let currentEditRow = null;
-    let currentReuploadRow = null;
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){ if (n == null) return '—'; const v = Math.round(n * 100) / 100; return v.toFixed(2) + '%'; }
@@ -254,11 +165,13 @@
       currentUser = session.user;
       return true;
     }
+
     async function getRole(userId) {
       const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
       if (error) console.warn('role error', error);
       return (data?.role || 'unknown').toString().trim().toLowerCase();
     }
+
     async function loadExperiments() {
       try {
         const { data, error } = await sb.rpc('list_experiments_for_results');
@@ -272,6 +185,7 @@
         }
       } catch (e) { console.warn('loadExperiments', e); }
     }
+
     async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
       const args = {
         exp_id: has(exp_id) ? exp_id : null,
@@ -282,6 +196,7 @@
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
+
     function renderSummaryForStudent(rows) {
       const attempts = rows.length;
       const percents = rows.map(r => Number(r.percent)).filter(n => !Number.isNaN(n));
@@ -296,181 +211,40 @@
       studentSummary.style.display = 'block';
     }
 
-    // --- Details Modal logic ---
-    function openDetailsModal(row) {
-      // Ensure breakdown is parsed from string to array if needed
-      if (typeof row.breakdown === 'string') {
-        try {
-          row.breakdown = JSON.parse(row.breakdown);
-        } catch(e) {
-          console.error("Could not parse breakdown", e);
-          row.breakdown = [];
-        }
-      }
-      detailsModalBg.style.display = "flex";
-      detailsModalBody.innerHTML = renderDetailsBreakdown(row);
-    }
-    function closeDetailsModal() {
-      detailsModalBg.style.display = "none";
-      detailsModalBody.innerHTML = "";
-    }
-    window.closeDetailsModal = closeDetailsModal;
-
-    function getAssessmentQuestionDetails(qObj) {
-      // For MCQ/dropdown, match by question text.
-      for (let i = 0; i < assessmentQuestions.length; i++) {
-        let aq = assessmentQuestions[i];
-        if (aq.type === "image-labels") {
-          if (qObj.type === "image-label") {
-            let match = aq.labels.find(lab =>
-              qObj.question && qObj.question.indexOf(`Label ${lab.name}`) !== -1
-            );
-            if (match) return { ...match, parentText: aq.text, type: "image-label" };
-          }
-        } else if (aq.text === qObj.question) {
-          return aq;
-        }
-      }
-      return null;
-    }
-
-    function renderDetailsBreakdown(row) {
-      if (!row.breakdown || !Array.isArray(row.breakdown) || row.breakdown.length === 0) {
-        return "<div>No breakdown data found.<br><span class='muted'>Please check if the backend returns a <b>breakdown</b> array for each result row.</span></div>";
-      }
-      let html = `<h3>Question Breakdown</h3>`;
-      row.breakdown.forEach((q, idx) => {
-        if (q.type === "meta") return;
-        let aq = getAssessmentQuestionDetails(q);
-        let feedbackClass = q.isCorrect ? "feedback-correct" : "feedback-wrong";
-        let correct = q.correct || (aq && aq.answer) || "";
-        let explanation = (aq && aq.explanation) ? `<div class="feedback-explanation">Explanation: ${aq.explanation}</div>` : "";
-        let optionsHtml = "";
-        if (aq && aq.options) {
-          optionsHtml = `<div class="options-list">Options: `;
-          optionsHtml += aq.options.map(opt => {
-            if (opt === correct) return `<span class="option-correct">${opt}</span>`;
-            if (opt === q.answer && !q.isCorrect) return `<span class="option-wrong">${opt}</span>`;
-            return `<span class="option-normal">${opt}</span>`;
-          }).join(", ");
-          optionsHtml += `</div>`;
-        }
-        if (aq && aq.type === "image-label") {
-          html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
-            <b>Q${idx+1}:</b> ${aq.parentText} <span class="muted">(Label ${aq.name})</span><br>
-            ${optionsHtml}
-            <div style="margin-left:1em;">
-              <span class="${feedbackClass}">Your answer: <i>${q.answer || "(blank)"}</i> – <b>${q.isCorrect ? "Correct" : "Wrong"}</b></span><br>
-              ${!q.isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
-            </div>
-          </div>`;
-        } else {
-          html += `<div style="border-bottom:1px solid #eee; margin-bottom:1em;">
-            <b>Q${idx+1}:</b> ${q.question}<br>
-            ${optionsHtml}
-            <div style="margin-left:1em;">
-              <span class="${feedbackClass}">Your answer: <i>${q.answer || "(blank)"}</i> – <b>${q.isCorrect ? "Correct" : "Wrong"}</b></span><br>
-              ${!q.isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correct}</b></span><br>${explanation}` : ""}
-            </div>
-          </div>`;
-        }
-      });
-      return html;
-    }
-
-    // Edit Modal logic
-    function openEditModal(row) {
-      editModalBg.style.display = "flex";
-      currentEditRow = row;
-      editCheckbox.checked = row.assignment_editable ?? false;
-    }
-    function closeEditModal() {
-      editModalBg.style.display = "none";
-      currentEditRow = null;
-    }
-    window.closeEditModal = closeEditModal;
-    editForm.onsubmit = (e) => {
-      e.preventDefault();
-      alert('Assignment editability set to: ' + editCheckbox.checked + '\n(TODO: Save to backend)');
-      closeEditModal();
-    };
-    function openReuploadModal(row) {
-      reuploadModalBg.style.display = "flex";
-      currentReuploadRow = row;
-      reuploadStatus.textContent = "";
-      reuploadForm.reset();
-    }
-    function closeReuploadModal() {
-      reuploadModalBg.style.display = "none";
-      currentReuploadRow = null;
-    }
-    window.closeReuploadModal = closeReuploadModal;
-    reuploadForm.onsubmit = async (e) => {
-      e.preventDefault();
-      let file = reuploadFile.files[0];
-      if (!file) {
-        reuploadStatus.textContent = "Please select a PDF file.";
-        return;
-      }
-      if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
-        reuploadStatus.textContent = "Only PDF files allowed.";
-        return;
-      }
-      reuploadStatus.textContent = "PDF uploaded (stub; integrate backend).";
-      setTimeout(closeReuploadModal, 1000);
-    };
-
     function renderRows(rows) {
       count.textContent = rows.length;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="13" class="muted">No results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="muted">No results.</td></tr>';
         return;
       }
       const parts = [];
-      rows.forEach((r, rowIdx) => {
+      for (const r of rows) {
         const student = r.user_name || r.email || r.user_id;
-        const prn = r.meta?.prn || r.prn || '—';
-        const batch = r.meta?.batch || r.batch || '—';
+        const prnbatch = [r.prn, r.batch].filter(Boolean).join(' • ');
         const scoreTxt = (r.score != null && r.total != null) ? `${r.score}/${r.total}` : (r.score ?? '—');
-        const assignmentUrl = r.assignment_path ? sb.storage.from(r.assignment_bucket || "assignments").getPublicUrl(r.assignment_path).data?.publicUrl : null;
-        const assignmentMarks = r.assignment_marks ?? '—';
-        const assignmentEditable = r.assignment_editable ?? true;
-
-        let canReupload = assignmentEditable && (!r.assignment_marks || r.assignment_marks === '—');
-        let canEdit = isAdmin;
-
         parts.push(`
           <tr>
-            <td>${student || '—'}<div class="muted" style="font-size:12px">${r.meta?.email || r.email || ''}</div></td>
-            <td>${r.meta?.assessment_title || r.assessment_title || '—'}</td>
-            <td>${prn}</td>
-            <td>${batch}</td>
+            <td>${student || '—'}<div class="muted" style="font-size:12px">${r.email || ''}</div></td>
+            <td>${r.assessment_title || '—'}</td>
+            <td>${prnbatch || '—'}</td>
             <td>${scoreTxt}</td>
             <td>${fmtPct(r.percent)}</td>
             <td>${fmtDate(r.submitted_at)}</td>
             <td>${fmtDur(r.duration_sec)}</td>
-            <td>
-              ${assignmentUrl
-                ? `<a href="${assignmentUrl}" target="_blank" class="assignment-link">Download</a>`
-                : '<span class="muted">Not uploaded</span>'}
-            </td>
-            <td>${assignmentMarks}</td>
-            <td>
-              <button class="details-btn" onclick="window.openDetailsModalRow(${rowIdx})">Details</button>
-            </td>
-            <td>
-              <button class="assignment-reupload-btn" onclick="window.openReuploadModalRow(${rowIdx})" ${canReupload ? "" : "disabled"}>Reupload</button>
-            </td>
-            <td>
-              ${canEdit ? `<button class="assignment-edit-btn" onclick="window.openEditModalRow(${rowIdx})">Edit</button>` : ""}
-            </td>
           </tr>
+          ${r.detail ? `
+            <tr>
+              <td colspan="7">
+                <details>
+                  <summary>Details</summary>
+                  <pre class="mono" style="white-space:pre-wrap; margin:8px 0;">${JSON.stringify(r.detail, null, 2)}</pre>
+                </details>
+              </td>
+            </tr>
+          ` : ''}
         `);
-      });
+      }
       tbody.innerHTML = parts.join('');
-      window.openDetailsModalRow = (rowIdx) => openDetailsModal(rows[rowIdx]);
-      window.openEditModalRow = (rowIdx) => openEditModal(rows[rowIdx]);
-      window.openReuploadModalRow = (rowIdx) => openReuploadModal(rows[rowIdx]);
     }
 
     async function applyFilters() {
@@ -485,7 +259,7 @@
         setStatus('Ready.');
       } catch (e) {
         console.error('applyFilters error', e);
-        tbody.innerHTML = '<tr><td colspan="13" class="muted">Failed to load results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
@@ -499,6 +273,7 @@
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
       roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
+      // UI visibility
       filters.style.display = 'block';
       if (isAdmin) {
         adminSearchWrap.style.display = 'block';
@@ -508,8 +283,10 @@
         who.textContent = 'Viewing: your attempts';
         studentSummary.style.display = 'block';
       }
+
       await loadExperiments();
 
+      // Auto-select experiment from URL like ?exp=ABC123
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
 
@@ -520,6 +297,7 @@
         if (filterBatch) filterBatch.value = '';
         applyFilters();
       });
+
       await applyFilters();
       setStatus('Ready.');
     }
