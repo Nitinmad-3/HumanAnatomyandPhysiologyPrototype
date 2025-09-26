@@ -6,571 +6,406 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    :root {
-      --c-border:#cfe0ff;
-      --c-accent:#1565c0;
-      --c-accent-alt:#0d47a1;
-      --c-bg-soft:#f5faff;
-      --c-badge:#e3f2fd;
-      --c-ok:#1b5e20;
-      --c-bad:#c62828;
-      --c-warn:#fbc02d;
-    }
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; color:#222; background:#f6f9ff; }
-    header { padding:1rem; background:#e3f2fd; border-bottom:1px solid var(--c-border); }
-    header .row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-    header a { color:var(--c-accent); text-decoration:none; font-weight:600; }
-    h1 { margin:0; font-size:1.4rem; color:var(--c-accent-alt); }
-    main { max-width:1250px; margin:18px auto 40px; padding:0 12px; }
-    .panel { background:#fff; border:1px solid var(--c-border); border-radius:10px; padding:14px; margin-bottom:14px; }
-    .grid { display:grid; gap:10px; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; color: #222; background: #f6f9ff; }
+    header { padding: 1rem; background: #e3f2fd; border-bottom: 1px solid #cfe0ff; }
+    header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    header a { color:#1565c0; text-decoration:none; font-weight:600; }
+    h1 { margin: 0; font-size: 1.4rem; color:#0d47a1; }
+    main { max-width: 1100px; margin: 18px auto; padding: 0 12px 24px; }
+    .panel { background: #fff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
     .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .muted { color:#375a9e; font-size:.94rem; }
-    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid var(--c-border); background:#fff; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:var(--c-badge); color:var(--c-accent-alt); font-weight:600; }
-    .stat { background:var(--c-bg-soft); border:1px solid var(--c-border); border-radius:8px; padding:10px; }
+    .muted { color:#375a9e; font-size: 0.95rem; }
+    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
+    .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; }
+    .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
     .stat .label { font-size:12px; color:#375a9e; }
-    .stat .value { font-size:20px; font-weight:700; color:var(--c-accent-alt); }
-    .input, select { width:100%; padding:9px 10px; border:1px solid var(--c-border); border-radius:8px; background:#fff; font-size:14px; }
-    .btn { background:var(--c-accent); color:#fff; border:0; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:4px; }
-    .btn.small { padding:4px 10px; font-size:12px; }
-    .btn.ghost { background:#fff; color:var(--c-accent); border:1px solid var(--c-border); }
-    .btn.alt { background:#0d5bb5; }
-    .btn.warn { background:var(--c-warn); color:#222; }
-    .btn:disabled { opacity:.55; cursor:not-allowed; }
-    .controls-inline { display:flex; flex-wrap:wrap; gap:8px; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { border-bottom:1px dashed var(--c-border); padding:8px 6px; text-align:left; vertical-align:top; }
-    th { background:#f0f6ff; color:var(--c-accent); position:sticky; top:0; z-index:1; }
-    tbody tr.data-row:hover { background:#f9fbff; }
-    details { background:#f9fbff; border:1px solid #d9e7ff; border-radius:8px; padding:8px 10px; }
+    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+    th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
+    tbody tr:hover { background: #f9fbff; }
+    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
     details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
     details[open] { background:#f0f6ff; }
-    .questions-wrap { margin-top:8px; display:grid; gap:6px; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
-    .q-card { border:1px solid #e2ebf9; background:#fff; border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; gap:6px; position:relative; }
-    .q-text { font-weight:600; font-size:13.6px; line-height:1.3; }
-    .correct { color:var(--c-ok); font-weight:600; }
-    .wrong { color:var(--c-bad); font-weight:600; }
-    .correct-answer { color:var(--c-ok); font-size:12.8px; }
-    .your-answer { font-style:italic; }
-    .question-type { font-size:10px; background:var(--c-badge); padding:2px 6px; border-radius:999px; margin-left:6px; color:var(--c-accent-alt); }
-    .no-breakdown { color:var(--c-bad); font-size:13px; }
-    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; max-height:260px; }
-    .meta-line { font-size:11px; margin-top:6px; color:#375a9e; }
-    .toolbar-divider { width:1px; background:var(--c-border); height:30px; align-self:center; }
-    @media (max-width: 960px){
-      .questions-wrap { grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
-      th:nth-child(3), td:nth-child(3),
-      th:nth-child(6), td:nth-child(6),
-      th:nth-child(7), td:nth-child(7) { display:none; }
-    }
-    @media (max-width: 600px){
-      table { font-size:13px; }
-      .q-card { padding:6px 8px; }
-      .q-text { font-size:13px; }
-    }
+    .q-row { border-bottom:1px solid #e3ecfa; padding:6px 4px; }
+    .q-row:last-child { border-bottom:none; }
+    .q-text { font-weight:600; margin-bottom:2px; }
+    .ans-line { margin-left:8px; }
+    .correct { color:#1b5e20; font-weight:600; }
+    .wrong { color:#c62828; font-weight:600; }
+    .correct-answer { color:#2e7d32; margin-left:8px; }
+    .your-answer { font-style: italic; }
+    .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
+    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
+    .no-breakdown { color:#c62828; font-size:13px; }
+    .assignment-btn { background:#1976d2; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
+    .assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
 <body>
-<header>
-  <div class="row">
-    <a href="index.html">← Home</a>
-    <h1>Results</h1>
-    <span id="role-badge" class="badge">Loading…</span>
-    <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
-  </div>
-</header>
-
-<main>
-  <!-- Student summary -->
-  <section id="student-summary" class="panel" style="display:none;">
-    <div class="row" style="margin-bottom:8px;">
-      <div class="muted">Your performance summary</div>
+  <header>
+    <div class="row">
+      <a href="index.html">← Home</a>
+      <h1>Results</h1>
+      <span id="role-badge" class="badge">Loading…</span>
+      <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
     </div>
-    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-      <div class="stat"><div class="label">Total Attempts</div><div class="value" id="sum-attempts">0</div></div>
-      <div class="stat"><div class="label">Average %</div><div class="value" id="sum-avg">0%</div></div>
-      <div class="stat"><div class="label">Best %</div><div class="value" id="sum-best">0%</div></div>
-      <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
-    </div>
-  </section>
-
-  <!-- Filters -->
-  <section id="filters" class="panel" style="display:none;">
-    <div class="row" style="margin-bottom:8px;">
-      <div class="muted">Filters</div>
-    </div>
-    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
-      <div>
-        <label class="muted">Experiment</label>
-        <select id="filter-experiment">
-          <option value="">All experiments</option>
-        </select>
+  </header>
+  <main>
+    <!-- Student summary -->
+    <section id="student-summary" class="panel" style="display:none;">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Your performance summary</div>
       </div>
-      <div id="admin-search-wrap" style="display:none;">
-        <label class="muted">Search (name/email/PRN)</label>
-        <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
+      <div class="grid">
+        <div class="stat"><div class="label">Total Attempts</div><div class="value" id="sum-attempts">0</div></div>
+        <div class="stat"><div class="label">Average %</div><div class="value" id="sum-avg">0%</div></div>
+        <div class="stat"><div class="label">Best %</div><div class="value" id="sum-best">0%</div></div>
+        <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
-      <div id="admin-batch-wrap" style="display:none;">
-        <label class="muted">Batch</label>
-        <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
+    </section>
+    <!-- Filters -->
+    <section id="filters" class="panel" style="display:none;">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Filters</div>
       </div>
-      <div>
-        <label class="muted">Min % (client filter)</label>
-        <input id="filter-min-pct" class="input" type="number" min="0" max="100" placeholder="e.g., 40">
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:6px;">
-        <input type="checkbox" id="toggle-hide-correct">
-        <span class="muted">Hide correct questions</span>
-      </label>
-      <button id="apply" class="btn">Apply</button>
-      <button id="reset" class="btn ghost">Reset</button>
-      <button id="expand-all" class="btn small">Expand All</button>
-      <button id="collapse-all" class="btn small ghost">Collapse All</button>
-      <button id="export-csv" class="btn alt small">Export CSV</button>
-      <span class="note">Server filters apply on fetch; min % & hide-correct are client-side.</span>
-    </div>
-  </section>
-
-  <!-- Results table -->
-  <section class="panel">
-    <div class="row" style="margin-bottom:8px;">
-      <div class="muted">Results</div>
-      <span id="count" class="pill" style="margin-left:8px;">0</span>
-      <div style="margin-left:auto;" class="muted" id="who"></div>
-    </div>
-    <div style="overflow:auto; max-height: 65vh;">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Assessment</th>
-            <th>PRN</th>
-            <th>Batch</th>
-            <th>Score</th>
-            <th>%</th>
-            <th>Submitted</th>
-            <th>Duration</th>
-            <th>Assignment</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="9" class="muted">Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="legend" class="panel">
-    <div class="muted" style="margin-bottom:6px;">
-      Tip: Each attempt has a full-width Details block below it. Click “Assignment” to view the uploaded PDF. Only the uploader and admin can access each assignment.
-    </div>
-  </section>
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-<script>
-const sb = window.sb || (window.sb = window.supabase.createClient(
-  'https://hunlistfklwvpivfjmbk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-));
-
-const $ = s => document.querySelector(s);
-const statusEl = $('#status');
-const roleBadge = $('#role-badge');
-const studentSummary = $('#student-summary');
-const sumAttempts = $('#sum-attempts');
-const sumAvg = $('#sum-avg');
-const sumBest = $('#sum-best');
-const sumLast = $('#sum-last');
-const filters = $('#filters');
-const filterExperiment = $('#filter-experiment');
-const adminSearchWrap = $('#admin-search-wrap');
-const adminBatchWrap = $('#admin-batch-wrap');
-const filterSearch = $('#filter-search');
-const filterBatch = $('#filter-batch');
-const filterMinPct = $('#filter-min-pct');
-const toggleHideCorrect = $('#toggle-hide-correct');
-const btnApply = $('#apply');
-const btnReset = $('#reset');
-const btnExpandAll = $('#expand-all');
-const btnCollapseAll = $('#collapse-all');
-const btnExportCsv = $('#export-csv');
-const who = $('#who');
-const tbody = $('#tbody');
-const count = $('#count');
-let currentUser = null;
-let isAdmin = false;
-window._allRows = [];
-
-function setStatus(msg){ statusEl.textContent = msg; }
-function fmtPct(n){
-  if (n == null) return '—';
-  const num = Number(n);
-  if (Number.isNaN(num)) return '—';
-  return (Math.round(num * 100) / 100).toFixed(2) + '%';
-}
-function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
-function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
-function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
-function escapeHTML(str){
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
-}
-
-async function requireLogin() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session?.user) {
-    window.location.replace('login_Version4.html');
-    return false;
-  }
-  currentUser = session.user;
-  return true;
-}
-async function getRole(userId) {
-  const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
-  if (error) console.warn('role error', error);
-  return (data?.role || 'unknown').toString().trim().toLowerCase();
-}
-async function loadExperiments() {
-  try {
-    const { data, error } = await sb.rpc('list_experiments_for_results');
-    if (!error && Array.isArray(data)) {
-      for (const row of data) {
-        const opt = document.createElement('option');
-        opt.value = row.experiment_id || '';
-        opt.textContent = row.experiment_id || '(untitled)';
-        filterExperiment.appendChild(opt);
-      }
-    }
-  } catch (e) { console.warn('loadExperiments', e); }
-}
-async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
-  const args = {
-    exp_id: has(exp_id) ? exp_id : null,
-    search_text: has(search) ? search : null,
-    batch_text: has(batch) ? batch : null
-  };
-  const { data, error } = await sb.rpc('get_assessment_results', args);
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
-}
-function extractRawBreakdown(row) {
-  return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
-}
-function parseBreakdown(raw) {
-  if (!raw) return null;
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'object') return raw;
-  if (typeof raw === 'string') {
-    try { return JSON.parse(raw); }
-    catch(e){ console.warn('parse breakdown failed', e); return null; }
-  }
-  return null;
-}
-function normalizeQuestionArray(parsed) {
-  if (!parsed) return [];
-  if (Array.isArray(parsed)) return parsed;
-  if (Array.isArray(parsed.questions)) return parsed.questions;
-  return [];
-}
-function renderSummaryForStudent(rows) {
-  const attempts = rows.length;
-  const percents = rows
-    .map(r => Number(r.percent ?? r.percentage))
-    .filter(n => !Number.isNaN(n));
-  const avg = percents.length ? (percents.reduce((a,b)=>a+b,0)/percents.length) : 0;
-  const best = percents.length ? Math.max(...percents) : 0;
-  const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
-
-  sumAttempts.textContent = attempts;
-  sumAvg.textContent = fmtPct(avg);
-  sumBest.textContent = fmtPct(best);
-  sumLast.textContent = fmtDate(last);
-  studentSummary.style.display = 'block';
-}
-function filteredClientRows() {
-  const minPct = Number(filterMinPct.value);
-  const applyMin = !Number.isNaN(minPct) && filterMinPct.value.trim() !== '';
-  return window._allRows.filter(r => {
-    if (applyMin) {
-      const pct = Number(r.percent ?? r.percentage);
-      if (Number.isNaN(pct) || pct < minPct) return false;
-    }
-    return true;
-  });
-}
-function buildQuestionsHTML(qArr, hideCorrect) {
-  const usable = qArr.filter(q => q && q.type !== 'meta');
-  if (!usable.length) return '<div class="no-breakdown">No question entries.</div>';
-  const filtered = hideCorrect
-    ? usable.filter(q => !q.isCorrect)
-    : usable;
-  if (!filtered.length) {
-    return '<div class="no-breakdown">All questions correct (or none to show with current filter).</div>';
-  }
-  let html = '<div class="questions-wrap">';
-  filtered.forEach((q, i) => {
-    const yourAns = (q.answer === '' || q.answer == null) ? '(blank)' : q.answer;
-    const isCorrect = !!q.isCorrect;
-    const correct = q.correct ?? '';
-    html += `
-      <div class="q-card">
-        <div class="q-text">
-          ${escapeHTML(q.question || '(no question text)')}
-          ${q.type ? `<span class="question-type">${escapeHTML(q.type)}</span>` : ''}
+      <div class="grid">
+        <div>
+          <label class="muted">Experiment</label>
+          <select id="filter-experiment">
+            <option value="">All experiments</option>
+          </select>
         </div>
-        <div class="${isCorrect ? 'correct' : 'wrong'}">
-          Your answer: <span class="your-answer">${escapeHTML(yourAns)}</span>
-          – ${isCorrect ? 'Correct' : 'Wrong'}
+        <div id="admin-search-wrap" style="display:none;">
+          <label class="muted">Search (name/email/PRN)</label>
+          <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
         </div>
-        ${!isCorrect && correct
-          ? `<div class="correct-answer">Correct: <strong>${escapeHTML(correct)}</strong></div>`
-          : ''}
+        <div id="admin-batch-wrap" style="display:none;">
+          <label class="muted">Batch</label>
+          <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
+        </div>
       </div>
-    `;
-  });
-  html += '</div>';
-  return html;
-}
-function buildDetailsBlock(row, hideCorrect) {
-  const raw = extractRawBreakdown(row);
-  const parsed = parseBreakdown(raw);
-  const qArray = normalizeQuestionArray(parsed);
+      <div class="row" style="margin-top:10px;">
+        <button id="apply" class="btn">Apply</button>
+        <button id="reset" class="btn ghost">Reset</button>
+      </div>
+    </section>
+    <!-- Results table -->
+    <section class="panel">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Results</div>
+        <span id="count" class="pill" style="margin-left:8px;">0</span>
+        <div style="margin-left:auto;" class="muted" id="who"></div>
+      </div>
+      <div style="overflow:auto; max-height: 65vh;">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Assessment</th>
+              <th>PRN</th>
+              <th>Batch</th>
+              <th>Score</th>
+              <th>%</th>
+              <th>Submitted</th>
+              <th>Duration</th>
+              <th>Assignment</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="9" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section id="legend" class="panel">
+      <div class="muted">
+        Tip: Expand “Details” below each row to view per-question breakdown. Only the uploader and admins can view each assignment.
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script>
+    const sb = window.sb || (window.sb = window.supabase.createClient(
+      'https://hunlistfklwvpivfjmbk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+    ));
+    const $ = (s) => document.querySelector(s);
+    const statusEl = $('#status');
+    const roleBadge = $('#role-badge');
+    const studentSummary = $('#student-summary');
+    const sumAttempts = $('#sum-attempts');
+    const sumAvg = $('#sum-avg');
+    const sumBest = $('#sum-best');
+    const sumLast = $('#sum-last');
+    const filters = $('#filters');
+    const filterExperiment = $('#filter-experiment');
+    const adminSearchWrap = $('#admin-search-wrap');
+    const adminBatchWrap = $('#admin-batch-wrap');
+    const filterSearch = $('#filter-search');
+    const filterBatch = $('#filter-batch');
+    const btnApply = $('#apply');
+    const btnReset = $('#reset');
+    const who = $('#who');
+    const tbody = $('#tbody');
+    const count = $('#count');
+    let currentUser = null;
+    let isAdmin = false;
 
-  if (Array.isArray(qArray) && qArray.length) {
-    const answered = qArray.filter(q => q.type !== 'meta');
-    const correctCount = answered.filter(q => q.isCorrect).length;
-    const progressText = `${correctCount}/${answered.length} correct`;
-    return `
-      <details>
-        <summary>Details (${progressText})</summary>
-        ${buildQuestionsHTML(qArray, hideCorrect)}
-      </details>
-    `;
-  }
-  if (raw) {
-    let printable;
-    try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
-    catch(e){ printable = '(unprintable breakdown)'; }
-    return `
-      <details>
-        <summary>Details (raw)</summary>
-        <div class="no-breakdown" style="margin:4px 0 6px;">Could not format questions, showing raw data:</div>
-        <pre class="fallback-json">${escapeHTML(printable)}</pre>
-      </details>
-    `;
-  }
-  return '<div class="no-breakdown">No breakdown data.</div>';
-}
-function renderRows(rows) {
-  count.textContent = rows.length;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="muted">No results.</td></tr>';
-    return;
-  }
-  const hideCorrect = toggleHideCorrect.checked;
-  const parts = [];
-  rows.forEach((r, rowIdx) => {
-    const email = r.meta?.email || r.email || '';
-    const prn = r.meta?.prn || r.prn || '—';
-    const batch = r.meta?.batch || r.batch || '—';
-    const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
-    const percentVal = r.percent ?? r.percentage;
-    const scoreTxt = (r.score != null && r.total != null)
-      ? `${r.score}/${r.total}`
-      : (r.score ?? '—');
-    // Assignment button logic with access control
-    let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
-    // Only show if admin or uploader
-    const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
-    if (r.assignment_path && canViewAssignment) {
-      const bucket = r.assignment_bucket || "assignments";
-      const url = sb.storage.from(bucket).getPublicUrl(r.assignment_path).data?.publicUrl;
-      if (url) {
-        assignmentBtn = `<button class="btn small" onclick="window.open('${url}','_blank')">View PDF</button>`;
-      }
-    } else if (r.assignment_path) {
-      assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
+    function setStatus(msg){ statusEl.textContent = msg; }
+    function fmtPct(n){
+      if (n == null) return '—';
+      const num = Number(n);
+      if (Number.isNaN(num)) return '—';
+      return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
-    const detailsBlock = buildDetailsBlock(r, hideCorrect);
+    function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
+    function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
+    function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+    async function requireLogin() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.user) {
+        window.location.replace('login_Version4.html');
+        return false;
+      }
+      currentUser = session.user;
+      return true;
+    }
+    async function getRole(userId) {
+      const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
+      if (error) console.warn('role error', error);
+      return (data?.role || 'unknown').toString().trim().toLowerCase();
+    }
+    async function loadExperiments() {
+      try {
+        const { data, error } = await sb.rpc('list_experiments_for_results');
+        if (!error && Array.isArray(data)) {
+          for (const row of data) {
+            const opt = document.createElement('option');
+            opt.value = row.experiment_id || '';
+            opt.textContent = row.experiment_id || '(untitled)';
+            filterExperiment.appendChild(opt);
+          }
+        }
+      } catch (e) { console.warn('loadExperiments', e); }
+    }
+    async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
+      const args = {
+        exp_id: has(exp_id) ? exp_id : null,
+        search_text: has(search) ? search : null,
+        batch_text: has(batch) ? batch : null
+      };
+      const { data, error } = await sb.rpc('get_assessment_results', args);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    }
+    function renderSummaryForStudent(rows) {
+      const attempts = rows.length;
+      const percents = rows
+        .map(r => Number(r.percent ?? r.percentage))
+        .filter(n => !Number.isNaN(n));
+      const avg = percents.length ? (percents.reduce((a,b)=>a+b,0)/percents.length) : 0;
+      const best = percents.length ? Math.max(...percents) : 0;
+      const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
 
-    parts.push(`
-      <tr class="data-row">
-        <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
-          <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
-        </td>
-        <td>${escapeHTML(assessmentTitle)}</td>
-        <td>${escapeHTML(prn)}</td>
-        <td>${escapeHTML(batch)}</td>
-        <td>${escapeHTML(scoreTxt)}</td>
-        <td>${fmtPct(percentVal)}</td>
-        <td>${fmtDate(r.submitted_at)}</td>
-        <td>${fmtDur(r.duration_sec)}</td>
-        <td>${assignmentBtn}</td>
-      </tr>
-      <tr class="details-row">
-        <td colspan="9">
-          ${detailsBlock}
-        </td>
-      </tr>
-    `);
-  });
-  tbody.innerHTML = parts.join('');
-}
-function expandAllDetails() {
-  tbody.querySelectorAll('details').forEach(d => d.open = true);
-}
-function collapseAllDetails() {
-  tbody.querySelectorAll('details').forEach(d => d.open = false);
-}
-function exportCSV() {
-  const rows = filteredClientRows();
-  if (!rows.length) {
-    alert('Nothing to export.');
-    return;
-  }
-  const lines = [];
-  lines.push([
-    'attempt_id','user_id','user_name','email','assessment_title','prn','batch',
-    'score','total','percent','submitted_at','duration_sec',
-    'question_index','question_text','question_type','student_answer','is_correct','correct_answer'
-  ].join(','));
-
-  rows.forEach(r => {
-    const raw = extractRawBreakdown(r);
-    const parsed = parseBreakdown(raw);
-    const qArray = normalizeQuestionArray(parsed);
-    const email = r.meta?.email || r.email || '';
-    const prn = r.meta?.prn || r.prn || '';
-    const batch = r.meta?.batch || r.batch || '';
-    const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '';
-    if (Array.isArray(qArray) && qArray.length) {
-      let idxCounter = 0;
-      qArray.forEach(q => {
-        if (q.type === 'meta') return;
-        idxCounter++;
-        lines.push([
-          r.id,
-          r.user_id,
-          csvEscape(r.user_name || ''),
-          csvEscape(email),
-          csvEscape(assessmentTitle),
-          csvEscape(prn),
-          csvEscape(batch),
-          r.score ?? '',
-          r.total ?? '',
-          (r.percent ?? r.percentage) ?? '',
-          r.submitted_at ?? '',
-          r.duration_sec ?? '',
-          idxCounter,
-          csvEscape(q.question || ''),
-          csvEscape(q.type || ''),
-          csvEscape(q.answer == null || q.answer === '' ? '(blank)' : q.answer),
-          q.isCorrect ? 'TRUE' : 'FALSE',
-          csvEscape(q.correct ?? '')
-        ].join(','));
+      sumAttempts.textContent = attempts;
+      sumAvg.textContent = fmtPct(avg);
+      sumBest.textContent = fmtPct(best);
+      sumLast.textContent = fmtDate(last);
+      studentSummary.style.display = 'block';
+    }
+    function extractRawBreakdown(row) {
+      return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
+    }
+    function parseBreakdown(raw) {
+      if (!raw) return null;
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'object') return raw;
+      if (typeof raw === 'string') {
+        try { return JSON.parse(raw); }
+        catch(e){ console.warn('parse breakdown failed', e); return null; }
+      }
+      return null;
+    }
+    function normalizeQuestionArray(parsed) {
+      if (!parsed) return [];
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed.questions)) return parsed.questions;
+      return [];
+    }
+    function buildQuestionsHTML(qArr) {
+      const usable = qArr.filter(q => q && q.type !== 'meta');
+      if (!usable.length) return '<div class="no-breakdown">No question entries.</div>';
+      let html = '<div>';
+      usable.forEach((q, i) => {
+        const yourAns = (q.answer === '' || q.answer == null) ? '(blank)' : q.answer;
+        const isCorrect = !!q.isCorrect;
+        const correct = q.correct ?? '';
+        html += `
+          <div class="q-row">
+            <div class="q-text">Q${i+1}. ${escapeHTML(q.question || '(no question text)')}
+              ${q.type ? `<span class="question-type">${escapeHTML(q.type)}</span>` : ''}
+            </div>
+            <div class="ans-line">
+              <span class="${isCorrect ? 'correct' : 'wrong'}">
+                Your answer: <span class="your-answer">${escapeHTML(yourAns)}</span>
+                – ${isCorrect ? 'Correct' : 'Wrong'}
+              </span>
+              ${!isCorrect && correct
+                ? `<span class="correct-answer">Correct: <strong>${escapeHTML(correct)}</strong></span>`
+                : ''}
+            </div>
+          </div>
+        `;
       });
-    } else {
-      lines.push([
-        r.id, r.user_id, csvEscape(r.user_name || ''), csvEscape(email),
-        csvEscape(assessmentTitle), csvEscape(prn), csvEscape(batch),
-        r.score ?? '', r.total ?? '', (r.percent ?? r.percentage) ?? '',
-        r.submitted_at ?? '', r.duration_sec ?? '',
-        '', '', '', '', '', ''
-      ].join(','));
+      html += '</div>';
+      return html;
     }
-  });
-
-  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const stamp = new Date().toISOString().replace(/[:T]/g,'-').split('.')[0];
-  a.download = `assessment_results_${stamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-function csvEscape(v) {
-  const s = String(v);
-  if (/[",\n]/.test(s)) {
-    return '"' + s.replace(/"/g,'""') + '"';
-  }
-  return s;
-}
-async function applyFilters(serverFetch = true) {
-  try {
-    setStatus('Loading…');
-    if (serverFetch) {
-      const exp_id = filterExperiment.value || '';
-      const search = filterSearch?.value || '';
-      const batch = filterBatch?.value || '';
-      const rows = await fetchResults({ exp_id, search, batch });
-      window._allRows = rows;
+    function buildDetailsBlock(row) {
+      const raw = extractRawBreakdown(row);
+      const parsed = parseBreakdown(raw);
+      const qArray = normalizeQuestionArray(parsed);
+      if (Array.isArray(qArray) && qArray.length) {
+        const answered = qArray.filter(q => q.type !== 'meta');
+        const correctCount = answered.filter(q => q.isCorrect).length;
+        return `
+          <details>
+            <summary>Details (${correctCount}/${answered.length} correct)</summary>
+            ${buildQuestionsHTML(qArray)}
+          </details>
+        `;
+      }
+      if (raw) {
+        let printable;
+        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
+        catch(e){ printable = '(unprintable breakdown)'; }
+        return `
+          <details>
+            <summary>Details (raw)</summary>
+            <div class="no-breakdown" style="margin-bottom:6px;">Could not format questions, showing raw data:</div>
+            <pre class="fallback-json">${escapeHTML(printable)}</pre>
+          </details>
+        `;
+      }
+      return '<div class="no-breakdown">No breakdown data found.</div>';
     }
-    const clientFiltered = filteredClientRows();
-    renderRows(clientFiltered);
-    if (!isAdmin) renderSummaryForStudent(clientFiltered);
-    setStatus('Ready.');
-  } catch (e) {
-    console.error('applyFilters error', e);
-    tbody.innerHTML = '<tr><td colspan="9" class="muted">Failed to load results.</td></tr>';
-    setStatus('Failed.');
-    alert('Error loading results: ' + (e?.message || e));
-  }
-}
-async function init() {
-  if (!(await requireLogin())) return;
-  const role = await getRole(currentUser.id);
-  isAdmin = (role === 'admin');
-  roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
-  roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
-  roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
+    function renderRows(rows) {
+      count.textContent = rows.length;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">No results.</td></tr>';
+        return;
+      }
+      const parts = [];
+      rows.forEach(r => {
+        const email = r.meta?.email || r.email || '';
+        const prn = r.meta?.prn || r.prn || '—';
+        const batch = r.meta?.batch || r.batch || '—';
+        const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
+        const percentVal = r.percent ?? r.percentage;
+        const scoreTxt = (r.score != null && r.total != null)
+          ? `${r.score}/${r.total}`
+          : (r.score ?? '—');
+        // Assignment button logic with access control
+        let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
+        // Only admin or uploader can view
+        const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
+        if (r.assignment_path && canViewAssignment) {
+          const bucket = r.assignment_bucket || "assignments";
+          const url = sb.storage.from(bucket).getPublicUrl(r.assignment_path).data?.publicUrl;
+          if (url) {
+            assignmentBtn = `<button class="assignment-btn" onclick="window.open('${url}','_blank')">View PDF</button>`;
+          }
+        } else if (r.assignment_path) {
+          assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
+        }
+        const detailsBlock = buildDetailsBlock(r);
 
-  filters.style.display = 'block';
-  if (isAdmin) {
-    adminSearchWrap.style.display = 'block';
-    adminBatchWrap.style.display = 'block';
-    who.textContent = 'Viewing: all students (filtered)';
-  } else {
-    who.textContent = 'Viewing: your attempts';
-    studentSummary.style.display = 'block';
-  }
+        parts.push(`
+          <tr>
+            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
+              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
+            </td>
+            <td>${escapeHTML(assessmentTitle)}</td>
+            <td>${escapeHTML(prn)}</td>
+            <td>${escapeHTML(batch)}</td>
+            <td>${escapeHTML(scoreTxt)}</td>
+            <td>${fmtPct(percentVal)}</td>
+            <td>${fmtDate(r.submitted_at)}</td>
+            <td>${fmtDur(r.duration_sec)}</td>
+            <td>${assignmentBtn}</td>
+          </tr>
+          <tr>
+            <td colspan="9">
+              ${detailsBlock}
+            </td>
+          </tr>
+        `);
+      });
+      tbody.innerHTML = parts.join('');
+    }
+    async function applyFilters() {
+      try {
+        setStatus('Loading…');
+        const exp_id = filterExperiment.value || '';
+        const search = filterSearch?.value || '';
+        const batch = filterBatch?.value || '';
+        const rows = await fetchResults({ exp_id, search, batch });
+        renderRows(rows);
+        if (!isAdmin) renderSummaryForStudent(rows);
+        setStatus('Ready.');
+      } catch (e) {
+        console.error('applyFilters error', e);
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">Failed to load results.</td></tr>';
+        setStatus('Failed.');
+        alert('Error loading results: ' + (e?.message || e));
+      }
+    }
+    async function init() {
+      if (!(await requireLogin())) return;
+      const role = await getRole(currentUser.id);
+      isAdmin = (role === 'admin');
+      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
+      roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
+      roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
-  await loadExperiments();
+      filters.style.display = 'block';
+      if (isAdmin) {
+        adminSearchWrap.style.display = 'block';
+        adminBatchWrap.style.display = 'block';
+        who.textContent = 'Viewing: all students (filtered)';
+      } else {
+        who.textContent = 'Viewing: your attempts';
+        studentSummary.style.display = 'block';
+      }
+      await loadExperiments();
 
-  const urlExp = new URLSearchParams(location.search).get('exp');
-  if (urlExp) filterExperiment.value = urlExp;
+      const urlExp = new URLSearchParams(location.search).get('exp');
+      if (urlExp) filterExperiment.value = urlExp;
 
-  btnApply.addEventListener('click', () => applyFilters(true));
-  btnReset.addEventListener('click', () => {
-    filterExperiment.value = '';
-    if (filterSearch) filterSearch.value = '';
-    if (filterBatch) filterBatch.value = '';
-    filterMinPct.value = '';
-    toggleHideCorrect.checked = false;
-    applyFilters(true);
-  });
-
-  filterMinPct.addEventListener('input', () => applyFilters(false));
-  toggleHideCorrect.addEventListener('change', () => applyFilters(false));
-  btnExpandAll.addEventListener('click', () => tbody.querySelectorAll('details').forEach(d => d.open = true));
-  btnCollapseAll.addEventListener('click', () => tbody.querySelectorAll('details').forEach(d => d.open = false));
-  btnExportCsv.addEventListener('click', exportCSV);
-
-  await applyFilters(true);
-  setStatus('Ready.');
-}
-
-init();
-</script>
+      btnApply.addEventListener('click', () => applyFilters());
+      btnReset.addEventListener('click', () => {
+        filterExperiment.value = '';
+        if (filterSearch) filterSearch.value = '';
+        if (filterBatch) filterBatch.value = '';
+        applyFilters();
+      });
+      await applyFilters();
+      setStatus('Ready.');
+    }
+    init();
+  </script>
 </body>
 </html>
