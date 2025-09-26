@@ -377,6 +377,7 @@
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
     }
+
     // **DEBUG LOGGING ADDED HERE**
     function renderRows(rows) {
       console.log('RenderRows Debug:', rows.map(r => ({
@@ -393,6 +394,8 @@
       }
       const parts = [];
       rows.forEach((r, rowIdx) => {
+        // Extra debug log per row
+        console.log(`Row ${rowIdx} id=${r.id} assignment_marks=${r.assignment_marks} score=${r.score} user_name=${r.user_name}`);
         const email = r.meta?.email || r.email || '';
         const prn = r.meta?.prn || r.prn || '—';
         const batch = r.meta?.batch || r.batch || '—';
