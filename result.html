@@ -139,7 +139,7 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    const sb = window.sb || (window.sb = window.supabase.createClient(
+    const sb = window.sb || (window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     ));
@@ -346,7 +346,7 @@
         return;
       }
       const marks = Number(val);
-      // Optionally limit marks (e.g., max 10)
+      // Optionally limit marks (e.g., max 50)
       if (marks < 0 || marks > 50) {
         alert('Marks should be between 0 and 50.');
         return;
@@ -365,8 +365,17 @@
         return;
       }
       setStatus('Marks saved!');
-      // Refresh results
-      await applyFilters();
+      // Debug info: log the update result
+      console.log(`Assignment marks for id ${row.id} saved as:`, marks);
+      // Refresh results and log new marks from DB
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      console.log('Latest marks from DB:', rows.map(r => ({id: r.id, assignment_marks: r.assignment_marks})));
+      renderRows(rows);
+      if (!isAdmin) renderSummaryForStudent(rows);
+      setStatus('Ready.');
     }
     function renderRows(rows) {
       currentRows = rows;
