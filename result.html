@@ -11,27 +11,50 @@
     header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     header a { color:#1565c0; text-decoration:none; font-weight:600; }
     h1 { margin: 0; font-size: 1.4rem; color:#0d47a1; }
-    main { max-width: 1100px; margin: 18px auto; padding: 0 12px 24px; }
+    main { max-width: 1150px; margin: 18px auto; padding: 0 12px 40px; }
+
     .panel { background: #fff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
     .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
     .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .muted { color:#375a9e; font-size: 0.95rem; }
     .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; font-weight:600; }
+
+    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
+    .stat .label { font-size:12px; color:#375a9e; }
+    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
+
     .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
     .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; }
     .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
     .btn:disabled { opacity:.6; cursor:not-allowed; }
-    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
-    .stat .label { font-size:12px; color:#375a9e; }
-    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; vertical-align: top; }
     th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
     tbody tr:hover { background: #f9fbff; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace; }
-    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; font-weight:600; }
-    @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
+
+    details { background:#f9fbff; border:1px solid #d9e7ff; border-radius:8px; padding:8px 10px; margin-top:6px; }
+    details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
+    details[open] { background:#f0f6ff; }
+
+    .q-item { border-bottom:1px solid #e3ecfa; padding:8px 4px; }
+    .q-item:last-child { border-bottom:none; }
+    .q-text { font-weight:600; margin-bottom:4px; }
+    .ans { margin-left:6px; }
+    .correct { color:#1b5e20; font-weight:600; }
+    .wrong { color:#c62828; font-weight:600; }
+    .correct-answer { color:#2e7d32; }
+    .your-answer { font-style: italic; }
+    .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
+    .no-breakdown { color:#c62828; font-size:13px; }
+
+    @media (max-width: 760px) {
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(6), td:nth-child(6),
+      th:nth-child(7), td:nth-child(7) { display:none; }
+      .q-text { font-size:13px; }
+    }
   </style>
 </head>
 <body>
@@ -98,33 +121,40 @@
             <tr>
               <th>Student</th>
               <th>Assessment</th>
-              <th>PRN/Batch</th>
+              <th>PRN</th>
+              <th>Batch</th>
               <th>Score</th>
               <th>%</th>
               <th>Submitted</th>
               <th>Duration</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="7" class="muted">Loading…</td></tr>
+            <tr><td colspan="9" class="muted">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
     <section id="legend" class="panel">
-      <div class="muted">Tip: Click “Details” where available to view per-question breakdown.</div>
+      <div class="muted">
+        Tip: Expand “Details” to view each question, your answer, and the correct answer (if you were wrong).
+      </div>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
+    // Supabase client
     const sb = window.sb || (window.sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     ));
 
+    // DOM helpers
     const $ = (s) => document.querySelector(s);
+
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
 
@@ -147,11 +177,17 @@
     const tbody = $('#tbody');
     const count = $('#count');
 
+    // State
     let currentUser = null;
     let isAdmin = false;
 
     function setStatus(msg){ statusEl.textContent = msg; }
-    function fmtPct(n){ if (n == null) return '—'; const v = Math.round(n * 100) / 100; return v.toFixed(2) + '%'; }
+    function fmtPct(n){
+      if (n == null) return '—';
+      const num = Number(n);
+      if (Number.isNaN(num)) return '—';
+      return (Math.round(num * 100) / 100).toFixed(2) + '%';
+    }
     function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
     function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
     function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
@@ -199,10 +235,12 @@
 
     function renderSummaryForStudent(rows) {
       const attempts = rows.length;
-      const percents = rows.map(r => Number(r.percent)).filter(n => !Number.isNaN(n));
+      const percents = rows
+        .map(r => Number(r.percent ?? r.percentage))
+        .filter(n => !Number.isNaN(n));
       const avg = percents.length ? (percents.reduce((a,b)=>a+b,0)/percents.length) : 0;
       const best = percents.length ? Math.max(...percents) : 0;
-      const last = rows.slice().sort((a,b) => new Date(b.submitted_at||0)-new Date(a.submitted_at||0))[0]?.submitted_at;
+      const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
 
       sumAttempts.textContent = attempts;
       sumAvg.textContent = fmtPct(avg);
@@ -211,39 +249,107 @@
       studentSummary.style.display = 'block';
     }
 
+    function safeParseBreakdown(bd) {
+      if (!bd) return null;
+      if (Array.isArray(bd)) return bd;
+      if (typeof bd === 'string') {
+        try {
+          const parsed = JSON.parse(bd);
+            return Array.isArray(parsed) ? parsed : null;
+        } catch (e) {
+          console.warn('Failed to parse breakdown string', e);
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function buildDetailsHTML(row) {
+      const breakdown = safeParseBreakdown(row.breakdown);
+      if (!breakdown || !breakdown.length) {
+        return '<div class="no-breakdown">No breakdown data found for this attempt.</div>';
+      }
+      // filter out any meta objects
+      const usable = breakdown.filter(q => q && q.type !== 'meta');
+
+      if (!usable.length) {
+        return '<div class="no-breakdown">No question entries in breakdown.</div>';
+      }
+
+      let html = '<div>';
+      usable.forEach((q, idx) => {
+        const isCorrect = !!q.isCorrect;
+        const yourAns = (q.answer === '' || q.answer == null) ? '(blank)' : q.answer;
+        const correctAns = q.correct ?? '';
+        html += `
+          <div class="q-item">
+            <div class="q-text">Q${idx+1}. ${q.question}
+              ${q.type ? `<span class="question-type">${q.type}</span>` : ''}
+            </div>
+            <div class="ans">
+              <span class="${isCorrect ? 'correct' : 'wrong'}">
+                Your answer: <span class="your-answer">${escapeHTML(yourAns)}</span>
+                – ${isCorrect ? 'Correct' : 'Wrong'}
+              </span>
+              ${!isCorrect && correctAns
+                ? `<div class="correct-answer">Correct answer: <strong>${escapeHTML(correctAns)}</strong></div>`
+                : ''}
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
     function renderRows(rows) {
       count.textContent = rows.length;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="muted">No results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">No results.</td></tr>';
         return;
       }
       const parts = [];
-      for (const r of rows) {
-        const student = r.user_name || r.email || r.user_id;
-        const prnbatch = [r.prn, r.batch].filter(Boolean).join(' • ');
-        const scoreTxt = (r.score != null && r.total != null) ? `${r.score}/${r.total}` : (r.score ?? '—');
+      rows.forEach(r => {
+        // meta fallback
+        const email = r.meta?.email || r.email || '';
+        const prn = r.meta?.prn || r.prn || '—';
+        const batch = r.meta?.batch || r.batch || '—';
+        const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
+        const percentVal = r.percent ?? r.percentage;
+        const scoreTxt = (r.score != null && r.total != null)
+          ? `${r.score}/${r.total}`
+          : (r.score ?? '—');
+
+        const breakdown = safeParseBreakdown(r.breakdown);
+        const hasBreakdown = breakdown && breakdown.length;
+
         parts.push(`
           <tr>
-            <td>${student || '—'}<div class="muted" style="font-size:12px">${r.email || ''}</div></td>
-            <td>${r.assessment_title || '—'}</td>
-            <td>${prnbatch || '—'}</td>
-            <td>${scoreTxt}</td>
-            <td>${fmtPct(r.percent)}</td>
+            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}<div class="muted" style="font-size:11px">${escapeHTML(email)}</div></td>
+            <td>${escapeHTML(assessmentTitle)}</td>
+            <td>${escapeHTML(prn)}</td>
+            <td>${escapeHTML(batch)}</td>
+            <td>${escapeHTML(scoreTxt)}</td>
+            <td>${fmtPct(percentVal)}</td>
             <td>${fmtDate(r.submitted_at)}</td>
             <td>${fmtDur(r.duration_sec)}</td>
+            <td>
+              ${hasBreakdown
+                ? `<details><summary>Details</summary>${buildDetailsHTML(r)}</details>`
+                : '<span class="muted" style="font-size:12px;">No details</span>'}
+            </td>
           </tr>
-          ${r.detail ? `
-            <tr>
-              <td colspan="7">
-                <details>
-                  <summary>Details</summary>
-                  <pre class="mono" style="white-space:pre-wrap; margin:8px 0;">${JSON.stringify(r.detail, null, 2)}</pre>
-                </details>
-              </td>
-            </tr>
-          ` : ''}
         `);
-      }
+      });
       tbody.innerHTML = parts.join('');
     }
 
@@ -259,7 +365,7 @@
         setStatus('Ready.');
       } catch (e) {
         console.error('applyFilters error', e);
-        tbody.innerHTML = '<tr><td colspan="7" class="muted">Failed to load results.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
@@ -286,7 +392,7 @@
 
       await loadExperiments();
 
-      // Auto-select experiment from URL like ?exp=ABC123
+      // Auto-select experiment from URL like ?exp=EXPERIMENT_ID
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
 
