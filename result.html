@@ -156,6 +156,7 @@
     const count = $('#count');
     let currentUser = null;
     let isAdmin = false;
+    let currentRows = []; // Expose for assignment view
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){
@@ -302,14 +303,41 @@
       }
       return '<div class="no-breakdown">No breakdown data found.</div>';
     }
+
+    // Assignment signed URL logic
+    async function getAssignmentSignedUrl(row) {
+      if (!row.assignment_path) return null;
+      const bucket = row.assignment_bucket || "assignments";
+      try {
+        const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60); // 60 seconds
+        if (error) return null;
+        return data?.signedUrl || null;
+      } catch (e) {
+        console.error("Signed URL error", e);
+        return null;
+      }
+    }
+    window.viewAssignment = async function(rowIdx) {
+      const row = currentRows[rowIdx];
+      const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
+      if (!canViewAssignment) {
+        alert("You do not have access to this assignment.");
+        return;
+      }
+      const url = await getAssignmentSignedUrl(row);
+      if (url) window.open(url, '_blank');
+      else alert("Unable to generate assignment link (access denied or file missing)");
+    };
+
     function renderRows(rows) {
+      currentRows = rows; // for assignment button handler
       count.textContent = rows.length;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="9" class="muted">No results.</td></tr>';
         return;
       }
       const parts = [];
-      rows.forEach(r => {
+      rows.forEach((r, rowIdx) => {
         const email = r.meta?.email || r.email || '';
         const prn = r.meta?.prn || r.prn || '—';
         const batch = r.meta?.batch || r.batch || '—';
@@ -320,14 +348,9 @@
           : (r.score ?? '—');
         // Assignment button logic with access control
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
-        // Only admin or uploader can view
         const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
         if (r.assignment_path && canViewAssignment) {
-          const bucket = r.assignment_bucket || "assignments";
-          const url = sb.storage.from(bucket).getPublicUrl(r.assignment_path).data?.publicUrl;
-          if (url) {
-            assignmentBtn = `<button class="assignment-btn" onclick="window.open('${url}','_blank')">View PDF</button>`;
-          }
+          assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">View PDF</button>`;
         } else if (r.assignment_path) {
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
