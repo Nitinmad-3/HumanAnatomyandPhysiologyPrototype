@@ -82,8 +82,8 @@
       </div>
       <div class="grid">
         <div>
-          <label class="muted">Experiment</label>
-          <select id="filter-experiment">
+          <label for="filter-experiment" class="muted">Experiment</label>
+          <select id="filter-experiment" aria-label="Experiment">
             <option value="">All experiments</option>
           </select>
         </div>
@@ -377,7 +377,14 @@
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
     }
+    // **DEBUG LOGGING ADDED HERE**
     function renderRows(rows) {
+      console.log('RenderRows Debug:', rows.map(r => ({
+        id: r.id,
+        assignment_marks: r.assignment_marks,
+        score: r.score,
+        user_name: r.user_name
+      })));
       currentRows = rows;
       count.textContent = rows.length;
       if (!rows.length) {
