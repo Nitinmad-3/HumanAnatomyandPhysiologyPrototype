@@ -239,25 +239,13 @@
     function extractRawBreakdown(row) {
       return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
     }
-    // Defensive breakdown parsing and logging
     function parseBreakdown(raw) {
       if (!raw) return null;
-      // Log raw breakdown for debugging
-      console.log('Student row breakdown:', raw);
-
       if (Array.isArray(raw)) return raw;
-      if (typeof raw === 'object') {
-        try {
-          JSON.stringify(raw);
-        } catch (e) {
-          console.warn('Breakdown circular detected:', e, raw);
-          return null;
-        }
-        return raw;
-      }
+      if (typeof raw === 'object') return raw;
       if (typeof raw === 'string') {
         try { return JSON.parse(raw); }
-        catch(e){ console.warn('parse breakdown failed', e, raw); return null; }
+        catch(e){ console.warn('parse breakdown failed', e); return null; }
       }
       return null;
     }
@@ -296,37 +284,32 @@
       return html;
     }
     function buildDetailsBlock(row) {
-      try {
-        const raw = extractRawBreakdown(row);
-        const parsed = parseBreakdown(raw);
-        const qArray = normalizeQuestionArray(parsed);
-        if (Array.isArray(qArray) && qArray.length) {
-          const answered = qArray.filter(q => q.type !== 'meta');
-          const correctCount = answered.filter(q => q.isCorrect).length;
-          return `
-            <details>
-              <summary>Details (${correctCount}/${answered.length} correct)</summary>
-              ${buildQuestionsHTML(qArray)}
-            </details>
-          `;
-        }
-        if (raw) {
-          let printable;
-          try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
-          catch(e){ printable = '(unprintable breakdown)'; }
-          return `
-            <details>
-              <summary>Details (raw)</summary>
-              <div class="no-breakdown" style="margin-bottom:6px;">Could not format questions, showing raw data:</div>
-              <pre class="fallback-json">${escapeHTML(printable)}</pre>
-            </details>
-          `;
-        }
-        return '<div class="no-breakdown">No breakdown data found.</div>';
-      } catch (e) {
-        console.error("Error building details block:", e, row);
-        return '<div class="no-breakdown">Details could not be shown due to a data error.</div>';
+      const raw = extractRawBreakdown(row);
+      const parsed = parseBreakdown(raw);
+      const qArray = normalizeQuestionArray(parsed);
+      if (Array.isArray(qArray) && qArray.length) {
+        const answered = qArray.filter(q => q.type !== 'meta');
+        const correctCount = answered.filter(q => q.isCorrect).length;
+        return `
+          <details>
+            <summary>Details (${correctCount}/${answered.length} correct)</summary>
+            ${buildQuestionsHTML(qArray)}
+          </details>
+        `;
       }
+      if (raw) {
+        let printable;
+        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
+        catch(e){ printable = '(unprintable breakdown)'; }
+        return `
+          <details>
+            <summary>Details (raw)</summary>
+            <div class="no-breakdown" style="margin-bottom:6px;">Could not format questions, showing raw data:</div>
+            <pre class="fallback-json">${escapeHTML(printable)}</pre>
+          </details>
+        `;
+      }
+      return '<div class="no-breakdown">No breakdown data found.</div>';
     }
     // Assignment signed URL logic
     async function getAssignmentSignedUrl(row) {
