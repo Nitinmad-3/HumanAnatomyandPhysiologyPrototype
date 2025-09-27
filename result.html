@@ -378,14 +378,7 @@
       setStatus('Ready.');
     }
 
-    // **DEBUG LOGGING ADDED HERE**
     function renderRows(rows) {
-      console.log('RenderRows Debug:', rows.map(r => ({
-        id: r.id,
-        assignment_marks: r.assignment_marks,
-        score: r.score,
-        user_name: r.user_name
-      })));
       currentRows = rows;
       count.textContent = rows.length;
       if (!rows.length) {
@@ -394,8 +387,6 @@
       }
       const parts = [];
       rows.forEach((r, rowIdx) => {
-        // Extra debug log per row
-        console.log(`Row ${rowIdx} id=${r.id} assignment_marks=${r.assignment_marks} score=${r.score} user_name=${r.user_name}`);
         const email = r.meta?.email || r.email || '';
         const prn = r.meta?.prn || r.prn || '—';
         const batch = r.meta?.batch || r.batch || '—';
@@ -406,22 +397,17 @@
         const scoreTxt = (scoreNum != null && totalNum != null && !isNaN(scoreNum) && !isNaN(totalNum))
           ? `${scoreNum}/${totalNum}`
           : (r.score ?? '—');
-        // Assignment marks logic (FIXED)
-        const marksVal = (
-          r.assignment_marks !== null &&
-          r.assignment_marks !== undefined &&
-          r.assignment_marks !== '' &&
-          !isNaN(Number(r.assignment_marks))
-        ) ? Number(r.assignment_marks) : null;
+        // Assignment marks logic
+        const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
         let marksCell = '';
         if (isAdmin) {
           marksCell = `<div class="marks-cell">
-            <input class="marks-input" id="marks-input-${r.id}" type="number" min="0" max="50" value="${marksVal !== null ? marksVal : ''}" placeholder="-" />
+            <input class="marks-input" id="marks-input-${r.id}" type="number" min="0" max="50" value="${marksVal != null ? marksVal : ''}" placeholder="-" />
             <button class="btn small" id="marks-save-${r.id}" onclick="saveAssignmentMarks(${rowIdx})">Save</button>
-            <span id="marks-status-${r.id}" class="marks-status">${marksVal !== null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
+            <span id="marks-status-${r.id}" class="marks-status">${marksVal != null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
           </div>`;
         } else {
-          marksCell = `<span class="marks-label">${marksVal !== null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
+          marksCell = `<span class="marks-label">${marksVal != null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
         }
         // Total marks
         const totalMarks = (scoreNum || 0) + (marksVal || 0);
