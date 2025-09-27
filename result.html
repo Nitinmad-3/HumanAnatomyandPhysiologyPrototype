@@ -244,8 +244,17 @@
       if (Array.isArray(raw)) return raw;
       if (typeof raw === 'object') return raw;
       if (typeof raw === 'string') {
-        try { return JSON.parse(raw); }
-        catch(e){ console.warn('parse breakdown failed', e); return null; }
+        try {
+          let parsed = JSON.parse(raw);
+          // If parsed is still a string, it's double-encoded JSON, so parse again
+          if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed);
+          }
+          return parsed;
+        } catch(e){
+          console.warn('parse breakdown failed', e);
+          return null;
+        }
       }
       return null;
     }
