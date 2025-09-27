@@ -246,7 +246,6 @@
       if (typeof raw === 'string') {
         try {
           let parsed = JSON.parse(raw);
-          // If parsed is still a string, it's double-encoded JSON, so parse again
           if (typeof parsed === 'string') {
             parsed = JSON.parse(parsed);
           }
@@ -296,6 +295,22 @@
       const raw = extractRawBreakdown(row);
       const parsed = parseBreakdown(raw);
       const qArray = normalizeQuestionArray(parsed);
+
+      // Always show raw breakdown for debugging
+      let debugBlock = "";
+      if (raw) {
+        let printable;
+        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
+        catch(e){ printable = '(unprintable breakdown)'; }
+        debugBlock = `
+          <details>
+            <summary>Details (raw)</summary>
+            <div class="no-breakdown" style="margin-bottom:6px;">Showing raw breakdown data:</div>
+            <pre class="fallback-json">${escapeHTML(printable)}</pre>
+          </details>
+        `;
+      }
+
       if (Array.isArray(qArray) && qArray.length) {
         const answered = qArray.filter(q => q.type !== 'meta');
         const correctCount = answered.filter(q => q.isCorrect).length;
@@ -304,23 +319,12 @@
             <summary>Details (${correctCount}/${answered.length} correct)</summary>
             ${buildQuestionsHTML(qArray)}
           </details>
+          ${debugBlock}
         `;
       }
-      if (raw) {
-        let printable;
-        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
-        catch(e){ printable = '(unprintable breakdown)'; }
-        return `
-          <details>
-            <summary>Details (raw)</summary>
-            <div class="no-breakdown" style="margin-bottom:6px;">Could not format questions, showing raw data:</div>
-            <pre class="fallback-json">${escapeHTML(printable)}</pre>
-          </details>
-        `;
-      }
-      return '<div class="no-breakdown">No breakdown data found.</div>';
+
+      return debugBlock || '<div class="no-breakdown">No breakdown data found.</div>';
     }
-    // Assignment signed URL logic
     async function getAssignmentSignedUrl(row) {
       if (!row.assignment_path) return null;
       const bucket = row.assignment_bucket || "assignments";
@@ -344,7 +348,6 @@
       if (url) window.open(url, '_blank');
       else alert("Unable to generate assignment link (access denied or file missing)");
     };
-    // Assignment marks saving logic
     window.saveAssignmentMarks = async function(rowIdx) {
       const row = currentRows[rowIdx];
       const marksInput = document.getElementById('marks-input-' + row.id);
@@ -355,7 +358,6 @@
         return;
       }
       const marks = Number(val);
-      // Optionally limit marks (e.g., max 50)
       if (marks < 0 || marks > 50) {
         alert('Marks should be between 0 and 50.');
         return;
@@ -364,7 +366,6 @@
       const btn = document.getElementById('marks-save-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Saving assignment marks...');
-      // Update DB
       const { error } = await sb.from('assessment_results').update({ assignment_marks: marks }).eq('id', row.id);
       if (error) {
         alert("Could not save marks: " + error.message);
@@ -374,14 +375,10 @@
         return;
       }
       setStatus('Marks saved!');
-      // Debug info: log the update result
-      console.log(`Assignment marks for id ${row.id} saved as:`, marks);
-      // Refresh results and log new marks from DB
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
-      console.log('Latest marks from DB:', rows.map(r => ({id: r.id, assignment_marks: r.assignment_marks})));
       renderRows(rows);
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
@@ -406,7 +403,6 @@
         const scoreTxt = (scoreNum != null && totalNum != null && !isNaN(scoreNum) && !isNaN(totalNum))
           ? `${scoreNum}/${totalNum}`
           : (r.score ?? '—');
-        // Assignment marks logic
         const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
         let marksCell = '';
         if (isAdmin) {
@@ -418,10 +414,8 @@
         } else {
           marksCell = `<span class="marks-label">${marksVal != null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
         }
-        // Total marks
         const totalMarks = (scoreNum || 0) + (marksVal || 0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
-        // Assignment button logic with access control
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
         if (r.assignment_path && canViewAssignment) {
