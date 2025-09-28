@@ -211,6 +211,7 @@
         }
       } catch (e) { console.warn('loadExperiments', e); }
     }
+
     // --------- UPDATED FUNCTION -----------
     async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
       const args = {
@@ -218,8 +219,11 @@
         search_text: has(search) ? search : null,
         batch_text: has(batch) ? batch : null
       };
-      // CALL THE NEW FUNCTION!
-      const { data, error } = await sb.rpc('get_assessment_results_v2', args);
+      // Use the correct RPC function for admin/student
+      const functionName = isAdmin
+        ? 'get_assessment_results_admin_v2'
+        : 'get_assessment_results_student_v2';
+      const { data, error } = await sb.rpc(functionName, args);
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
