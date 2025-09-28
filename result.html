@@ -68,6 +68,7 @@
     .resubmission-status-message.enabled { color:#1976d2; }
     .resubmission-status-message.disabled { color:#888; }
     .resubmission-toggle-btn { margin-bottom:4px; }
+    .debug-log { font-size:11px; color:#888; margin-top:2px; }
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -81,7 +82,6 @@
     </div>
   </header>
   <main>
-    <!-- Student summary -->
     <section id="student-summary" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Your performance summary</div>
@@ -93,7 +93,6 @@
         <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
     </section>
-    <!-- Filters -->
     <section id="filters" class="panel" style="display:none;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Filters</div>
@@ -119,7 +118,6 @@
         <button id="reset" class="btn ghost">Reset</button>
       </div>
     </section>
-    <!-- Results table -->
     <section class="panel">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Results</div>
@@ -155,7 +153,6 @@
         Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.
       </div>
     </section>
-    <!-- Modal for student assignment resubmission -->
     <div id="edit-assignment-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.2); z-index:1000; align-items:center; justify-content:center;">
       <div style="background:#fff; border-radius:10px; max-width:400px; width:90%; margin:auto; padding:20px; box-shadow:0 4px 18px #888;">
         <h2 style="margin-top:0; color:#1976d2;">Resubmit Assignment</h2>
@@ -169,11 +166,18 @@
             <button type="button" class="btn ghost" id="close-edit-modal">Cancel</button>
           </div>
         </form>
+        <div id="modal-debug" class="debug-log"></div>
       </div>
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
+    function debug(msg) {
+      console.log("[DEBUG]", msg);
+      const modalDebug = document.getElementById('modal-debug');
+      if (modalDebug) modalDebug.textContent = msg;
+    }
+
     const sb = window.sb || (window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
@@ -279,7 +283,7 @@
       if (!row.assignment_path) return null;
       const bucket = row.assignment_bucket || "assignments";
       try {
-        const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60); // 60 seconds
+        const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60);
         if (error) return null;
         return data?.signedUrl || null;
       } catch (e) {
@@ -334,76 +338,91 @@
       setStatus('Ready.');
     }
     window.toggleResubmission = async function(rowIdx) {
+      debug("Admin clicked toggleResubmission for rowIdx: " + rowIdx);
       const row = currentRows[rowIdx];
       const newStatus = !row.resubmission_allowed;
+      debug(`Updating resubmission_allowed in DB. Row ID: ${row.id}, New Status: ${newStatus}`);
       const btn = document.getElementById('resubmission-toggle-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Updating resubmission status...');
       const { error } = await sb.from('assessment_results').update({ resubmission_allowed: newStatus }).eq('id', row.id);
       if (error) {
+        debug("Error updating DB: " + error.message);
         alert("Could not update resubmission status: " + error.message);
         setStatus('Update failed.');
         if (btn) btn.disabled = false;
         return;
       }
+      debug("Resubmission status updated in DB, fetching new rows...");
       setStatus('Resubmission status updated!');
-      // Refresh table:
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
+      debug("Fetched rows: " + JSON.stringify(rows));
       renderRows(rows);
       setStatus('Ready.');
     };
 
-    // Student Assignment Resubmission Modal Handlers
     window.openEditAssignmentModal = function(rowIdx) {
+      debug("Student clicked Resubmit Assignment for rowIdx: " + rowIdx);
       editingRowIdx = rowIdx;
       $('#edit-assignment-modal').style.display = 'flex';
       $('#assignmentFile').value = '';
+      debug("Opened modal for rowIdx: " + rowIdx);
     }
     $('#close-edit-modal').onclick = function() {
       $('#edit-assignment-modal').style.display = 'none';
       editingRowIdx = null;
+      debug("Closed assignment modal");
     }
     $('#edit-assignment-form').onsubmit = async function(e) {
       e.preventDefault();
       if (editingRowIdx == null) return;
       const row = currentRows[editingRowIdx];
+      debug("Submitting new assignment for row: " + JSON.stringify(row));
       const fileInput = $('#assignmentFile');
       if (!fileInput.files.length) {
+        debug("No file selected.");
         alert('Please select a PDF file.');
         return;
       }
       const file = fileInput.files[0];
       if (file.type !== 'application/pdf') {
+        debug("File type is not PDF: " + file.type);
         alert('Only PDF files allowed.');
         return;
       }
       setStatus('Uploading assignment...');
       const bucket = row.assignment_bucket || "assignments";
       const path = `${row.user_id}/${row.experiment_id}/assignment.pdf`;
+      debug(`Uploading to bucket: ${bucket}, path: ${path}`);
       const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
       if (uploadErr) {
+        debug("Upload failed: " + uploadErr.message);
         alert('Upload failed: ' + uploadErr.message);
         setStatus('Upload failed.');
         return;
       }
+      debug("Upload success, updating assessment_results assignment_path...");
       const { error: updateErr } = await sb.from('assessment_results').update({
         assignment_path: path
       }).eq('id', row.id);
       if (updateErr) {
+        debug("Could not update assignment record: " + updateErr.message);
         alert('Could not update assignment record: ' + updateErr.message);
         setStatus('Update failed.');
         return;
       }
       setStatus('Assignment updated!');
+      debug("Assignment updated. Closing modal and refreshing table.");
       $('#edit-assignment-modal').style.display = 'none';
       editingRowIdx = null;
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
+      debug("Fetched rows after assignment upload: " + JSON.stringify(rows));
       renderRows(rows);
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
@@ -411,6 +430,7 @@
 
     function renderRows(rows) {
       currentRows = rows;
+      debug("Rendering rows: " + JSON.stringify(rows));
       count.textContent = rows.length;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
@@ -468,6 +488,8 @@
             <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
           `;
         }
+        // Debug: show row values
+        resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
         resubmitCell += '</div>';
 
         parts.push(`
@@ -498,19 +520,22 @@
         const search = filterSearch?.value || '';
         const batch = filterBatch?.value || '';
         const rows = await fetchResults({ exp_id, search, batch });
+        debug("applyFilters fetched rows: " + JSON.stringify(rows));
         renderRows(rows);
         if (!isAdmin) renderSummaryForStudent(rows);
         setStatus('Ready.');
       } catch (e) {
-        console.error('applyFilters error', e);
+        debug("Error in applyFilters: " + (e?.message || e));
         tbody.innerHTML = '<tr><td colspan="12" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
     }
     async function init() {
+      debug("Initializing page...");
       if (!(await requireLogin())) return;
       const role = await getRole(currentUser.id);
+      debug("User role: " + role);
       isAdmin = (role === 'admin');
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
@@ -539,6 +564,7 @@
       });
       await applyFilters();
       setStatus('Ready.');
+      debug("Init complete.");
     }
     init();
   </script>
