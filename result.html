@@ -291,7 +291,7 @@
         return null;
       }
     }
-    window.viewAssignment = async function(rowIdx) {
+   window.viewAssignment = async function(rowIdx) {
   const row = currentRows[rowIdx];
   const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
   if (!canViewAssignment) {
@@ -300,7 +300,7 @@
   }
   let url = await getAssignmentSignedUrl(row);
   if (url) {
-    // Add cache-busting parameter
+    // Add cache-busting parameter to always fetch the latest file
     url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
     window.open(url, '_blank');
   }
