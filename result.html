@@ -158,8 +158,8 @@
         <h2 style="margin-top:0; color:#1976d2;">Resubmit Assignment</h2>
         <form id="edit-assignment-form">
           <div style="margin-bottom:12px;">
-            <label for="assignmentFile" style="display:block; margin-bottom:4px;">Select PDF Assignment:</label>
-            <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required />
+            <label for="assignmentFile" style="display:block; margin-bottom:4px;">Select PDF or Image Assignment:</label>
+            <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf,image/*" required />
           </div>
           <div class="row" style="justify-content:flex-end;">
             <button type="submit" class="btn">Submit</button>
@@ -384,18 +384,23 @@
       const fileInput = $('#assignmentFile');
       if (!fileInput.files.length) {
         debug("No file selected.");
-        alert('Please select a PDF file.');
+        alert('Please select a file.');
         return;
       }
       const file = fileInput.files[0];
-      if (file.type !== 'application/pdf') {
-        debug("File type is not PDF: " + file.type);
-        alert('Only PDF files allowed.');
+      // Accept PDF or image
+      if (
+        file.type !== 'application/pdf' &&
+        !file.type.startsWith('image/')
+      ) {
+        debug("File type is not allowed: " + file.type);
+        alert('Only PDF or image files allowed.');
         return;
       }
       setStatus('Uploading assignment...');
       const bucket = row.assignment_bucket || "assignments";
-      const path = `${row.user_id}/${row.experiment_id}/assignment.pdf`;
+      const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
+      const path = `${row.user_id}/${row.experiment_id}/assignment.${extension}`;
       debug(`Uploading to bucket: ${bucket}, path: ${path}`);
       const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
       if (uploadErr) {
@@ -404,9 +409,10 @@
         setStatus('Upload failed.');
         return;
       }
-      debug("Upload success, updating assessment_results assignment_path...");
+      debug("Upload success, updating assessment_results assignment_path and assignment_type...");
       const { error: updateErr } = await sb.from('assessment_results').update({
-        assignment_path: path
+        assignment_path: path,
+        assignment_type: file.type
       }).eq('id', row.id);
       if (updateErr) {
         debug("Could not update assignment record: " + updateErr.message);
@@ -462,34 +468,43 @@
         }
         const totalMarks = (scoreNum || 0) + (marksVal || 0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
+        
+        // Assignment column: show correct button for PDF/image
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
         if (r.assignment_path && canViewAssignment) {
-          assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">View PDF</button>`;
+          let btnLabel = "View File";
+          if (r.assignment_type === "application/pdf") btnLabel = "View PDF";
+          else if (r.assignment_type && r.assignment_type.startsWith("image/")) btnLabel = "View Image";
+          assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">${btnLabel}</button>`;
         } else if (r.assignment_path) {
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
 
-        // --- FIX: Resubmit button logic ---
+        // Resubmit column logic
         let resubmitCell = '<div class="resubmission-status-box">';
         if (isAdmin) {
-          resubmitCell += `
-            <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
-              ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
-            </button>
-          `;
+          if (r.assignment_marks == null) {
+            resubmitCell += `<span class="resubmission-status-message enabled">
+              Student can resubmit until marks are given.
+            </span>`;
+          } else {
+            resubmitCell += `
+              <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
+                ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
+              </button>
+              <span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
+                ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
+              </span>
+            `;
+          }
         }
-        resubmitCell += `<span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
-          ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
-        </span>`;
-        // Student sees resubmit button if marks not allotted OR resubmission_allowed is true
         if (!isAdmin && currentUser && r.user_id === currentUser.id &&
             (r.assignment_marks == null || r.resubmission_allowed)) {
           resubmitCell += `
             <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
           `;
         }
-        // Debug: show row values
         resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
         resubmitCell += '</div>';
 
