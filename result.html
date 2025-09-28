@@ -292,16 +292,20 @@
       }
     }
     window.viewAssignment = async function(rowIdx) {
-      const row = currentRows[rowIdx];
-      const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
-      if (!canViewAssignment) {
-        alert("You do not have access to this assignment.");
-        return;
-      }
-      const url = await getAssignmentSignedUrl(row);
-      if (url) window.open(url, '_blank');
-      else alert("Unable to generate assignment link (access denied or file missing)");
-    };
+  const row = currentRows[rowIdx];
+  const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
+  if (!canViewAssignment) {
+    alert("You do not have access to this assignment.");
+    return;
+  }
+  let url = await getAssignmentSignedUrl(row);
+  if (url) {
+    // Add cache-busting parameter
+    url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+    window.open(url, '_blank');
+  }
+  else alert("Unable to generate assignment link (access denied or file missing)");
+};
     window.saveAssignmentMarks = async function(rowIdx) {
       const row = currentRows[rowIdx];
       const marksInput = document.getElementById('marks-input-' + row.id);
