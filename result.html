@@ -88,11 +88,11 @@
           </select>
         </div>
         <div id="admin-search-wrap" style="display:none;">
-          <label class="muted">Search (name/email/PRN)</label>
+          <label for="filter-search" class="muted">Search (name/email/PRN)</label>
           <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
         </div>
         <div id="admin-batch-wrap" style="display:none;">
-          <label class="muted">Batch</label>
+          <label for="filter-batch" class="muted">Batch</label>
           <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
         </div>
       </div>
@@ -211,16 +211,20 @@
         }
       } catch (e) { console.warn('loadExperiments', e); }
     }
+    // --------- UPDATED FUNCTION -----------
     async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
       const args = {
         exp_id: has(exp_id) ? exp_id : null,
         search_text: has(search) ? search : null,
         batch_text: has(batch) ? batch : null
       };
-      const { data, error } = await sb.rpc('get_assessment_results', args);
+      // CALL THE NEW FUNCTION!
+      const { data, error } = await sb.rpc('get_assessment_results_v2', args);
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
+    // --------- END UPDATED FUNCTION --------
+
     function renderSummaryForStudent(rows) {
       const attempts = rows.length;
       const percents = rows
