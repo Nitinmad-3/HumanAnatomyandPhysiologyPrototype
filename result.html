@@ -93,7 +93,7 @@
         <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
     </section>
-    <section id="filters" class="panel" style="display:none;">
+    <section id="filters" class="panel" style="display:block;">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Filters</div>
       </div>
@@ -470,7 +470,7 @@
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
 
-        // Resubmit column - alignment and logic for both admin and student
+        // --- FIX: Resubmit button logic ---
         let resubmitCell = '<div class="resubmission-status-box">';
         if (isAdmin) {
           resubmitCell += `
@@ -482,8 +482,9 @@
         resubmitCell += `<span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
           ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
         </span>`;
-        // Student sees resubmit button only if enabled
-        if (!isAdmin && currentUser && r.user_id === currentUser.id && r.resubmission_allowed) {
+        // Student sees resubmit button if marks not allotted OR resubmission_allowed is true
+        if (!isAdmin && currentUser && r.user_id === currentUser.id &&
+            (r.assignment_marks == null || r.resubmission_allowed)) {
           resubmitCell += `
             <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
           `;
