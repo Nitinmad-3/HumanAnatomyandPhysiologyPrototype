@@ -178,10 +178,10 @@
       if (modalDebug) modalDebug.textContent = msg;
     }
 
-    const sb = window.sb || (window.supabase.createClient(
+    const sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-    ));
+    );
     const $ = (s) => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
@@ -291,21 +291,21 @@
         return null;
       }
     }
-   window.viewAssignment = async function(rowIdx) {
-  const row = currentRows[rowIdx];
-  const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
-  if (!canViewAssignment) {
-    alert("You do not have access to this assignment.");
-    return;
-  }
-  let url = await getAssignmentSignedUrl(row);
-  if (url) {
-    // Add cache-busting parameter to always fetch the latest file
-    url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-    window.open(url, '_blank');
-  }
-  else alert("Unable to generate assignment link (access denied or file missing)");
-};
+    window.viewAssignment = async function(rowIdx) {
+      const row = currentRows[rowIdx];
+      const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
+      if (!canViewAssignment) {
+        alert("You do not have access to this assignment.");
+        return;
+      }
+      let url = await getAssignmentSignedUrl(row);
+      if (url) {
+        url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+        window.open(url, '_blank');
+      }
+      else alert("Unable to generate assignment link (access denied or file missing)");
+    };
+
     window.saveAssignmentMarks = async function(rowIdx) {
       const row = currentRows[rowIdx];
       const marksInput = document.getElementById('marks-input-' + row.id);
@@ -341,6 +341,7 @@
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
     }
+
     window.toggleResubmission = async function(rowIdx) {
       debug("Admin clicked toggleResubmission for rowIdx: " + rowIdx);
       const row = currentRows[rowIdx];
@@ -380,6 +381,7 @@
       editingRowIdx = null;
       debug("Closed assignment modal");
     }
+    // --- CDN-Aware Assignment Upload: always use a unique filename ---
     $('#edit-assignment-form').onsubmit = async function(e) {
       e.preventDefault();
       if (editingRowIdx == null) return;
@@ -404,7 +406,8 @@
       setStatus('Uploading assignment...');
       const bucket = row.assignment_bucket || "assignments";
       const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
-      const path = `${row.user_id}/${row.experiment_id}/assignment.${extension}`;
+      // --- CHANGE: Save each file with a unique name (timestamp) to bust CDN cache ---
+      const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${extension}`;
       debug(`Uploading to bucket: ${bucket}, path: ${path}`);
       const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
       if (uploadErr) {
