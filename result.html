@@ -52,10 +52,22 @@
     .marks-status { font-size:12px; color:#388e3c; }
     .marks-pending { color:#fbc02d;}
     .total-marks { font-weight:700; color:#1565c0;}
-    .resubmission-status { font-size:13px; margin-left:4px; font-weight:600; }
-    .resubmission-status.enabled { color:#1976d2; }
-    .resubmission-status.disabled { color:#888; }
-    .resubmission-toggle-btn { margin-left:6px; }
+    .resubmission-status-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .resubmission-status-message {
+      font-size:13px;
+      font-weight:600;
+      margin-top:4px;
+    }
+    .resubmission-status-message.enabled { color:#1976d2; }
+    .resubmission-status-message.disabled { color:#888; }
+    .resubmission-toggle-btn { margin-bottom:4px; }
     @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
@@ -140,9 +152,25 @@
     </section>
     <section id="legend" class="panel">
       <div class="muted">
-        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Total marks are updated for both admin and student.
+        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.
       </div>
     </section>
+    <!-- Modal for student assignment resubmission -->
+    <div id="edit-assignment-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.2); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:#fff; border-radius:10px; max-width:400px; width:90%; margin:auto; padding:20px; box-shadow:0 4px 18px #888;">
+        <h2 style="margin-top:0; color:#1976d2;">Resubmit Assignment</h2>
+        <form id="edit-assignment-form">
+          <div style="margin-bottom:12px;">
+            <label for="assignmentFile" style="display:block; margin-bottom:4px;">Select PDF Assignment:</label>
+            <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required />
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <button type="submit" class="btn">Submit</button>
+            <button type="button" class="btn ghost" id="close-edit-modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
@@ -172,6 +200,7 @@
     let currentUser = null;
     let isAdmin = false;
     let currentRows = [];
+    let editingRowIdx = null;
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){
@@ -245,94 +274,6 @@
       sumBest.textContent = fmtPct(best);
       sumLast.textContent = fmtDate(last);
       studentSummary.style.display = 'block';
-    }
-    function extractRawBreakdown(row) {
-      return row.breakdown ?? row.detail ?? row.details ?? row.result_breakdown ?? row.meta?.breakdown;
-    }
-    function parseBreakdown(raw) {
-      if (!raw) return null;
-      if (Array.isArray(raw)) return raw;
-      if (typeof raw === 'object') return raw;
-      if (typeof raw === 'string') {
-        try {
-          let parsed = JSON.parse(raw);
-          if (typeof parsed === 'string') {
-            parsed = JSON.parse(parsed);
-          }
-          return parsed;
-        } catch(e){
-          console.warn('parse breakdown failed', e);
-          return null;
-        }
-      }
-      return null;
-    }
-    function normalizeQuestionArray(parsed) {
-      if (!parsed) return [];
-      if (Array.isArray(parsed)) return parsed;
-      if (Array.isArray(parsed.questions)) return parsed.questions;
-      return [];
-    }
-    function buildQuestionsHTML(qArr) {
-      const usable = qArr.filter(q => q && q.type !== 'meta');
-      if (!usable.length) return '<div class="no-breakdown">No question entries.</div>';
-      let html = '<div>';
-      usable.forEach((q, i) => {
-        const yourAns = (q.answer === '' || q.answer == null) ? '(blank)' : q.answer;
-        const isCorrect = !!q.isCorrect;
-        const correct = q.correct ?? '';
-        html += `
-          <div class="q-row">
-            <div class="q-text">Q${i+1}. ${escapeHTML(q.question || '(no question text)')}
-              ${q.type ? `<span class="question-type">${escapeHTML(q.type)}</span>` : ''}
-            </div>
-            <div class="ans-line">
-              <span class="${isCorrect ? 'correct' : 'wrong'}">
-                Your answer: <span class="your-answer">${escapeHTML(yourAns)}</span>
-                – ${isCorrect ? 'Correct' : 'Wrong'}
-              </span>
-              ${!isCorrect && correct
-                ? `<span class="correct-answer">Correct: <strong>${escapeHTML(correct)}</strong></span>`
-                : ''}
-            </div>
-          </div>
-        `;
-      });
-      html += '</div>';
-      return html;
-    }
-    function buildDetailsBlock(row) {
-      const raw = extractRawBreakdown(row);
-      const parsed = parseBreakdown(raw);
-      const qArray = normalizeQuestionArray(parsed);
-
-      let debugBlock = "";
-      if (raw) {
-        let printable;
-        try { printable = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2); }
-        catch(e){ printable = '(unprintable breakdown)'; }
-        debugBlock = `
-          <details>
-            <summary>Details (raw)</summary>
-            <div class="no-breakdown" style="margin-bottom:6px;">Showing raw breakdown data:</div>
-            <pre class="fallback-json">${escapeHTML(printable)}</pre>
-          </details>
-        `;
-      }
-
-      if (Array.isArray(qArray) && qArray.length) {
-        const answered = qArray.filter(q => q.type !== 'meta');
-        const correctCount = answered.filter(q => q.isCorrect).length;
-        return `
-          <details>
-            <summary>Details (${correctCount}/${answered.length} correct)</summary>
-            ${buildQuestionsHTML(qArray)}
-          </details>
-          ${debugBlock}
-        `;
-      }
-
-      return debugBlock || '<div class="no-breakdown">No breakdown data found.</div>';
     }
     async function getAssignmentSignedUrl(row) {
       if (!row.assignment_path) return null;
@@ -414,6 +355,60 @@
       renderRows(rows);
       setStatus('Ready.');
     };
+
+    // Student Assignment Resubmission Modal Handlers
+    window.openEditAssignmentModal = function(rowIdx) {
+      editingRowIdx = rowIdx;
+      $('#edit-assignment-modal').style.display = 'flex';
+      $('#assignmentFile').value = '';
+    }
+    $('#close-edit-modal').onclick = function() {
+      $('#edit-assignment-modal').style.display = 'none';
+      editingRowIdx = null;
+    }
+    $('#edit-assignment-form').onsubmit = async function(e) {
+      e.preventDefault();
+      if (editingRowIdx == null) return;
+      const row = currentRows[editingRowIdx];
+      const fileInput = $('#assignmentFile');
+      if (!fileInput.files.length) {
+        alert('Please select a PDF file.');
+        return;
+      }
+      const file = fileInput.files[0];
+      if (file.type !== 'application/pdf') {
+        alert('Only PDF files allowed.');
+        return;
+      }
+      setStatus('Uploading assignment...');
+      const bucket = row.assignment_bucket || "assignments";
+      const path = `${row.user_id}/${row.experiment_id}/assignment.pdf`;
+      const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
+      if (uploadErr) {
+        alert('Upload failed: ' + uploadErr.message);
+        setStatus('Upload failed.');
+        return;
+      }
+      const { error: updateErr } = await sb.from('assessment_results').update({
+        assignment_path: path
+      }).eq('id', row.id);
+      if (updateErr) {
+        alert('Could not update assignment record: ' + updateErr.message);
+        setStatus('Update failed.');
+        return;
+      }
+      setStatus('Assignment updated!');
+      $('#edit-assignment-modal').style.display = 'none';
+      editingRowIdx = null;
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      renderRows(rows);
+      if (!isAdmin) renderSummaryForStudent(rows);
+      setStatus('Ready.');
+    };
+
     function renderRows(rows) {
       currentRows = rows;
       count.textContent = rows.length;
@@ -454,18 +449,27 @@
         } else if (r.assignment_path) {
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
-        // New Resubmit column - visible to both, only admin gets button
-        let resubmitCell = '';
-        if (r.resubmission_allowed) {
-          resubmitCell = `<span class="resubmission-status enabled">Resubmission Enabled</span>`;
-        } else {
-          resubmitCell = `<span class="resubmission-status disabled">Resubmission Disabled</span>`;
-        }
+
+        // Resubmit column - alignment and logic for both admin and student
+        let resubmitCell = '<div class="resubmission-status-box">';
         if (isAdmin) {
-          resubmitCell += ` <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
-            ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
-          </button>`;
+          resubmitCell += `
+            <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
+              ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
+            </button>
+          `;
         }
+        resubmitCell += `<span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
+          ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
+        </span>`;
+        // Student sees resubmit button only if enabled
+        if (!isAdmin && currentUser && r.user_id === currentUser.id && r.resubmission_allowed) {
+          resubmitCell += `
+            <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
+          `;
+        }
+        resubmitCell += '</div>';
+
         parts.push(`
           <tr>
             <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
