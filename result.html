@@ -422,6 +422,7 @@
         return;
       }
       setStatus('Resubmission status updated!');
+      // Refresh table:
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
@@ -519,7 +520,7 @@
             <button class="btn ghost" id="resubmission-toggle-${r.id}" style="margin-left:6px;" onclick="toggleResubmission(${rowIdx})">
               ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
             </button>
-            <span style="font-size:12px; color:${r.resubmission_allowed ? '#1976d2' : '#888'}; margin-left:2px;">
+            <span id="resubmission-status-${r.id}" style="font-size:12px; color:${r.resubmission_allowed ? '#1976d2' : '#888'}; margin-left:2px;">
               ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
             </span>
           </div>`;
@@ -530,6 +531,7 @@
         const totalMarks = (scoreNum || 0) + (marksVal || 0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
 
+        // Assignment column logic for both student and admin
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
         if (r.assignment_path && canViewAssignment) {
@@ -537,8 +539,19 @@
         } else if (r.assignment_path) {
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
-        // Add edit/resubmit button for students
-        if (canEditAssignment) {
+
+        // Add student-side resubmission status indicator
+        if (!isAdmin && currentUser && r.user_id === currentUser.id) {
+          if (r.resubmission_allowed) {
+            assignmentBtn += `<span style="margin-left:6px; font-size:12px; color:#1976d2;">Resubmission Enabled</span>`;
+          } else if (r.assignment_marks != null) {
+            assignmentBtn += `<span style="margin-left:6px; font-size:12px; color:#888;">Resubmission Disabled</span>`;
+          }
+        }
+
+        // If student can edit, add the edit button
+        if (!isAdmin && currentUser && r.user_id === currentUser.id &&
+            ((r.assignment_marks == null) || r.resubmission_allowed)) {
           assignmentBtn += `<button class="edit-assignment-btn" style="margin-left:6px;" onclick="openEditAssignmentModal(${rowIdx})">Edit/Resubmit Assignment</button>`;
         }
 
