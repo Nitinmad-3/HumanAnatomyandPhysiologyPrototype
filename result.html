@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <style>
+    /* ... (same styles as your original) ... */
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; color: #222; background: #f6f9ff; }
     header { padding: 1rem; background: #e3f2fd; border-bottom: 1px solid #cfe0ff; }
     header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -222,12 +223,14 @@
       // Use the correct RPC function for admin/student
       const functionName = isAdmin
         ? 'get_assessment_results_admin_v2'
-        : 'get_assessment_results_student_v2';
+        : 'get_results_student_test'; // <--- NEW FUNCTION NAME FOR STUDENT
       const { data, error } = await sb.rpc(functionName, args);
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
     // --------- END UPDATED FUNCTION --------
+
+    // ... (rest of your JavaScript remains unchanged) ...
 
     function renderSummaryForStudent(rows) {
       const attempts = rows.length;
