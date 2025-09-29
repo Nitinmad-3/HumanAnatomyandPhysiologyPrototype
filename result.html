@@ -6,9 +6,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* Your CSS is unchanged for brevity */
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; color: #222; background: #f6f9ff; }
-    /* ... rest of style ... */
+    header { padding: 1rem; background: #e3f2fd; border-bottom: 1px solid #cfe0ff; }
+    header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    header a { color:#1565c0; text-decoration:none; font-weight:600; }
+    h1 { margin: 0; font-size: 1.4rem; color:#0d47a1; }
+    main { max-width: 1100px; margin: 18px auto; padding: 0 12px 24px; }
+    .panel { background: #fff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .muted { color:#375a9e; font-size: 0.95rem; }
+    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
+    .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; }
+    .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
+    .stat .label { font-size:12px; color:#375a9e; }
+    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+    th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
+    tbody tr:hover { background: #f9fbff; }
+    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
+    details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
+    details[open] { background:#f0f6ff; }
+    .q-row { border-bottom:1px solid #e3ecfa; padding:6px 4px; }
+    .q-row:last-child { border-bottom:none; }
+    .q-text { font-weight:600; margin-bottom:2px; }
+    .ans-line { margin-left:8px; }
+    .correct { color:#1b5e20; font-weight:600; }
+    .wrong { color:#c62828; font-weight:600; }
+    .correct-answer { color:#2e7d32; margin-left:8px; }
+    .your-answer { font-style: italic; }
+    .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
+    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
+    .no-breakdown { color:#c62828; font-size:13px; }
+    .assignment-btn { background:#1976d2; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
+    .assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    .edit-assignment-btn { background:#43a047; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
+    .edit-assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    .marks-input { width: 50px; padding: 4px 6px; font-size: 14px; border: 1px solid #cfe0ff; border-radius: 6px; margin-right:4px; }
+    .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .marks-label { font-size:13px; color:#0d47a1; }
+    .marks-status { font-size:12px; color:#388e3c; }
+    .marks-pending { color:#fbc02d;}
+    .total-marks { font-weight:700; color:#1565c0;}
+    .resubmission-status-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .resubmission-status-message {
+      font-size:13px;
+      font-weight:600;
+      margin-top:4px;
+    }
+    .resubmission-status-message.enabled { color:#1976d2; }
+    .resubmission-status-message.disabled { color:#888; }
+    .resubmission-toggle-btn { margin-bottom:4px; }
+    .debug-log { font-size:11px; color:#888; margin-top:2px; }
+    @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
   </style>
 </head>
 <body>
@@ -21,12 +82,41 @@
     </div>
   </header>
   <main>
-    <!-- UI sections unchanged -->
     <section id="student-summary" class="panel" style="display:none;">
-      <!-- ... -->
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Your performance summary</div>
+      </div>
+      <div class="grid">
+        <div class="stat"><div class="label">Total Attempts</div><div class="value" id="sum-attempts">0</div></div>
+        <div class="stat"><div class="label">Average %</div><div class="value" id="sum-avg">0%</div></div>
+        <div class="stat"><div class="label">Best %</div><div class="value" id="sum-best">0%</div></div>
+        <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
+      </div>
     </section>
     <section id="filters" class="panel" style="display:block;">
-      <!-- ... -->
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Filters</div>
+      </div>
+      <div class="grid">
+        <div>
+          <label for="filter-experiment" class="muted">Experiment</label>
+          <select id="filter-experiment" aria-label="Experiment">
+            <option value="">All experiments</option>
+          </select>
+        </div>
+        <div id="admin-search-wrap" style="display:none;">
+          <label for="filter-search" class="muted">Search (name/email/PRN)</label>
+          <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
+        </div>
+        <div id="admin-batch-wrap" style="display:none;">
+          <label for="filter-batch" class="muted">Batch</label>
+          <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="apply" class="btn">Apply</button>
+        <button id="reset" class="btn ghost">Reset</button>
+      </div>
     </section>
     <section class="panel">
       <div class="row" style="margin-bottom:8px;">
@@ -93,7 +183,6 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     );
     const $ = (s) => document.querySelector(s);
-    // All UI element selectors
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
     const studentSummary = $('#student-summary');
@@ -292,7 +381,7 @@
       editingRowIdx = null;
       debug("Closed assignment modal");
     }
-    // Assignment Upload With DB Update
+    // --- Assignment upload handler: CRITICAL FIX ---
     $('#edit-assignment-form').onsubmit = async function(e) {
       e.preventDefault();
       if (editingRowIdx == null) return;
@@ -317,7 +406,6 @@
       setStatus('Uploading assignment...');
       const bucket = row.assignment_bucket || "assignments";
       const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
-      // Use unique name to avoid CDN cache
       const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${extension}`;
       debug(`Uploading to bucket: ${bucket}, path: ${path}`);
       const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
@@ -327,7 +415,7 @@
         setStatus('Upload failed.');
         return;
       }
-      // Critical: Update DB path and type after upload!
+      // --- CRITICAL: Update DB row with new file path and type ---
       const { error: updateErr } = await sb.from('assessment_results').update({
         assignment_path: path,
         assignment_type: file.type
@@ -352,9 +440,9 @@
       setStatus('Ready.');
     };
 
+    // ... rest of your JS unchanged ...
     function renderRows(rows) {
       currentRows = rows;
-      debug("Rendering rows: " + JSON.stringify(rows));
       count.textContent = rows.length;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
@@ -454,22 +542,18 @@
         const search = filterSearch?.value || '';
         const batch = filterBatch?.value || '';
         const rows = await fetchResults({ exp_id, search, batch });
-        debug("applyFilters fetched rows: " + JSON.stringify(rows));
         renderRows(rows);
         if (!isAdmin) renderSummaryForStudent(rows);
         setStatus('Ready.');
       } catch (e) {
-        debug("Error in applyFilters: " + (e?.message || e));
         tbody.innerHTML = '<tr><td colspan="12" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
         alert('Error loading results: ' + (e?.message || e));
       }
     }
     async function init() {
-      debug("Initializing page...");
       if (!(await requireLogin())) return;
       const role = await getRole(currentUser.id);
-      debug("User role: " + role);
       isAdmin = (role === 'admin');
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
@@ -498,7 +582,6 @@
       });
       await applyFilters();
       setStatus('Ready.');
-      debug("Init complete.");
     }
     init();
   </script>
