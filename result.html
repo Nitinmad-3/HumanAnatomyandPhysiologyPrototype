@@ -343,63 +343,52 @@
     }
 
     window.toggleResubmission = async function(rowIdx) {
-      debug("Admin clicked toggleResubmission for rowIdx: " + rowIdx);
       const row = currentRows[rowIdx];
       const newStatus = !row.resubmission_allowed;
-      debug(`Updating resubmission_allowed in DB. Row ID: ${row.id}, New Status: ${newStatus}`);
       const btn = document.getElementById('resubmission-toggle-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Updating resubmission status...');
       const { error } = await sb.from('assessment_results').update({ resubmission_allowed: newStatus }).eq('id', row.id);
       if (error) {
-        debug("Error updating DB: " + error.message);
         alert("Could not update resubmission status: " + error.message);
         setStatus('Update failed.');
         if (btn) btn.disabled = false;
         return;
       }
-      debug("Resubmission status updated in DB, fetching new rows...");
       setStatus('Resubmission status updated!');
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
-      debug("Fetched rows: " + JSON.stringify(rows));
       renderRows(rows);
       setStatus('Ready.');
     };
 
     window.openEditAssignmentModal = function(rowIdx) {
-      debug("Student clicked Resubmit Assignment for rowIdx: " + rowIdx);
       editingRowIdx = rowIdx;
       $('#edit-assignment-modal').style.display = 'flex';
       $('#assignmentFile').value = '';
-      debug("Opened modal for rowIdx: " + rowIdx);
     }
     $('#close-edit-modal').onclick = function() {
       $('#edit-assignment-modal').style.display = 'none';
       editingRowIdx = null;
-      debug("Closed assignment modal");
     }
-    // --- Assignment upload handler: CRITICAL FIX ---
+
+    // -- CRITICAL FIX: Assignment upload handler --
     $('#edit-assignment-form').onsubmit = async function(e) {
       e.preventDefault();
       if (editingRowIdx == null) return;
       const row = currentRows[editingRowIdx];
-      debug("Submitting new assignment for row: " + JSON.stringify(row));
       const fileInput = $('#assignmentFile');
       if (!fileInput.files.length) {
-        debug("No file selected.");
         alert('Please select a file.');
         return;
       }
       const file = fileInput.files[0];
-      // Accept PDF or image
       if (
         file.type !== 'application/pdf' &&
         !file.type.startsWith('image/')
       ) {
-        debug("File type is not allowed: " + file.type);
         alert('Only PDF or image files allowed.');
         return;
       }
@@ -407,40 +396,34 @@
       const bucket = row.assignment_bucket || "assignments";
       const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
       const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${extension}`;
-      debug(`Uploading to bucket: ${bucket}, path: ${path}`);
       const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
       if (uploadErr) {
-        debug("Upload failed: " + uploadErr.message);
         alert('Upload failed: ' + uploadErr.message);
         setStatus('Upload failed.');
         return;
       }
-      // --- CRITICAL: Update DB row with new file path and type ---
+      // -- CRITICAL UPDATE: update DB row with new file path --
       const { error: updateErr } = await sb.from('assessment_results').update({
         assignment_path: path,
         assignment_type: file.type
       }).eq('id', row.id);
       if (updateErr) {
-        debug("Could not update assignment record: " + updateErr.message);
         alert('Could not update assignment record: ' + updateErr.message);
         setStatus('Update failed.');
         return;
       }
       setStatus('Assignment updated!');
-      debug("Assignment updated. Closing modal and refreshing table.");
       $('#edit-assignment-modal').style.display = 'none';
       editingRowIdx = null;
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
-      debug("Fetched rows after assignment upload: " + JSON.stringify(rows));
       renderRows(rows);
       if (!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
     };
 
-    // ... rest of your JS unchanged ...
     function renderRows(rows) {
       currentRows = rows;
       count.textContent = rows.length;
