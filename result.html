@@ -31,6 +31,18 @@
     details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
     details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
     details[open] { background:#f0f6ff; }
+    .details-q-block { margin-bottom:18px; border-bottom:1px solid #e3ecfa; padding-bottom:8px;}
+    .details-q-block:last-child { border-bottom:none; }
+    .details-q-title { font-weight:600; margin-bottom:3px; color:#0d47a1;}
+    .details-q-options { margin-left:16px; margin-bottom:4px; }
+    .details-q-option { display:block; margin-bottom:2px; }
+    .details-q-option.correct { color:#1b5e20; font-weight:600; }
+    .details-q-option.student { color:#1565c0; }
+    .details-q-answer { margin-top:2px; }
+    .details-q-ans-correct { color:#1b5e20; font-weight:600; }
+    .details-q-ans-wrong { color:#c62828; font-weight:600; }
+    .details-q-correct-answer { color:#388e3c; margin-left:12px; }
+    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
     .marks-input { width: 50px; padding: 4px 6px; font-size: 14px; border: 1px solid #cfe0ff; border-radius: 6px; margin-right:4px; }
     .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .marks-label { font-size:13px; color:#0d47a1; }
@@ -508,31 +520,30 @@
           </tr>
         `);
 
-        // Details row (spanning all columns)
+        // Details row (spanning all columns, formatted)
         let detailsContent = "";
         if (Array.isArray(r.breakdown)) {
           detailsContent = r.breakdown.map((q, idx) => {
             const isCorrect = (q.answer === q.student_answer);
             const optionList = Array.isArray(q.options)
-              ? q.options.map(opt =>
-                  `<div style="margin-left:8px;">
-                    <span style="font-weight:${q.answer === opt ? 'bold' : 'normal'};color:${q.answer === opt ? '#1b5e20' : '#222'};">
-                      ${escapeHTML(opt)}
-                    </span>
-                    ${q.student_answer === opt ? `<span style="color:${isCorrect ? '#1b5e20' : '#c62828'};font-weight:600;"> ← Student</span>` : ""}
-                  </div>`
+              ? q.options.map((opt, optIdx) =>
+                  `<span class="details-q-option${q.answer === opt ? " correct" : ""}${q.student_answer === opt ? " student" : ""}">
+                    ${String.fromCharCode(65+optIdx)}. ${escapeHTML(opt)}
+                    ${q.answer === opt ? " <b>(Correct)</b>" : ""}
+                    ${q.student_answer === opt ? (isCorrect ? " <b>(Your Answer - Correct)</b>" : " <b>(Your Answer - Wrong)</b>") : ""}
+                  </span>`
                 ).join("")
               : "";
             return `
-              <div style="margin-bottom:10px;">
-                <div style="font-weight:600;margin-bottom:2px;">Q${idx+1}: ${escapeHTML(q.question||'')}</div>
-                <div>${optionList}</div>
-                <div>
-                  <span style="color:${isCorrect ? '#1b5e20' : '#c62828'};font-weight:600;">
+              <div class="details-q-block">
+                <div class="details-q-title">Q${(idx+1)}: ${escapeHTML(q.question||'')}</div>
+                <div class="details-q-options">${optionList}</div>
+                <div class="details-q-answer">
+                  <span class="${isCorrect ? 'details-q-ans-correct' : 'details-q-ans-wrong'}">
                     Your answer: ${escapeHTML(q.student_answer ?? '—')}
                     ${isCorrect ? '(Correct)' : '(Wrong)'}
                   </span>
-                  ${!isCorrect && q.answer != null ? `<span style="margin-left:12px;color:#388e3c;">Correct answer: ${escapeHTML(q.answer)}</span>` : ""}
+                  ${!isCorrect && q.answer != null ? `<span class="details-q-correct-answer">Correct answer: ${escapeHTML(q.answer)}</span>` : ""}
                 </div>
               </div>
             `;
