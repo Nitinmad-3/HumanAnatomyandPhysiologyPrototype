@@ -328,38 +328,24 @@
     };
 
     // --- TIME PARSING & FORMATTING PATCH START ---
-    // Treat ANY timestamp lacking explicit zone (Z or ±HH:MM) as UTC, then convert to IST.
-    // Handles:
-    //  - "YYYY-MM-DD HH:MM:SS(.ms)"
-    //  - "YYYY-MM-DDTHH:MM:SS(.ms)" (no zone)
-    //  - Keeps zone-aware forms unchanged except for formatting in IST.
-    // Toggle DEBUG_TIME for console diagnostics.
     const DEBUG_TIME = false;
     const RE_HAS_ZONE = /(Z|[+-]\d{2}:?\d{2})$/i;
     const RE_SPACE = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d+)?$/;
     const RE_T_NOZONE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?$/;
-
     function _debugTime(...args){ if (DEBUG_TIME) console.log('[TIME]', ...args); }
-
     function parseDBTimestamp(raw) {
       if (!raw) return null;
-
       if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
       if (typeof raw !== 'string') {
         const d = new Date(raw);
         return isNaN(d.getTime()) ? null : d;
       }
-
       const s = raw.trim();
-
-      // Zone-aware -> parse directly.
       if (RE_HAS_ZONE.test(s)) {
         const d = new Date(s);
         _debugTime('zone-aware', s, d.toISOString());
         return isNaN(d.getTime()) ? null : d;
       }
-
-      // Space form (assume UTC)
       let m = s.match(RE_SPACE);
       if (m) {
         const [, Y, Mo, D, H, Mi, S] = m;
@@ -367,21 +353,16 @@
         _debugTime('space-utc', s, dUTC.toISOString());
         return dUTC;
       }
-
-      // T form without zone (assume UTC)
       m = s.match(RE_T_NOZONE);
       if (m) {
         const dT = new Date(s + 'Z');
         _debugTime('t-nozone-utc', s, dT.toISOString());
         return isNaN(dT.getTime()) ? null : dT;
       }
-
-      // Fallback
       const fb = new Date(s);
       _debugTime('fallback', s, fb.toISOString());
       return isNaN(fb.getTime()) ? null : fb;
     }
-
     function formatIST(dateObj) {
       return dateObj.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
@@ -394,12 +375,10 @@
         hour12:false
       }).replace(',', '');
     }
-
     const fmtDate = (val) => {
       const dt = parseDBTimestamp(val);
       return dt ? formatIST(dt) : '—';
     };
-
     console.log('TIME PATCH ACTIVE v2');
     // --- TIME PARSING & FORMATTING PATCH END ---
 
@@ -410,12 +389,17 @@
       const r = s % 60;
       return m + 'm ' + r + 's';
     };
-    const escapeHTML = str => String(str)
-      .replace(/&/g,'&amp;')
-      .replace(/<//g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
+
+    // Corrected escapeHTML (fixed regex typo)
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
     const has = v => typeof v === 'string' ? v.trim().length>0 : !!v;
 
     async function requireLogin(){
@@ -782,7 +766,7 @@
         setStatus('Loading…');
         tbody.innerHTML = '<tr class="skeleton"><td colspan="12">Loading</td></tr>';
         const exp_id = filterExperiment.value || '';
-        const search = filterSearch?.value || '';
+               const search = filterSearch?.value || '';
         const batch  = filterBatch?.value || '';
         const rows = await fetchResults({ exp_id, search, batch });
         renderRows(rows);
