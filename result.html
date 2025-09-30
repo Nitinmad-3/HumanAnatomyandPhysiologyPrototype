@@ -1,103 +1,588 @@
-function renderRows(rows) {
-  currentRows = rows;
-  count.textContent = rows.length;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
-    return;
-  }
-  const parts = [];
-  rows.forEach((r, rowIdx) => {
-    const email = r.meta?.email || r.email || '';
-    const prn = r.meta?.prn || r.prn || '—';
-    const batch = r.meta?.batch || r.batch || '—';
-    const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
-    const percentVal = r.percent ?? r.percentage;
-    const scoreNum = Number(r.score);
-    const totalNum = Number(r.total);
-    const scoreTxt = (scoreNum != null && totalNum != null && !isNaN(scoreNum) && !isNaN(totalNum))
-      ? `${scoreNum}/${totalNum}`
-      : (r.score ?? '—');
-    const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
-
-    let marksCell = '';
-    if (isAdmin) {
-      marksCell = `<div class="marks-cell">
-        <input class="marks-input" id="marks-input-${r.id}" type="number" min="0" max="50" value="${marksVal != null ? marksVal : ''}" placeholder="-" />
-        <button class="btn small" id="marks-save-${r.id}" onclick="saveAssignmentMarks(${rowIdx})">Save</button>
-        <span id="marks-status-${r.id}" class="marks-status">${marksVal != null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
-      </div>`;
-    } else {
-      marksCell = `<span class="marks-label">${marksVal != null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Results | Human Anatomy & Physiology Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; color: #222; background: #f6f9ff; }
+    header { padding: 1rem; background: #e3f2fd; border-bottom: 1px solid #cfe0ff; }
+    header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    header a { color:#1565c0; text-decoration:none; font-weight:600; }
+    h1 { margin: 0; font-size: 1.4rem; color:#0d47a1; }
+    main { max-width: 1100px; margin: 18px auto; padding: 0 12px 24px; }
+    .panel { background: #fff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .muted { color:#375a9e; font-size: 0.95rem; }
+    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
+    .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; }
+    .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
+    .stat .label { font-size:12px; color:#375a9e; }
+    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+    th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
+    tbody tr:hover { background: #f9fbff; }
+    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
+    details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
+    details[open] { background:#f0f6ff; }
+    .q-row { border-bottom:1px solid #e3ecfa; padding:6px 4px; }
+    .q-row:last-child { border-bottom:none; }
+    .q-text { font-weight:600; margin-bottom:2px; }
+    .ans-line { margin-left:8px; }
+    .correct { color:#1b5e20; font-weight:600; }
+    .wrong { color:#c62828; font-weight:600; }
+    .correct-answer { color:#2e7d32; margin-left:8px; }
+    .your-answer { font-style: italic; }
+    .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
+    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
+    .no-breakdown { color:#c62828; font-size:13px; }
+    .assignment-btn { background:#1976d2; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
+    .assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    .edit-assignment-btn { background:#43a047; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
+    .edit-assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
+    .marks-input { width: 50px; padding: 4px 6px; font-size: 14px; border: 1px solid #cfe0ff; border-radius: 6px; margin-right:4px; }
+    .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .marks-label { font-size:13px; color:#0d47a1; }
+    .marks-status { font-size:12px; color:#388e3c; }
+    .marks-pending { color:#fbc02d;}
+    .total-marks { font-weight:700; color:#1565c0;}
+    .resubmission-status-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
     }
-    const totalMarks = (scoreNum || 0) + (marksVal || 0);
-    const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
-    
-    // Assignment column: show correct button for PDF/image
-    let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
-    const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
-    if (r.assignment_path && canViewAssignment) {
-      let btnLabel = "View File";
-      if (r.assignment_type === "application/pdf") btnLabel = "View PDF";
-      else if (r.assignment_type && r.assignment_type.startsWith("image/")) btnLabel = "View Image";
-      assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">${btnLabel}</button>`;
-    } else if (r.assignment_path) {
-      assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
+    .resubmission-status-message {
+      font-size:13px;
+      font-weight:600;
+      margin-top:4px;
+    }
+    .resubmission-status-message.enabled { color:#1976d2; }
+    .resubmission-status-message.disabled { color:#888; }
+    .resubmission-toggle-btn { margin-bottom:4px; }
+    .debug-log { font-size:11px; color:#888; margin-top:2px; }
+    @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <a href="index.html">← Home</a>
+      <h1>Results</h1>
+      <span id="role-badge" class="badge">Loading…</span>
+      <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
+    </div>
+  </header>
+  <main>
+    <section id="student-summary" class="panel" style="display:none;">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Your performance summary</div>
+      </div>
+      <div class="grid">
+        <div class="stat"><div class="label">Total Attempts</div><div class="value" id="sum-attempts">0</div></div>
+        <div class="stat"><div class="label">Average %</div><div class="value" id="sum-avg">0%</div></div>
+        <div class="stat"><div class="label">Best %</div><div class="value" id="sum-best">0%</div></div>
+        <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
+      </div>
+    </section>
+    <section id="filters" class="panel" style="display:block;">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Filters</div>
+      </div>
+      <div class="grid">
+        <div>
+          <label for="filter-experiment" class="muted">Experiment</label>
+          <select id="filter-experiment" aria-label="Experiment">
+            <option value="">All experiments</option>
+          </select>
+        </div>
+        <div id="admin-search-wrap" style="display:none;">
+          <label for="filter-search" class="muted">Search (name/email/PRN)</label>
+          <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
+        </div>
+        <div id="admin-batch-wrap" style="display:none;">
+          <label for="filter-batch" class="muted">Batch</label>
+          <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="apply" class="btn">Apply</button>
+        <button id="reset" class="btn ghost">Reset</button>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="row" style="margin-bottom:8px;">
+        <div class="muted">Results</div>
+        <span id="count" class="pill" style="margin-left:8px;">0</span>
+        <div style="margin-left:auto;" class="muted" id="who"></div>
+      </div>
+      <div style="overflow:auto; max-height: 65vh;">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Assessment</th>
+              <th>PRN</th>
+              <th>Batch</th>
+              <th>Score</th>
+              <th>Assignment Marks</th>
+              <th>Total Marks</th>
+              <th>%</th>
+              <th>Submitted</th>
+              <th>Duration</th>
+              <th>Assignment</th>
+              <th>Resubmit</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="12" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section id="legend" class="panel">
+      <div class="muted">
+        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.<br>
+        <span style="color:#388e3c;font-weight:600;">
+        <b>Optional:</b> When an admin allots marks, resubmission is automatically disabled. Admins can re-enable resubmission at any time by toggling the option in the Resubmit column.
+        </span>
+      </div>
+    </section>
+    <div id="edit-assignment-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.2); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:#fff; border-radius:10px; max-width:400px; width:90%; margin:auto; padding:20px; box-shadow:0 4px 18px #888;">
+        <h2 style="margin-top:0; color:#1976d2;">Resubmit Assignment</h2>
+        <form id="edit-assignment-form">
+          <div style="margin-bottom:12px;">
+            <label for="assignmentFile" style="display:block; margin-bottom:4px;">Select PDF or Image Assignment:</label>
+            <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf,image/*" required />
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <button type="submit" class="btn">Submit</button>
+            <button type="button" class="btn ghost" id="close-edit-modal">Cancel</button>
+          </div>
+        </form>
+        <div id="modal-debug" class="debug-log"></div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script>
+    function debug(msg) {
+      console.log("[DEBUG]", msg);
+      const modalDebug = document.getElementById('modal-debug');
+      if (modalDebug) modalDebug.textContent = msg;
     }
 
-    // Resubmit column logic
-    let resubmitCell = '<div class="resubmission-status-box">';
-    if (isAdmin) {
-      if (r.assignment_marks == null) {
-        resubmitCell += `<span class="resubmission-status-message enabled">
-          Student can resubmit until marks are given.
-        </span>`;
-      } else {
-        resubmitCell += `
-          <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
-            ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
-          </button>
-          <span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
-            ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
-          </span>
-        `;
+    const sb = window.supabase.createClient(
+      'https://hunlistfklwvpivfjmbk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+    );
+    const $ = (s) => document.querySelector(s);
+    const statusEl = $('#status');
+    const roleBadge = $('#role-badge');
+    const studentSummary = $('#student-summary');
+    const sumAttempts = $('#sum-attempts');
+    const sumAvg = $('#sum-avg');
+    const sumBest = $('#sum-best');
+    const sumLast = $('#sum-last');
+    const filters = $('#filters');
+    const filterExperiment = $('#filter-experiment');
+    const adminSearchWrap = $('#admin-search-wrap');
+    const adminBatchWrap = $('#admin-batch-wrap');
+    const filterSearch = $('#filter-search');
+    const filterBatch = $('#filter-batch');
+    const btnApply = $('#apply');
+    const btnReset = $('#reset');
+    const who = $('#who');
+    const tbody = $('#tbody');
+    const count = $('#count');
+    let currentUser = null;
+    let isAdmin = false;
+    let currentRows = [];
+    let editingRowIdx = null;
+
+    function setStatus(msg){ statusEl.textContent = msg; }
+    function fmtPct(n){
+      if (n == null) return '—';
+      const num = Number(n);
+      if (Number.isNaN(num)) return '—';
+      return (Math.round(num * 100) / 100).toFixed(2) + '%';
+    }
+    function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
+    function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
+    function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+    async function requireLogin() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.user) {
+        window.location.replace('login_Version4.html');
+        return false;
+      }
+      currentUser = session.user;
+      return true;
+    }
+    async function getRole(userId) {
+      const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
+      if (error) console.warn('role error', error);
+      return (data?.role || 'unknown').toString().trim().toLowerCase();
+    }
+    async function loadExperiments() {
+      try {
+        const { data, error } = await sb.rpc('list_experiments_for_results');
+        if (!error && Array.isArray(data)) {
+          for (const row of data) {
+            const opt = document.createElement('option');
+            opt.value = row.experiment_id || '';
+            opt.textContent = row.experiment_id || '(untitled)';
+            filterExperiment.appendChild(opt);
+          }
+        }
+      } catch (e) { console.warn('loadExperiments', e); }
+    }
+    async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
+      const args = {
+        exp_id: has(exp_id) ? exp_id : null,
+        search_text: has(search) ? search : null,
+        batch_text: has(batch) ? batch : null
+      };
+      const functionName = isAdmin
+        ? 'get_assessment_results_admin_v2'
+        : 'get_results_student_test';
+      const { data, error } = await sb.rpc(functionName, args);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    }
+    function renderSummaryForStudent(rows) {
+      const attempts = rows.length;
+      const percents = rows
+        .map(r => Number(r.percent ?? r.percentage))
+        .filter(n => !Number.isNaN(n));
+      const avg = percents.length ? (percents.reduce((a,b)=>a+b,0)/percents.length) : 0;
+      const best = percents.length ? Math.max(...percents) : 0;
+      const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
+
+      sumAttempts.textContent = attempts;
+      sumAvg.textContent = fmtPct(avg);
+      sumBest.textContent = fmtPct(best);
+      sumLast.textContent = fmtDate(last);
+      studentSummary.style.display = 'block';
+    }
+    async function getAssignmentSignedUrl(row) {
+      if (!row.assignment_path) return null;
+      const bucket = row.assignment_bucket || "assignments";
+      try {
+        const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60);
+        if (error) return null;
+        return data?.signedUrl || null;
+      } catch (e) {
+        console.error("Signed URL error", e);
+        return null;
       }
     }
-    // Student can resubmit if marks are not allotted or admin has allowed resubmission
-    if (!isAdmin && currentUser && r.user_id === currentUser.id &&
-        (r.assignment_marks == null || r.resubmission_allowed)) {
-      resubmitCell += `
-        <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
-      `;
-    }
-    resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
-    // --- ADD DETAILS TAB HERE ---
-    resubmitCell += `
-      <details>
-        <summary>Details</summary>
-        <pre style="text-align:left;overflow:auto;max-width:350px;max-height:200px;">${escapeHTML(JSON.stringify(r, null, 2))}</pre>
-      </details>
-    `;
-    // --- END DETAILS TAB ADDITION ---
-    resubmitCell += '</div>';
+    window.viewAssignment = async function(rowIdx) {
+      const row = currentRows[rowIdx];
+      const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
+      if (!canViewAssignment) {
+        alert("You do not have access to this assignment.");
+        return;
+      }
+      let url = await getAssignmentSignedUrl(row);
+      if (url) {
+        url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+        window.open(url, '_blank');
+      }
+      else alert("Unable to generate assignment link (access denied or file missing)");
+    };
 
-    parts.push(`
-      <tr>
-        <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
-          <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
-        </td>
-        <td>${escapeHTML(assessmentTitle)}</td>
-        <td>${escapeHTML(prn)}</td>
-        <td>${escapeHTML(batch)}</td>
-        <td>${scoreTxt}</td>
-        <td>${marksCell}</td>
-        <td>${totalMarksTxt}</td>
-        <td>${fmtPct(percentVal)}</td>
-        <td>${fmtDate(r.submitted_at)}</td>
-        <td>${fmtDur(r.duration_sec)}</td>
-        <td>${assignmentBtn}</td>
-        <td>${resubmitCell}</td>
-      </tr>
-    `);
-  });
-  tbody.innerHTML = parts.join('');
-}
+    // OPTIONAL SUGGESTION: Auto-disable resubmission when admin allots marks
+    window.saveAssignmentMarks = async function(rowIdx) {
+      const row = currentRows[rowIdx];
+      const marksInput = document.getElementById('marks-input-' + row.id);
+      if (!marksInput) return;
+      const val = marksInput.value.trim();
+      if (val === '' || isNaN(val)) {
+        alert('Please enter a valid number for marks.');
+        return;
+      }
+      const marks = Number(val);
+      if (marks < 0 || marks > 50) {
+        alert('Marks should be between 0 and 50.');
+        return;
+      }
+      marksInput.disabled = true;
+      const btn = document.getElementById('marks-save-' + row.id);
+      if (btn) btn.disabled = true;
+      setStatus('Saving assignment marks...');
+      // This update disables resubmission automatically after marks are entered
+      const { error } = await sb.from('assessment_results').update({ assignment_marks: marks, resubmission_allowed: false }).eq('id', row.id);
+      if (error) {
+        alert("Could not save marks: " + error.message);
+        setStatus('Save failed.');
+        marksInput.disabled = false;
+        if (btn) btn.disabled = false;
+        return;
+      }
+      setStatus('Marks saved!');
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      renderRows(rows);
+      if (!isAdmin) renderSummaryForStudent(rows);
+      setStatus('Ready.');
+    }
+
+    window.toggleResubmission = async function(rowIdx) {
+      const row = currentRows[rowIdx];
+      const newStatus = !row.resubmission_allowed;
+      const btn = document.getElementById('resubmission-toggle-' + row.id);
+      if (btn) btn.disabled = true;
+      setStatus('Updating resubmission status...');
+      const { error } = await sb.from('assessment_results').update({ resubmission_allowed: newStatus }).eq('id', row.id);
+      if (error) {
+        alert("Could not update resubmission status: " + error.message);
+        setStatus('Update failed.');
+        if (btn) btn.disabled = false;
+        return;
+      }
+      setStatus('Resubmission status updated!');
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      renderRows(rows);
+      setStatus('Ready.');
+    };
+
+    window.openEditAssignmentModal = function(rowIdx) {
+      editingRowIdx = rowIdx;
+      $('#edit-assignment-modal').style.display = 'flex';
+      $('#assignmentFile').value = '';
+    }
+    $('#close-edit-modal').onclick = function() {
+      $('#edit-assignment-modal').style.display = 'none';
+      editingRowIdx = null;
+    }
+
+    // Assignment upload handler (shows latest assignment after resubmit)
+    $('#edit-assignment-form').onsubmit = async function(e) {
+      e.preventDefault();
+      if (editingRowIdx == null) return;
+      const row = currentRows[editingRowIdx];
+      const fileInput = $('#assignmentFile');
+      if (!fileInput.files.length) {
+        alert('Please select a file.');
+        return;
+      }
+      const file = fileInput.files[0];
+      if (
+        file.type !== 'application/pdf' &&
+        !file.type.startsWith('image/')
+      ) {
+        alert('Only PDF or image files allowed.');
+        return;
+      }
+      setStatus('Uploading assignment...');
+      const bucket = row.assignment_bucket || "assignments";
+      const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
+      const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${extension}`;
+      const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
+      if (uploadErr) {
+        alert('Upload failed: ' + uploadErr.message);
+        setStatus('Upload failed.');
+        return;
+      }
+      // Update DB row with new file path
+      const { error: updateErr } = await sb.from('assessment_results').update({
+        assignment_path: path,
+        assignment_type: file.type
+      }).eq('id', row.id);
+      if (updateErr) {
+        alert('Could not update assignment record: ' + updateErr.message);
+        setStatus('Update failed.');
+        return;
+      }
+      setStatus('Assignment updated!');
+      $('#edit-assignment-modal').style.display = 'none';
+      editingRowIdx = null;
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      renderRows(rows);
+      if (!isAdmin) renderSummaryForStudent(rows);
+      setStatus('Ready.');
+    };
+
+    // --- REPLACEMENT renderRows FUNCTION WITH DETAILS TAB ---
+    function renderRows(rows) {
+      currentRows = rows;
+      count.textContent = rows.length;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
+        return;
+      }
+      const parts = [];
+      rows.forEach((r, rowIdx) => {
+        const email = r.meta?.email || r.email || '';
+        const prn = r.meta?.prn || r.prn || '—';
+        const batch = r.meta?.batch || r.batch || '—';
+        const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
+        const percentVal = r.percent ?? r.percentage;
+        const scoreNum = Number(r.score);
+        const totalNum = Number(r.total);
+        const scoreTxt = (scoreNum != null && totalNum != null && !isNaN(scoreNum) && !isNaN(totalNum))
+          ? `${scoreNum}/${totalNum}`
+          : (r.score ?? '—');
+        const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
+
+        let marksCell = '';
+        if (isAdmin) {
+          marksCell = `<div class="marks-cell">
+            <input class="marks-input" id="marks-input-${r.id}" type="number" min="0" max="50" value="${marksVal != null ? marksVal : ''}" placeholder="-" />
+            <button class="btn small" id="marks-save-${r.id}" onclick="saveAssignmentMarks(${rowIdx})">Save</button>
+            <span id="marks-status-${r.id}" class="marks-status">${marksVal != null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
+          </div>`;
+        } else {
+          marksCell = `<span class="marks-label">${marksVal != null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
+        }
+        const totalMarks = (scoreNum || 0) + (marksVal || 0);
+        const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
+        
+        // Assignment column: show correct button for PDF/image
+        let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
+        const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
+        if (r.assignment_path && canViewAssignment) {
+          let btnLabel = "View File";
+          if (r.assignment_type === "application/pdf") btnLabel = "View PDF";
+          else if (r.assignment_type && r.assignment_type.startsWith("image/")) btnLabel = "View Image";
+          assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">${btnLabel}</button>`;
+        } else if (r.assignment_path) {
+          assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
+        }
+
+        // Resubmit column logic
+        let resubmitCell = '<div class="resubmission-status-box">';
+        if (isAdmin) {
+          if (r.assignment_marks == null) {
+            resubmitCell += `<span class="resubmission-status-message enabled">
+              Student can resubmit until marks are given.
+            </span>`;
+          } else {
+            resubmitCell += `
+              <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
+                ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
+              </button>
+              <span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
+                ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
+              </span>
+            `;
+          }
+        }
+        // Student can resubmit if marks are not allotted or admin has allowed resubmission
+        if (!isAdmin && currentUser && r.user_id === currentUser.id &&
+            (r.assignment_marks == null || r.resubmission_allowed)) {
+          resubmitCell += `
+            <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
+          `;
+        }
+        resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
+        // --- DETAILS TAB ADDED HERE ---
+        resubmitCell += `
+          <details>
+            <summary>Details</summary>
+            <pre style="text-align:left;overflow:auto;max-width:350px;max-height:200px;">${escapeHTML(JSON.stringify(r, null, 2))}</pre>
+          </details>
+        `;
+        resubmitCell += '</div>';
+
+        parts.push(`
+          <tr>
+            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
+              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
+            </td>
+            <td>${escapeHTML(assessmentTitle)}</td>
+            <td>${escapeHTML(prn)}</td>
+            <td>${escapeHTML(batch)}</td>
+            <td>${scoreTxt}</td>
+            <td>${marksCell}</td>
+            <td>${totalMarksTxt}</td>
+            <td>${fmtPct(percentVal)}</td>
+            <td>${fmtDate(r.submitted_at)}</td>
+            <td>${fmtDur(r.duration_sec)}</td>
+            <td>${assignmentBtn}</td>
+            <td>${resubmitCell}</td>
+          </tr>
+        `);
+      });
+      tbody.innerHTML = parts.join('');
+    }
+    // --- END REPLACEMENT renderRows FUNCTION WITH DETAILS TAB ---
+
+    async function applyFilters() {
+      try {
+        setStatus('Loading…');
+        const exp_id = filterExperiment.value || '';
+        const search = filterSearch?.value || '';
+        const batch = filterBatch?.value || '';
+        const rows = await fetchResults({ exp_id, search, batch });
+        renderRows(rows);
+        if (!isAdmin) renderSummaryForStudent(rows);
+        setStatus('Ready.');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="12" class="muted">Failed to load results.</td></tr>';
+        setStatus('Failed.');
+        alert('Error loading results: ' + (e?.message || e));
+      }
+    }
+    async function init() {
+      if (!(await requireLogin())) return;
+      const role = await getRole(currentUser.id);
+      isAdmin = (role === 'admin');
+      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
+      roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
+      roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
+
+      filters.style.display = 'block';
+      if (isAdmin) {
+        adminSearchWrap.style.display = 'block';
+        adminBatchWrap.style.display = 'block';
+        who.textContent = 'Viewing: all students (filtered)';
+      } else {
+        who.textContent = 'Viewing: your attempts';
+        studentSummary.style.display = 'block';
+      }
+      await loadExperiments();
+
+      const urlExp = new URLSearchParams(location.search).get('exp');
+      if (urlExp) filterExperiment.value = urlExp;
+
+      btnApply.addEventListener('click', () => applyFilters());
+      btnReset.addEventListener('click', () => {
+        filterExperiment.value = '';
+        if (filterSearch) filterSearch.value = '';
+        if (filterBatch) filterBatch.value = '';
+        applyFilters();
+      });
+      await applyFilters();
+      setStatus('Ready.');
+    }
+    init();
+  </script>
+</body>
+</html>
