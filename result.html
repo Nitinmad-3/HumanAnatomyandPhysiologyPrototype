@@ -4,227 +4,411 @@
   <meta charset="UTF-8" />
   <title>Results | Human Anatomy & Physiology Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="preconnect" href="https://hunlistfklwvpivfjmbk.supabase.co" />
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; color: #222; background: #f6f9ff; }
-    header { padding: 1rem; background: #e3f2fd; border-bottom: 1px solid #cfe0ff; }
-    header .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    header a { color:#1565c0; text-decoration:none; font-weight:600; }
-    h1 { margin: 0; font-size: 1.4rem; color:#0d47a1; }
-    main { max-width: 1100px; margin: 18px auto; padding: 0 12px 24px; }
-    .panel { background: #fff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .muted { color:#375a9e; font-size: 0.95rem; }
-    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
-    .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
-    .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; }
-    .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
-    .btn:disabled { opacity:.6; cursor:not-allowed; }
-    .stat { background:#f5faff; border:1px solid #cfe0ff; border-radius:8px; padding:10px; }
-    .stat .label { font-size:12px; color:#375a9e; }
-    .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
-    table { width:100%; border-collapse: collapse; font-size: 14px; }
-    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; vertical-align: top;}
-    th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
-    tbody tr:hover { background: #f9fbff; }
-    details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
-    details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
-    details[open] { background:#f0f6ff; }
-    .details-q-block { margin-bottom:18px; border-bottom:1px solid #e3ecfa; padding-bottom:8px;}
-    .details-q-block:last-child { border-bottom:none; }
-    .details-q-title { font-weight:600; margin-bottom:3px; color:#0d47a1;}
-    .details-q-options { margin-left:16px; margin-bottom:4px; }
-    .details-q-option { display:block; margin-bottom:2px; }
-    .details-q-option.correct { color:#1b5e20; font-weight:600; }
-    .details-q-option.incorrect { color:#c62828; font-weight:600; }
-    .details-q-answer { margin-top:2px; }
-    .details-q-ans-correct { color:#1b5e20; font-weight:600; }
-    .details-q-ans-wrong { color:#c62828; font-weight:600; }
-    .details-q-correct-answer { color:#388e3c; margin-left:12px; }
-    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
-    .marks-input { width: 50px; padding: 4px 6px; font-size: 14px; border: 1px solid #cfe0ff; border-radius: 6px; margin-right:4px; }
-    .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .marks-label { font-size:13px; color:#0d47a1; }
-    .marks-status { font-size:12px; color:#388e3c; }
-    .marks-pending { color:#fbc02d;}
-    .total-marks { font-weight:700; color:#1565c0;}
-    .resubmission-status-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: 4px;
+    /* ========== Base ========== */
+    :root {
+      --c-bg: #f6f9ff;
+      --c-panel: #fff;
+      --c-border: #cfe0ff;
+      --c-accent: #1565c0;
+      --c-accent-dark: #0d47a1;
+      --c-muted: #375a9e;
+      --c-good: #1b5e20;
+      --c-bad: #c62828;
+      --c-warn: #f9a825;
+      --radius: 10px;
+      --transition: 0.15s ease;
+      font-size: 16px;
     }
-    .resubmission-status-message {
-      font-size:13px;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, 'Segoe UI', Arial, sans-serif;
+      background: var(--c-bg);
+      color: #222;
+    }
+
+    /* ========== Layout & Panels ========== */
+    header {
+      padding: 0.75rem 1rem;
+      background: #e3f2fd;
+      border-bottom: 1px solid var(--c-border);
+    }
+    main {
+      max-width: 1150px;
+      margin: 18px auto 40px;
+      padding: 0 14px 24px;
+    }
+    .panel {
+      background: var(--c-panel);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 14px 16px 18px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    /* ========== Reusable ========== */
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
+    h1 { margin:0; font-size:1.35rem; color:var(--c-accent-dark); }
+    a { color: var(--c-accent); text-decoration:none; }
+    a:hover, button:hover { filter:brightness(1.05); }
+    .muted { color: var(--c-muted); font-size: 0.92rem; }
+    .badge {
+      display:inline-block; font-size:12px; padding:4px 10px;
+      border:1px solid var(--c-border); border-radius:999px;
+      background:#f0f6ff; font-weight:600;
+    }
+
+    /* ========== Forms & Buttons ========== */
+    label { font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--c-muted); font-weight:600; }
+    select, input[type="text"], input[type="number"], input[type="file"] {
+      width:100%; padding:10px; border:1px solid var(--c-border);
+      border-radius:8px; font-size:14px; background:#fff;
+      transition: var(--transition);
+    }
+    select:focus, input:focus { outline:2px solid #90caf9; }
+    .btn {
+      background: var(--c-accent);
+      color:#fff;
+      border:0;
+      padding:8px 14px;
+      border-radius:8px;
+      font-size:14px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      transition: var(--transition);
+    }
+    .btn.ghost {
+      background:transparent;
+      color:var(--c-accent);
+      border:1px solid var(--c-border);
+    }
+    .btn.small { padding:5px 10px; font-size:12px; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+
+    /* ========== Stats ========== */
+    .stat {
+      background:#f5faff;
+      border:1px solid var(--c-border);
+      border-radius:8px;
+      padding:10px 12px;
+    }
+    .stat .label { font-size:11px; color:var(--c-muted); text-transform:uppercase; letter-spacing:.5px; }
+    .stat .value { font-size:22px; font-weight:700; color:var(--c-accent-dark); }
+
+    /* ========== Table ========== */
+    .results-wrap { overflow:auto; max-height: 65vh; }
+    table { width:100%; border-collapse: collapse; font-size: 13.5px; line-height:1.35; }
+    caption {
+      text-align:left;
       font-weight:600;
-      margin-top:4px;
+      color:var(--c-accent-dark);
+      padding:4px 0 10px;
+      font-size:14px;
     }
+    th, td {
+      padding:8px 6px;
+      border-bottom:1px dashed var(--c-border);
+      text-align:left;
+      vertical-align: top;
+    }
+    th {
+      background:#f0f6ff;
+      color:var(--c-accent);
+      font-weight:600;
+      position:sticky;
+      top:0;
+      z-index:2;
+      font-size:12px;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+    tbody tr:hover { background:#f9fbff; }
+    tbody tr.skeleton td {
+      background: linear-gradient(90deg,#f0f6ff 25%, #e3edf9 50%, #f0f6ff 75%);
+      background-size: 300% 100%;
+      animation: shimmer 1.4s infinite;
+      color:transparent;
+    }
+    @keyframes shimmer {
+      0% { background-position:0 0; }
+      100% { background-position: -300% 0; }
+    }
+
+    /* ========== Details (Q Breakdown) ========== */
+    details {
+      background:#f9fbff;
+      border:1px solid var(--c-border);
+      border-radius:8px;
+      padding:8px 10px;
+      margin-top:6px;
+    }
+    details summary {
+      cursor:pointer;
+      font-weight:600;
+      color:var(--c-accent-dark);
+      outline:none;
+    }
+    details[open] { background:#f0f6ff; }
+    .details-q-block { margin-bottom:18px; border-bottom:1px solid #e3ecfa; padding-bottom:8px; }
+    .details-q-block:last-child { border-bottom:none; }
+    .details-q-title { font-weight:600; margin-bottom:4px; color:var(--c-accent-dark); }
+    .details-q-options { margin-left:14px; margin-bottom:4px; }
+    .details-q-option { display:block; margin-bottom:2px; }
+    .details-q-option.correct { color: var(--c-good); font-weight:600; }
+    .details-q-option.incorrect { color: var(--c-bad); font-weight:600; }
+    .details-q-ans-correct { color: var(--c-good); font-weight:600; }
+    .details-q-ans-wrong { color: var(--c-bad); font-weight:600; }
+    .details-q-correct-answer { color:#2e7d32; margin-left:12px; }
+
+    /* ========== Marks & Resubmission ========== */
+    .marks-input { width: 58px; padding:4px 6px; font-size:13px; }
+    .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .marks-status { font-size:11px; color: var(--c-good); }
+    .marks-pending { color: var(--c-warn); }
+    .total-marks { font-weight:700; color: var(--c-accent); }
+    .resubmission-status-box {
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:4px;
+      font-size:12px;
+    }
+    .resubmission-status-message { font-weight:600; }
     .resubmission-status-message.enabled { color:#1976d2; }
-    .resubmission-status-message.disabled { color:#888; }
-    .resubmission-toggle-btn { margin-bottom:4px; }
-    .debug-log { font-size:11px; color:#888; margin-top:2px; }
-    @media (max-width: 640px) { th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display:none; } }
+    .resubmission-status-message.disabled { color:#666; }
+    .debug-log { font-size:10px; color:#888; }
+
+    /* ========== Modal ========== */
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.25);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:1000;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .modal {
+      background:#fff;
+      border-radius:12px;
+      width: min(420px,92%);
+      padding:20px 22px 24px;
+      box-shadow:0 6px 28px -6px rgba(40,60,90,.35);
+      position:relative;
+      animation: popIn .25s ease;
+    }
+    @keyframes popIn { from{transform:scale(.94); opacity:0} to{transform:scale(1); opacity:1} }
+    .modal h2 { margin-top:0; font-size:1.05rem; color:#1976d2; letter-spacing:.5px; }
+    .modal-close {
+      position:absolute; top:8px; right:10px;
+      background:transparent; border:0; font-size:20px;
+      line-height:1; cursor:pointer; color:#1976d2;
+    }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 780px) {
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(4), td:nth-child(4),
+      th:nth-child(10), td:nth-child(10) { display:none; }
+      .grid { grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="row">
-      <a href="index.html">← Home</a>
+    <div class="row" role="navigation" aria-label="Main">
+      <a href="index.html" aria-label="Back to home">← Home</a>
       <h1>Results</h1>
-      <span id="role-badge" class="badge">Loading…</span>
-      <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
+      <span id="role-badge" class="badge" aria-live="polite">Loading…</span>
+      <span id="status" class="muted" style="margin-left:auto" aria-live="polite">Initializing…</span>
     </div>
   </header>
+
   <main>
+    <!-- Student Summary -->
     <section id="student-summary" class="panel" style="display:none;">
-      <div class="row" style="margin-bottom:8px;">
-        <div class="muted">Your performance summary</div>
-      </div>
-      <div class="grid">
+      <div class="muted" style="margin-bottom:10px;">Your Performance Summary</div>
+      <div class="grid" aria-label="Performance statistics">
         <div class="stat"><div class="label">Total Attempts</div><div class="value" id="sum-attempts">0</div></div>
         <div class="stat"><div class="label">Average %</div><div class="value" id="sum-avg">0%</div></div>
         <div class="stat"><div class="label">Best %</div><div class="value" id="sum-best">0%</div></div>
         <div class="stat"><div class="label">Last Attempt</div><div class="value" id="sum-last">—</div></div>
       </div>
     </section>
-    <section id="filters" class="panel" style="display:block;">
-      <div class="row" style="margin-bottom:8px;">
+
+    <!-- Filters -->
+    <section id="filters" class="panel">
+      <div class="row" style="margin-bottom:6px;">
         <div class="muted">Filters</div>
+        <div style="margin-left:auto; display:flex; gap:6px;">
+          <button id="export-csv" class="btn ghost small" aria-label="Export results as CSV">Export CSV</button>
+        </div>
       </div>
       <div class="grid">
         <div>
-          <label for="filter-experiment" class="muted">Experiment</label>
-          <select id="filter-experiment" aria-label="Experiment">
+          <label for="filter-experiment">Experiment</label>
+          <select id="filter-experiment" aria-label="Experiment filter">
             <option value="">All experiments</option>
           </select>
         </div>
         <div id="admin-search-wrap" style="display:none;">
-          <label for="filter-search" class="muted">Search (name/email/PRN)</label>
-          <input id="filter-search" class="input" type="text" placeholder="e.g., john, 2023-PRN-001, gmail.com" />
+          <label for="filter-search">Search (name/email/PRN)</label>
+          <input id="filter-search" type="text" placeholder="john, 2023-PRN-001, gmail.com" />
         </div>
         <div id="admin-batch-wrap" style="display:none;">
-          <label for="filter-batch" class="muted">Batch</label>
-          <input id="filter-batch" class="input" type="text" placeholder="e.g., B1, 2024" />
+          <label for="filter-batch">Batch</label>
+          <input id="filter-batch" type="text" placeholder="e.g., B1, 2024" />
         </div>
       </div>
-      <div class="row" style="margin-top:10px;">
+      <div class="row" style="margin-top:12px;">
         <button id="apply" class="btn">Apply</button>
         <button id="reset" class="btn ghost">Reset</button>
       </div>
     </section>
-    <section class="panel">
+
+    <!-- Results -->
+    <section class="panel" aria-label="Results section">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Results</div>
-        <span id="count" class="pill" style="margin-left:8px;">0</span>
-        <div style="margin-left:auto;" class="muted" id="who"></div>
+        <span id="count" class="badge" style="background:#f0f6ff;">0</span>
+        <div id="who" class="muted" style="margin-left:auto;"></div>
       </div>
-      <div style="overflow:auto; max-height: 65vh;">
-        <table>
+      <div class="results-wrap">
+        <table aria-describedby="legend-text">
+          <caption>Assessment Attempts</caption>
           <thead>
             <tr>
-              <th>Student</th>
-              <th>Assessment</th>
-              <th>PRN</th>
-              <th>Batch</th>
-              <th>Score</th>
-              <th>Assignment Marks</th>
-              <th>Total Marks</th>
-              <th>%</th>
-              <th>Submitted</th>
-              <th>Duration</th>
-              <th>Assignment</th>
-              <th>Resubmit</th>
+              <th scope="col">Student</th>
+              <th scope="col">Assessment</th>
+              <th scope="col">PRN</th>
+              <th scope="col">Batch</th>
+              <th scope="col">Score</th>
+              <th scope="col">Assign. Marks</th>
+              <th scope="col">Total</th>
+              <th scope="col">%</th>
+              <th scope="col">Submitted</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Assignment</th>
+              <th scope="col">Resubmit</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="12" class="muted">Loading…</td></tr>
+            <!-- Skeleton rows while loading -->
+            <tr class="skeleton"><td colspan="12">Loading</td></tr>
+            <tr class="skeleton"><td colspan="12">Loading</td></tr>
           </tbody>
         </table>
       </div>
     </section>
+
+    <!-- Legend / Tips -->
     <section id="legend" class="panel">
-      <div class="muted">
-        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.<br>
-        <span style="color:#388e3c;font-weight:600;">
-        <b>Optional:</b> When an admin allots marks, resubmission is automatically disabled. Admins can re-enable resubmission at any time by toggling the option in the Resubmit column.
+      <div id="legend-text" class="muted">
+        Tip: Admins can edit assignment marks directly in the table. Admins can allow or disallow assignment resubmission. Students may only resubmit when enabled.<br>
+        <span style="color:var(--c-good); font-weight:600;">
+          Optional rule: When an admin allots marks, resubmission auto-disables. Admins can re-enable anytime.
         </span>
       </div>
     </section>
-    <div id="edit-assignment-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.2); z-index:1000; align-items:center; justify-content:center;">
-      <div style="background:#fff; border-radius:10px; max-width:400px; width:90%; margin:auto; padding:20px; box-shadow:0 4px 18px #888;">
-        <h2 style="margin-top:0; color:#1976d2;">Resubmit Assignment</h2>
-        <form id="edit-assignment-form">
-          <div style="margin-bottom:12px;">
-            <label for="assignmentFile" style="display:block; margin-bottom:4px;">Select PDF or Image Assignment:</label>
-            <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf,image/*" required />
-          </div>
-          <div class="row" style="justify-content:flex-end;">
-            <button type="submit" class="btn">Submit</button>
-            <button type="button" class="btn ghost" id="close-edit-modal">Cancel</button>
-          </div>
-        </form>
-        <div id="modal-debug" class="debug-log"></div>
-      </div>
-    </div>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script>
-    function debug(msg) {
-      console.log("[DEBUG]", msg);
-      const modalDebug = document.getElementById('modal-debug');
-      if (modalDebug) modalDebug.textContent = msg;
-    }
 
-    const sb = window.supabase.createClient(
-      'https://hunlistfklwvpivfjmbk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-    );
-    const $ = (s) => document.querySelector(s);
-    const statusEl = $('#status');
-    const roleBadge = $('#role-badge');
+  <!-- Resubmit Modal -->
+  <div id="edit-assignment-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <button class="modal-close" id="close-edit-modal" aria-label="Close dialog">×</button>
+      <h2 id="modal-title">Resubmit Assignment</h2>
+      <form id="edit-assignment-form">
+        <div style="margin-bottom:14px;">
+          <label for="assignmentFile" style="display:block; margin-bottom:6px;">Select PDF or Image:</label>
+          <input type="file" id="assignmentFile" accept="application/pdf,image/*" required />
+        </div>
+        <div class="row" style="justify-content:flex-end;">
+          <button type="submit" class="btn">Submit</button>
+          <button type="button" class="btn ghost" id="cancel-upload">Cancel</button>
+        </div>
+      </form>
+      <div id="modal-debug" class="debug-log" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js" integrity="sha384-supabase-js"></script>
+  <script>
+    /************ Configuration ************/
+    const SUPABASE_URL = 'https://hunlistfklwvpivfjmbk.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE'; // Replace with environment injection in production build
+    const ASSIGNMENT_MAX = 50; // Adjust if needed
+
+    /************ Supabase Client ************/
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /************ DOM Helpers ************/
+    const $  = (sel, parent=document) => parent.querySelector(sel);
+    const $$ = (sel, parent=document) => [...parent.querySelectorAll(sel)];
+    const statusEl    = $('#status');
+    const roleBadge   = $('#role-badge');
+    const tbody       = $('#tbody');
+    const countEl     = $('#count');
+    const whoEl       = $('#who');
     const studentSummary = $('#student-summary');
     const sumAttempts = $('#sum-attempts');
-    const sumAvg = $('#sum-avg');
-    const sumBest = $('#sum-best');
-    const sumLast = $('#sum-last');
-    const filters = $('#filters');
+    const sumAvg      = $('#sum-avg');
+    const sumBest     = $('#sum-best');
+    const sumLast     = $('#sum-last');
     const filterExperiment = $('#filter-experiment');
-    const adminSearchWrap = $('#admin-search-wrap');
-    const adminBatchWrap = $('#admin-batch-wrap');
-    const filterSearch = $('#filter-search');
-    const filterBatch = $('#filter-batch');
-    const btnApply = $('#apply');
-    const btnReset = $('#reset');
-    const who = $('#who');
-    const tbody = $('#tbody');
-    const count = $('#count');
+    const filterSearch     = $('#filter-search');
+    const filterBatch      = $('#filter-batch');
+    const adminSearchWrap  = $('#admin-search-wrap');
+    const adminBatchWrap   = $('#admin-batch-wrap');
+
+    const editModalBackdrop = $('#edit-assignment-modal');
+    const assignmentFileInput = $('#assignmentFile');
+
+    /************ App State ************/
     let currentUser = null;
     let isAdmin = false;
     let currentRows = [];
     let editingRowIdx = null;
 
-    function setStatus(msg){ statusEl.textContent = msg; }
-    function fmtPct(n){
-      if (n == null) return '—';
-      const num = Number(n);
-      if (Number.isNaN(num)) return '—';
-      return (Math.round(num * 100) / 100).toFixed(2) + '%';
-    }
-    function fmtDate(s){ if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
-    function fmtDur(sec){ if (!sec && sec!==0) return '—'; const s = Number(sec)||0; const m = Math.floor(s/60), rem = s%60; return m + 'm ' + rem + 's'; }
-    function has(v){ return typeof v === 'string' ? v.trim().length>0 : !!v; }
-    function escapeHTML(str){
-      return String(str)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#39;');
-    }
-    async function requireLogin() {
+    /************ Utilities ************/
+    const setStatus = (msg) => { statusEl.textContent = msg; };
+    const fmtPct = n => {
+      if (n == null || isNaN(Number(n))) return '—';
+      const val = Number(n);
+      return (Math.round(val * 100) / 100).toFixed(2) + '%';
+    };
+    const fmtDate = iso => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString();
+    };
+    const fmtDur = sec => {
+      if (sec == null || isNaN(Number(sec))) return '—';
+      const s = Number(sec);
+      const m = Math.floor(s/60);
+      const r = s % 60;
+      return m + 'm ' + r + 's';
+    };
+    const escapeHTML = str => String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+
+    const has = v => typeof v === 'string' ? v.trim().length > 0 : !!v;
+
+    /************ Auth ************/
+    async function requireLogin(){
       const { data: { session } } = await sb.auth.getSession();
       if (!session?.user) {
         window.location.replace('login_Version4.html');
@@ -233,285 +417,306 @@
       currentUser = session.user;
       return true;
     }
-    async function getRole(userId) {
-      const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
-      if (error) console.warn('role error', error);
-      return (data?.role || 'unknown').toString().trim().toLowerCase();
+    async function getRole(userId){
+      const { data, error } = await sb.from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) {
+        console.warn('Role error', error);
+        return 'unknown';
+      }
+      return (data?.role || 'unknown').toLowerCase();
     }
-    async function loadExperiments() {
+
+    /************ Data Fetch ************/
+    async function loadExperiments(){
       try {
         const { data, error } = await sb.rpc('list_experiments_for_results');
-        if (!error && Array.isArray(data)) {
-          for (const row of data) {
+        if (error) throw error;
+        if (Array.isArray(data)) {
+          data.forEach(row => {
             const opt = document.createElement('option');
             opt.value = row.experiment_id || '';
             opt.textContent = row.experiment_id || '(untitled)';
             filterExperiment.appendChild(opt);
-          }
+          });
         }
-      } catch (e) { console.warn('loadExperiments', e); }
+      } catch (e){
+        console.warn('loadExperiments', e);
+      }
     }
-    async function fetchResults({ exp_id = '', search = '', batch = '' } = {}) {
+    async function fetchResults({ exp_id='', search='', batch='' } = {}){
       const args = {
         exp_id: has(exp_id) ? exp_id : null,
         search_text: has(search) ? search : null,
         batch_text: has(batch) ? batch : null
       };
-      const functionName = isAdmin
+      const fn = isAdmin
         ? 'get_assessment_results_admin_v2'
         : 'get_results_student_test';
-      const { data, error } = await sb.rpc(functionName, args);
+      const { data, error } = await sb.rpc(fn, args);
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
-    function renderSummaryForStudent(rows) {
+
+    /************ Summary (Student) ************/
+    function renderSummaryForStudent(rows){
       const attempts = rows.length;
       const percents = rows
         .map(r => Number(r.percent ?? r.percentage))
-        .filter(n => !Number.isNaN(n));
-      const avg = percents.length ? (percents.reduce((a,b)=>a+b,0)/percents.length) : 0;
+        .filter(v => !isNaN(v));
+      const avg = percents.length
+        ? (percents.reduce((a,b)=>a+b,0)/percents.length)
+        : 0;
       const best = percents.length ? Math.max(...percents) : 0;
-      const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
+      const lastAttempt = rows
+        .slice()
+        .sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
 
       sumAttempts.textContent = attempts;
       sumAvg.textContent = fmtPct(avg);
       sumBest.textContent = fmtPct(best);
-      sumLast.textContent = fmtDate(last);
+      sumLast.textContent = fmtDate(lastAttempt);
       studentSummary.style.display = 'block';
     }
-    async function getAssignmentSignedUrl(row) {
+
+    /************ Assignment Helpers ************/
+    async function getAssignmentSignedUrl(row){
       if (!row.assignment_path) return null;
-      const bucket = row.assignment_bucket || "assignments";
+      const bucket = row.assignment_bucket || 'assignments';
       try {
-        const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60);
+        const { data, error } = await sb
+          .storage
+          .from(bucket)
+          .createSignedUrl(row.assignment_path, 60);
         if (error) return null;
         return data?.signedUrl || null;
-      } catch (e) {
-        console.error("Signed URL error", e);
+      } catch {
         return null;
       }
     }
-    window.viewAssignment = async function(rowIdx) {
+
+    window.viewAssignment = async function(rowIdx){
       const row = currentRows[rowIdx];
-      const canViewAssignment = isAdmin || (currentUser && row.user_id === currentUser.id);
-      if (!canViewAssignment) {
-        alert("You do not have access to this assignment.");
+      const canView = isAdmin || (currentUser && row.user_id === currentUser.id);
+      if (!canView) {
+        alert('You do not have access to this assignment.');
         return;
       }
       let url = await getAssignmentSignedUrl(row);
       if (url) {
         url += (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-        window.open(url, '_blank');
+        window.open(url, '_blank', 'noopener');
+      } else {
+        alert('Unable to generate assignment link.');
       }
-      else alert("Unable to generate assignment link (access denied or file missing)");
     };
 
-    // OPTIONAL SUGGESTION: Auto-disable resubmission when admin allots marks
-    window.saveAssignmentMarks = async function(rowIdx) {
+    /************ Marks Save ************/
+    window.saveAssignmentMarks = async function(rowIdx){
       const row = currentRows[rowIdx];
-      const marksInput = document.getElementById('marks-input-' + row.id);
-      if (!marksInput) return;
-      const val = marksInput.value.trim();
+      const input = document.getElementById('marks-input-' + row.id);
+      if (!input) return;
+      const val = input.value.trim();
       if (val === '' || isNaN(val)) {
-        alert('Please enter a valid number for marks.');
+        alert('Please enter a valid number.');
         return;
       }
       const marks = Number(val);
-      if (marks < 0 || marks > 50) {
-        alert('Marks should be between 0 and 50.');
+      if (marks < 0 || marks > ASSIGNMENT_MAX) {
+        alert(`Marks must be between 0 and ${ASSIGNMENT_MAX}.`);
         return;
       }
-      marksInput.disabled = true;
+      input.disabled = true;
       const btn = document.getElementById('marks-save-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Saving assignment marks...');
-      // This update disables resubmission automatically after marks are entered
-      const { error } = await sb.from('assessment_results').update({ assignment_marks: marks, resubmission_allowed: false }).eq('id', row.id);
+      const { error } = await sb.from('assessment_results')
+        .update({
+          assignment_marks: marks,
+          resubmission_allowed: false // Auto-disable
+        }).eq('id', row.id);
       if (error) {
-        alert("Could not save marks: " + error.message);
+        alert('Save failed: ' + error.message);
         setStatus('Save failed.');
-        marksInput.disabled = false;
+        input.disabled = false;
         if (btn) btn.disabled = false;
         return;
       }
-      setStatus('Marks saved!');
-      const exp_id = filterExperiment.value || '';
-      const search = filterSearch?.value || '';
-      const batch = filterBatch?.value || '';
-      const rows = await fetchResults({ exp_id, search, batch });
-      renderRows(rows);
-      if (!isAdmin) renderSummaryForStudent(rows);
-      setStatus('Ready.');
-    }
+      await reloadData();
+      setStatus('Marks saved.');
+    };
 
-    window.toggleResubmission = async function(rowIdx) {
+    /************ Resubmission Toggle ************/
+    window.toggleResubmission = async function(rowIdx){
       const row = currentRows[rowIdx];
       const newStatus = !row.resubmission_allowed;
       const btn = document.getElementById('resubmission-toggle-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Updating resubmission status...');
-      const { error } = await sb.from('assessment_results').update({ resubmission_allowed: newStatus }).eq('id', row.id);
+      const { error } = await sb.from('assessment_results')
+        .update({ resubmission_allowed: newStatus })
+        .eq('id', row.id);
       if (error) {
-        alert("Could not update resubmission status: " + error.message);
-        setStatus('Update failed.');
+        alert('Update failed: ' + error.message);
         if (btn) btn.disabled = false;
+        setStatus('Failed.');
         return;
       }
-      setStatus('Resubmission status updated!');
-      const exp_id = filterExperiment.value || '';
-      const search = filterSearch?.value || '';
-      const batch = filterBatch?.value || '';
-      const rows = await fetchResults({ exp_id, search, batch });
-      renderRows(rows);
-      setStatus('Ready.');
+      await reloadData();
+      setStatus('Updated.');
     };
 
-    window.openEditAssignmentModal = function(rowIdx) {
+    /************ Modal Handling ************/
+    window.openEditAssignmentModal = function(rowIdx){
       editingRowIdx = rowIdx;
-      $('#edit-assignment-modal').style.display = 'flex';
-      $('#assignmentFile').value = '';
-    }
-    $('#close-edit-modal').onclick = function() {
-      $('#edit-assignment-modal').style.display = 'none';
+      assignmentFileInput.value = '';
+      editModalBackdrop.style.display = 'flex';
+    };
+    const closeModal = () => {
+      editModalBackdrop.style.display = 'none';
       editingRowIdx = null;
-    }
+    };
+    $('#close-edit-modal').addEventListener('click', closeModal);
+    $('#cancel-upload').addEventListener('click', closeModal);
 
-    // Assignment upload handler (shows latest assignment after resubmit)
-    $('#edit-assignment-form').onsubmit = async function(e) {
+    $('#edit-assignment-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
       if (editingRowIdx == null) return;
       const row = currentRows[editingRowIdx];
-      const fileInput = $('#assignmentFile');
-      if (!fileInput.files.length) {
+      const file = assignmentFileInput.files[0];
+      if (!file) {
         alert('Please select a file.');
         return;
       }
-      const file = fileInput.files[0];
-      if (
-        file.type !== 'application/pdf' &&
-        !file.type.startsWith('image/')
-      ) {
+      if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
         alert('Only PDF or image files allowed.');
         return;
       }
       setStatus('Uploading assignment...');
-      const bucket = row.assignment_bucket || "assignments";
-      const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
-      const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${extension}`;
-      const { error: uploadErr } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
+      const bucket = row.assignment_bucket || 'assignments';
+      const ext = file.type === 'application/pdf'
+        ? 'pdf'
+        : file.type.split('/')[1];
+      const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${ext}`;
+      const { error: uploadErr } = await sb.storage
+        .from(bucket)
+        .upload(path, file, { upsert: true });
       if (uploadErr) {
         alert('Upload failed: ' + uploadErr.message);
         setStatus('Upload failed.');
         return;
       }
-      // Update DB row with new file path
-      const { error: updateErr } = await sb.from('assessment_results').update({
-        assignment_path: path,
-        assignment_type: file.type
-      }).eq('id', row.id);
-      if (updateErr) {
-        alert('Could not update assignment record: ' + updateErr.message);
+      const { error: updErr } = await sb.from('assessment_results')
+        .update({
+          assignment_path: path,
+          assignment_type: file.type
+        }).eq('id', row.id);
+      if (updErr) {
+        alert('Could not update record: ' + updErr.message);
         setStatus('Update failed.');
         return;
       }
-      setStatus('Assignment updated!');
-      $('#edit-assignment-modal').style.display = 'none';
-      editingRowIdx = null;
-      const exp_id = filterExperiment.value || '';
-      const search = filterSearch?.value || '';
-      const batch = filterBatch?.value || '';
-      const rows = await fetchResults({ exp_id, search, batch });
-      renderRows(rows);
-      if (!isAdmin) renderSummaryForStudent(rows);
-      setStatus('Ready.');
-    };
+      setStatus('Assignment updated.');
+      closeModal();
+      await reloadData();
+    });
 
-    // ------------ MODIFIED renderRows FUNCTION ------------
-    function renderRows(rows) {
+    /************ Rendering ************/
+    function renderRows(rows){
       currentRows = rows;
-      count.textContent = rows.length;
+      countEl.textContent = rows.length;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="12" class="muted">No results.</td></tr>`;
         return;
       }
-      const parts = [];
+      const out = [];
       rows.forEach((r, rowIdx) => {
-        const email = r.meta?.email || r.email || '';
-        const prn = r.meta?.prn || r.prn || '—';
-        const batch = r.meta?.batch || r.batch || '—';
+        const email     = r.meta?.email || r.email || '';
+        const prn       = r.meta?.prn || r.prn || '—';
+        const batch     = r.meta?.batch || r.batch || '—';
         const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
-        const percentVal = r.percent ?? r.percentage;
+
         const scoreNum = Number(r.score);
         const totalNum = Number(r.total);
-        const scoreTxt = (scoreNum != null && totalNum != null && !isNaN(scoreNum) && !isNaN(totalNum))
+        const scoreTxt = (!isNaN(scoreNum) && !isNaN(totalNum))
           ? `${scoreNum}/${totalNum}`
           : (r.score ?? '—');
-        const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
 
+        const assignmentMarks = r.assignment_marks != null ? Number(r.assignment_marks) : null;
+
+        // Combined marks logic (adjust if you want a different formula)
+        const combinedObtained = (isNaN(scoreNum) ? 0 : scoreNum) + (assignmentMarks || 0);
+        const combinedMax = (isNaN(totalNum) ? 0 : totalNum) + (assignmentMarks != null ? ASSIGNMENT_MAX : ASSIGNMENT_MAX); // or dynamic if you store assignment max
+        const combinedTxt = `${combinedObtained}/${(isNaN(totalNum)?'?': totalNum + ASSIGNMENT_MAX)}`;
+
+        // Percent display (use backend if authoritative)
+        const percentVal = r.percent ?? r.percentage;
+
+        // Marks cell
         let marksCell = '';
         if (isAdmin) {
-          marksCell = `<div class="marks-cell">
-            <input class="marks-input" id="marks-input-${r.id}" type="number" min="0" max="50" value="${marksVal != null ? marksVal : ''}" placeholder="-" />
-            <button class="btn small" id="marks-save-${r.id}" onclick="saveAssignmentMarks(${rowIdx})">Save</button>
-            <span id="marks-status-${r.id}" class="marks-status">${marksVal != null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
-          </div>`;
+          marksCell = `
+            <div class="marks-cell">
+              <input id="marks-input-${r.id}" class="marks-input" type="number" min="0" max="${ASSIGNMENT_MAX}" value="${assignmentMarks != null ? assignmentMarks : ''}" placeholder="-" aria-label="Assignment marks for ${escapeHTML(email)}" />
+              <button class="btn small" id="marks-save-${r.id}" onclick="saveAssignmentMarks(${rowIdx})">Save</button>
+              <span class="marks-status">
+                ${assignmentMarks != null ? 'Saved' : '<span class="marks-pending">Pending</span>'}
+              </span>
+            </div>`;
         } else {
-          marksCell = `<span class="marks-label">${marksVal != null ? marksVal : '<span class="marks-pending">Pending</span>'}</span>`;
+          marksCell = `<span>${assignmentMarks != null ? assignmentMarks : '<span class="marks-pending">Pending</span>'}</span>`;
         }
-        const totalMarks = (scoreNum || 0) + (marksVal || 0);
-        const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
 
-        // Assignment column: show correct button for PDF/image
-        let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
-        const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
-        if (r.assignment_path && canViewAssignment) {
-          let btnLabel = "View File";
-          if (r.assignment_type === "application/pdf") btnLabel = "View PDF";
-          else if (r.assignment_type && r.assignment_type.startsWith("image/")) btnLabel = "View Image";
-          assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">${btnLabel}</button>`;
+        // Assignment view
+        const canView = isAdmin || (currentUser && r.user_id === currentUser.id);
+        let assignmentBtn = '<span class="muted" style="font-size:12px;">—</span>';
+        if (r.assignment_path && canView) {
+          let label = 'View File';
+          if (r.assignment_type === 'application/pdf') label = 'View PDF';
+            else if (r.assignment_type?.startsWith('image/')) label = 'View Image';
+          assignmentBtn = `<button class="btn small ghost" onclick="viewAssignment(${rowIdx})" aria-label="View assignment for ${escapeHTML(email)}">${label}</button>`;
         } else if (r.assignment_path) {
-          assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
+          assignmentBtn = '<span class="muted" style="font-size:12px;">Restricted</span>';
         }
 
-        // Resubmit column logic
+        // Resubmission cell
         let resubmitCell = '<div class="resubmission-status-box">';
         if (isAdmin) {
           if (r.assignment_marks == null) {
-            resubmitCell += `<span class="resubmission-status-message enabled">
-              Student can resubmit until marks are given.
-            </span>`;
+            resubmitCell += `<span class="resubmission-status-message enabled">Awaiting marking (resubmission open).</span>`;
           } else {
             resubmitCell += `
-              <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
-                ${r.resubmission_allowed ? 'Disable Resubmission' : 'Allow Resubmission'}
+              <button class="btn ghost small" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
+                ${r.resubmission_allowed ? 'Disable' : 'Allow'}
               </button>
-              <span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled' : 'disabled'}">
-                ${r.resubmission_allowed ? 'Resubmission Enabled' : 'Resubmission Disabled'}
+              <span class="resubmission-status-message ${r.resubmission_allowed ? 'enabled':'disabled'}">
+                ${r.resubmission_allowed ? 'Enabled' : 'Disabled'}
               </span>
             `;
           }
         }
         if (!isAdmin && currentUser && r.user_id === currentUser.id &&
-            (r.assignment_marks == null || r.resubmission_allowed)) {
-          resubmitCell += `
-            <button class="edit-assignment-btn" onclick="openEditAssignmentModal(${rowIdx})">Resubmit Assignment</button>
-          `;
+           (r.assignment_marks == null || r.resubmission_allowed)) {
+          resubmitCell += `<button class="btn small ghost" onclick="openEditAssignmentModal(${rowIdx})" aria-label="Resubmit assignment">Resubmit</button>`;
         }
-        resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
+        resubmitCell += `<div class="debug-log">ID:${r.id} resub:${r.resubmission_allowed}</div>`;
         resubmitCell += '</div>';
 
-        // Normal result row
-        parts.push(`
+        // Main row
+        out.push(`
           <tr>
-            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
-              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
+            <td>
+              ${escapeHTML(r.user_name || email || r.user_id || '—')}
+              <div class="muted" style="font-size:11px;">${escapeHTML(email)}</div>
             </td>
             <td>${escapeHTML(assessmentTitle)}</td>
             <td>${escapeHTML(prn)}</td>
             <td>${escapeHTML(batch)}</td>
             <td>${scoreTxt}</td>
             <td>${marksCell}</td>
-            <td>${totalMarksTxt}</td>
+            <td><span class="total-marks">${combinedTxt}</span></td>
             <td>${fmtPct(percentVal)}</td>
             <td>${fmtDate(r.submitted_at)}</td>
             <td>${fmtDur(r.duration_sec)}</td>
@@ -520,111 +725,160 @@
           </tr>
         `);
 
-        // Details row (spanning all columns, full question/options, answer coloring)
-        let detailsContent = "";
+        // Details
+        let detailsContent = '';
         if (Array.isArray(r.breakdown)) {
-          detailsContent = r.breakdown.map((q) => {
-            let optionsHtml = "";
-            if (Array.isArray(q.options)) {
-              optionsHtml = q.options.map(opt => {
-                let style = "details-q-option";
-                if (q.student_answer === opt && q.answer === opt) {
-                  style += " correct";
-                } else if (q.student_answer === opt && q.answer !== opt) {
-                  style += " incorrect";
-                } else if (q.answer === opt) {
-                  style += " correct";
-                }
-                return `<span class="${style}">${escapeHTML(opt)}</span>`;
-              }).join("");
-            }
-            let answerFeedback = "";
-            if (q.student_answer === q.answer) {
-              answerFeedback = `<div class="details-q-ans-correct">Correct answer</div>`;
-            } else {
-              answerFeedback = `<div class="details-q-ans-wrong">Incorrect answer</div>
-              <div class="details-q-correct-answer">Correct answer: <span style="color:#1b5e20;font-weight:bold">${escapeHTML(q.answer)}</span></div>`;
-            }
+          detailsContent = r.breakdown.map(q=>{
+            const optionsHtml = Array.isArray(q.options)
+              ? q.options.map(opt=>{
+                  let cls = 'details-q-option';
+                  if (q.student_answer === opt && q.answer === opt) cls += ' correct';
+                  else if (q.student_answer === opt && q.answer !== opt) cls += ' incorrect';
+                  else if (q.answer === opt) cls += ' correct';
+                  return `<span class="${cls}">${escapeHTML(opt)}</span>`;
+                }).join('')
+              : '';
+            const ansFeedback = q.student_answer === q.answer
+              ? `<div class="details-q-ans-correct">Correct</div>`
+              : `<div class="details-q-ans-wrong">Incorrect</div>
+                 <div class="details-q-correct-answer">Correct: <b>${escapeHTML(q.answer||'—')}</b></div>`;
             return `
               <div class="details-q-block">
                 <div class="details-q-title">${escapeHTML(q.question||'')}</div>
                 <div class="details-q-options">${optionsHtml}</div>
-                <div class="details-q-answer">
-                  Your answer: <b>${escapeHTML(q.student_answer ?? '—')}</b>
-                  ${answerFeedback}
-                </div>
+                <div>Your answer: <b>${escapeHTML(q.student_answer ?? '—')}</b></div>
+                ${ansFeedback}
               </div>
             `;
-          }).join("");
+          }).join('');
         } else {
-          detailsContent = `<div class="fallback-json"><pre>${escapeHTML(JSON.stringify(r.breakdown, null, 2))}</pre></div>`;
+          detailsContent = `<div class="debug-log"><pre>${escapeHTML(JSON.stringify(r.breakdown,null,2))}</pre></div>`;
         }
 
-        parts.push(`
+        out.push(`
           <tr>
             <td colspan="12">
               <details>
-                <summary style="font-size:15px;font-weight:600;color:#1976d2;">Details</summary>
-                <div style="padding:8px 0;">
-                  ${detailsContent}
-                </div>
+                <summary>Details</summary>
+                <div style="padding:8px 0 4px;">${detailsContent}</div>
               </details>
             </td>
           </tr>
         `);
       });
-      tbody.innerHTML = parts.join('');
+      tbody.innerHTML = out.join('');
     }
-    // ------------ END MODIFIED renderRows FUNCTION ------------
 
-    async function applyFilters() {
+    /************ CSV Export ************/
+    function exportCSV(){
+      if (!currentRows.length) {
+        alert('No data to export.');
+        return;
+      }
+      const headers = [
+        'student_name','email','prn','batch','assessment_title',
+        'score','total','assignment_marks','combined_total','percent','submitted_at','duration_sec','resubmission_allowed'
+      ];
+      const lines = [headers.join(',')];
+      currentRows.forEach(r=>{
+        const email = r.meta?.email || r.email || '';
+        const prn   = r.meta?.prn   || r.prn   || '';
+        const batch = r.meta?.batch || r.batch || '';
+        const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '';
+        const scoreNum = Number(r.score);
+        const totalNum = Number(r.total);
+        const assignMarks = r.assignment_marks != null ? Number(r.assignment_marks) : '';
+        const combinedObtained = (isNaN(scoreNum)?0:scoreNum) + (assignMarks||0);
+        const combinedMax = (isNaN(totalNum)?0:totalNum) + ASSIGNMENT_MAX;
+        const percent = r.percent ?? r.percentage ?? '';
+        const rowArr = [
+          JSON.stringify(r.user_name || email || r.user_id || ''),
+          JSON.stringify(email),
+          JSON.stringify(prn),
+          JSON.stringify(batch),
+            JSON.stringify(assessmentTitle),
+          scoreNum,
+          totalNum,
+          assignMarks,
+          `${combinedObtained}/${combinedMax}`,
+          percent,
+          r.submitted_at || '',
+          r.duration_sec || '',
+          r.resubmission_allowed
+        ];
+        lines.push(rowArr.join(','));
+      });
+      const blob = new Blob([lines.join('\n')], { type:'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'results_export.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    /************ Apply / Reload ************/
+    async function applyFilters(){
       try {
         setStatus('Loading…');
+        tbody.innerHTML = '<tr class="skeleton"><td colspan="12">Loading</td></tr>';
         const exp_id = filterExperiment.value || '';
         const search = filterSearch?.value || '';
-        const batch = filterBatch?.value || '';
+        const batch  = filterBatch?.value || '';
         const rows = await fetchResults({ exp_id, search, batch });
         renderRows(rows);
         if (!isAdmin) renderSummaryForStudent(rows);
         setStatus('Ready.');
-      } catch (e) {
+      } catch (e){
+        console.error(e);
         tbody.innerHTML = '<tr><td colspan="12" class="muted">Failed to load results.</td></tr>';
         setStatus('Failed.');
-        alert('Error loading results: ' + (e?.message || e));
       }
     }
-    async function init() {
+    async function reloadData(){
+      const exp_id = filterExperiment.value || '';
+      const search = filterSearch?.value || '';
+      const batch  = filterBatch?.value || '';
+      const rows = await fetchResults({ exp_id, search, batch });
+      renderRows(rows);
+      if (!isAdmin) renderSummaryForStudent(rows);
+    }
+
+    /************ Initialization ************/
+    async function init(){
       if (!(await requireLogin())) return;
       const role = await getRole(currentUser.id);
       isAdmin = (role === 'admin');
-      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
-      roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
-      roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
-      filters.style.display = 'block';
+      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
+      roleBadge.style.borderColor = isAdmin ? '#2ea043' : 'var(--c-border)';
+      roleBadge.style.color = isAdmin ? '#0a5d37' : 'var(--c-muted)';
+
       if (isAdmin) {
+        whoEl.textContent = 'Viewing: all students (filtered)';
         adminSearchWrap.style.display = 'block';
         adminBatchWrap.style.display = 'block';
-        who.textContent = 'Viewing: all students (filtered)';
       } else {
-        who.textContent = 'Viewing: your attempts';
+        whoEl.textContent = 'Viewing: your attempts';
         studentSummary.style.display = 'block';
       }
-      await loadExperiments();
 
+      await loadExperiments();
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
 
-      btnApply.addEventListener('click', () => applyFilters());
-      btnReset.addEventListener('click', () => {
+      $('#apply').addEventListener('click', ()=> applyFilters());
+      $('#reset').addEventListener('click', ()=>{
         filterExperiment.value = '';
         if (filterSearch) filterSearch.value = '';
         if (filterBatch) filterBatch.value = '';
         applyFilters();
       });
+      $('#export-csv').addEventListener('click', exportCSV);
+
       await applyFilters();
       setStatus('Ready.');
     }
+
     init();
   </script>
 </body>
