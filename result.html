@@ -25,27 +25,12 @@
     .stat .label { font-size:12px; color:#375a9e; }
     .stat .value { font-size:20px; font-weight:700; color:#0d47a1; }
     table { width:100%; border-collapse: collapse; font-size: 14px; }
-    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; }
+    th, td { border-bottom: 1px dashed #cfe0ff; padding: 8px 6px; text-align: left; vertical-align: top;}
     th { background: #f0f6ff; color:#1565c0; position: sticky; top: 0; z-index: 1; }
     tbody tr:hover { background: #f9fbff; }
     details { background:#f9fbff; border:1px solid #cfe0ff; border-radius:8px; padding:8px; margin-top:6px; }
     details summary { cursor:pointer; font-weight:600; color:#0d47a1; outline:none; }
     details[open] { background:#f0f6ff; }
-    .q-row { border-bottom:1px solid #e3ecfa; padding:6px 4px; }
-    .q-row:last-child { border-bottom:none; }
-    .q-text { font-weight:600; margin-bottom:2px; }
-    .ans-line { margin-left:8px; }
-    .correct { color:#1b5e20; font-weight:600; }
-    .wrong { color:#c62828; font-weight:600; }
-    .correct-answer { color:#2e7d32; margin-left:8px; }
-    .your-answer { font-style: italic; }
-    .question-type { font-size:11px; background:#e3f2fd; padding:2px 6px; border-radius:999px; margin-left:6px; color:#0d47a1; }
-    .fallback-json { background:#fff; border:1px solid #d0e3ff; padding:8px; border-radius:6px; overflow:auto; font-size:12px; }
-    .no-breakdown { color:#c62828; font-size:13px; }
-    .assignment-btn { background:#1976d2; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
-    .assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
-    .edit-assignment-btn { background:#43a047; color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:13px;}
-    .edit-assignment-btn:disabled { background: #bdbdbd; color: #888; cursor: not-allowed;}
     .marks-input { width: 50px; padding: 4px 6px; font-size: 14px; border: 1px solid #cfe0ff; border-radius: 6px; margin-right:4px; }
     .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .marks-label { font-size:13px; color:#0d47a1; }
@@ -429,7 +414,7 @@
       setStatus('Ready.');
     };
 
-    // --- REPLACEMENT renderRows FUNCTION WITH DETAILS TAB ---
+    // --- renderRows FUNCTION with Details tab below Student/Email cell ---
     function renderRows(rows) {
       currentRows = rows;
       count.textContent = rows.length;
@@ -502,20 +487,21 @@
           `;
         }
         resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
-        // --- DETAILS TAB ADDED HERE ---
-        resubmitCell += `
+        resubmitCell += '</div>';
+
+        // --- DETAILS TAB: put below email in Student column ---
+        const studentCell = `
+          ${escapeHTML(r.user_name || email || r.user_id || '—')}
+          <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
           <details>
             <summary>Details</summary>
             <pre style="text-align:left;overflow:auto;max-width:350px;max-height:200px;">${escapeHTML(JSON.stringify(r, null, 2))}</pre>
           </details>
         `;
-        resubmitCell += '</div>';
 
         parts.push(`
           <tr>
-            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
-              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
-            </td>
+            <td>${studentCell}</td>
             <td>${escapeHTML(assessmentTitle)}</td>
             <td>${escapeHTML(prn)}</td>
             <td>${escapeHTML(batch)}</td>
@@ -532,7 +518,7 @@
       });
       tbody.innerHTML = parts.join('');
     }
-    // --- END REPLACEMENT renderRows FUNCTION WITH DETAILS TAB ---
+    // --- END renderRows FUNCTION ---
 
     async function applyFilters() {
       try {
