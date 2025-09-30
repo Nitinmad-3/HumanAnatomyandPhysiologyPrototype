@@ -150,7 +150,10 @@
     </section>
     <section id="legend" class="panel">
       <div class="muted">
-        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.
+        Tip: Admins can edit assignment marks directly in the table. Admins can allow/disallow assignment resubmission in the Resubmit column. Students can resubmit assignment only when enabled. Total marks are updated for both admin and student.<br>
+        <span style="color:#388e3c;font-weight:600;">
+        <b>Optional:</b> When an admin allots marks, resubmission is automatically disabled. Admins can re-enable resubmission at any time by toggling the option in the Resubmit column.
+        </span>
       </div>
     </section>
     <div id="edit-assignment-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.2); z-index:1000; align-items:center; justify-content:center;">
@@ -306,6 +309,7 @@
       else alert("Unable to generate assignment link (access denied or file missing)");
     };
 
+    // OPTIONAL SUGGESTION: Auto-disable resubmission when admin allots marks
     window.saveAssignmentMarks = async function(rowIdx) {
       const row = currentRows[rowIdx];
       const marksInput = document.getElementById('marks-input-' + row.id);
@@ -324,7 +328,8 @@
       const btn = document.getElementById('marks-save-' + row.id);
       if (btn) btn.disabled = true;
       setStatus('Saving assignment marks...');
-      const { error } = await sb.from('assessment_results').update({ assignment_marks: marks }).eq('id', row.id);
+      // This update disables resubmission automatically after marks are entered
+      const { error } = await sb.from('assessment_results').update({ assignment_marks: marks, resubmission_allowed: false }).eq('id', row.id);
       if (error) {
         alert("Could not save marks: " + error.message);
         setStatus('Save failed.');
@@ -374,7 +379,7 @@
       editingRowIdx = null;
     }
 
-    // -- CRITICAL FIX: Assignment upload handler --
+    // Assignment upload handler (shows latest assignment after resubmit)
     $('#edit-assignment-form').onsubmit = async function(e) {
       e.preventDefault();
       if (editingRowIdx == null) return;
@@ -402,7 +407,7 @@
         setStatus('Upload failed.');
         return;
       }
-      // -- CRITICAL UPDATE: update DB row with new file path --
+      // Update DB row with new file path
       const { error: updateErr } = await sb.from('assessment_results').update({
         assignment_path: path,
         assignment_type: file.type
@@ -488,6 +493,7 @@
             `;
           }
         }
+        // Student can resubmit if marks are not allotted or admin has allowed resubmission
         if (!isAdmin && currentUser && r.user_id === currentUser.id &&
             (r.assignment_marks == null || r.resubmission_allowed)) {
           resubmitCell += `
