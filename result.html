@@ -286,7 +286,7 @@
     </div>
   </div>
 
-  <!-- Supabase UMD (no SRI per Option A) -->
+  <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://hunlistfklwvpivfjmbk.supabase.co';
@@ -327,10 +327,41 @@
       return (Math.round(val * 100) / 100).toFixed(2) + '%';
     };
 
-    // IST date formatter (Asia/Kolkata)
-    const fmtDate = (s) => {
-      if (!s) return '—';
-      return new Date(s).toLocaleString('en-IN', {
+    // --- TIME PARSING & FORMATTING PATCH START ---
+    // If your DB column for submitted_at is 'timestamp without time zone' and values
+    // were inserted as UTC (common), set this to true to treat naive strings as UTC.
+    // If later you migrate to timestamptz (proper) you can keep this true (it won't hurt)
+    // because ISO strings with 'T' or a timezone will bypass the naive branch.
+    const ASSUME_DB_NAIVE_TS_ARE_UTC = true;
+
+    function parseDBTimestamp(ts) {
+      if (!ts) return null;
+
+      // If already ISO-like (contains 'T') or has explicit zone (+/- or Z), let Date parse directly.
+      if (/[T]/.test(ts) || /[+-]\d\d:?\d\d|Z$/i.test(ts)) {
+        const dISO = new Date(ts);
+        return isNaN(dISO.getTime()) ? null : dISO;
+      }
+
+      // Match naive: YYYY-MM-DD HH:MM:SS (seconds optional)
+      const m = ts.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+      if (m) {
+        const [, Y, Mo, D, H, Mi, S = '0'] = m;
+        if (ASSUME_DB_NAIVE_TS_ARE_UTC) {
+          return new Date(Date.UTC(+Y, +Mo - 1, +D, +H, +Mi, +S));
+        } else {
+          // Treat naive as local time (fallback mode if you ever need it)
+            return new Date(+Y, +Mo - 1, +D, +H, +Mi, +S);
+        }
+      }
+
+      // Fallback attempt
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatIST(dateObj) {
+      return dateObj.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         day:'2-digit',
         month:'2-digit',
@@ -340,7 +371,15 @@
         second:'2-digit',
         hour12:false
       }).replace(',', '');
+    }
+
+    const fmtDate = (s) => {
+      if (!s) return '—';
+      const dt = parseDBTimestamp(s);
+      if (!dt) return '—';
+      return formatIST(dt);
     };
+    // --- TIME PARSING & FORMATTING PATCH END ---
 
     const fmtDur = sec => {
       if (sec == null || isNaN(Number(sec))) return '—';
