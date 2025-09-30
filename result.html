@@ -328,36 +328,58 @@
     };
 
     // --- TIME PARSING & FORMATTING PATCH START ---
-    // If your DB column for submitted_at is 'timestamp without time zone' and values
-    // were inserted as UTC (common), set this to true to treat naive strings as UTC.
-    // If later you migrate to timestamptz (proper) you can keep this true (it won't hurt)
-    // because ISO strings with 'T' or a timezone will bypass the naive branch.
-    const ASSUME_DB_NAIVE_TS_ARE_UTC = true;
+    // Treat ANY timestamp lacking explicit zone (Z or ±HH:MM) as UTC, then convert to IST.
+    // Handles:
+    //  - "YYYY-MM-DD HH:MM:SS(.ms)"
+    //  - "YYYY-MM-DDTHH:MM:SS(.ms)" (no zone)
+    //  - Keeps zone-aware forms unchanged except for formatting in IST.
+    // Toggle DEBUG_TIME for console diagnostics.
+    const DEBUG_TIME = false;
+    const RE_HAS_ZONE = /(Z|[+-]\d{2}:?\d{2})$/i;
+    const RE_SPACE = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d+)?$/;
+    const RE_T_NOZONE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?$/;
 
-    function parseDBTimestamp(ts) {
-      if (!ts) return null;
+    function _debugTime(...args){ if (DEBUG_TIME) console.log('[TIME]', ...args); }
 
-      // If already ISO-like (contains 'T') or has explicit zone (+/- or Z), let Date parse directly.
-      if (/[T]/.test(ts) || /[+-]\d\d:?\d\d|Z$/i.test(ts)) {
-        const dISO = new Date(ts);
-        return isNaN(dISO.getTime()) ? null : dISO;
+    function parseDBTimestamp(raw) {
+      if (!raw) return null;
+
+      if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+      if (typeof raw !== 'string') {
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? null : d;
       }
 
-      // Match naive: YYYY-MM-DD HH:MM:SS (seconds optional)
-      const m = ts.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+      const s = raw.trim();
+
+      // Zone-aware -> parse directly.
+      if (RE_HAS_ZONE.test(s)) {
+        const d = new Date(s);
+        _debugTime('zone-aware', s, d.toISOString());
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      // Space form (assume UTC)
+      let m = s.match(RE_SPACE);
       if (m) {
-        const [, Y, Mo, D, H, Mi, S = '0'] = m;
-        if (ASSUME_DB_NAIVE_TS_ARE_UTC) {
-          return new Date(Date.UTC(+Y, +Mo - 1, +D, +H, +Mi, +S));
-        } else {
-          // Treat naive as local time (fallback mode if you ever need it)
-            return new Date(+Y, +Mo - 1, +D, +H, +Mi, +S);
-        }
+        const [, Y, Mo, D, H, Mi, S] = m;
+        const dUTC = new Date(Date.UTC(+Y, +Mo - 1, +D, +H, +Mi, +S));
+        _debugTime('space-utc', s, dUTC.toISOString());
+        return dUTC;
       }
 
-      // Fallback attempt
-      const d = new Date(ts);
-      return isNaN(d.getTime()) ? null : d;
+      // T form without zone (assume UTC)
+      m = s.match(RE_T_NOZONE);
+      if (m) {
+        const dT = new Date(s + 'Z');
+        _debugTime('t-nozone-utc', s, dT.toISOString());
+        return isNaN(dT.getTime()) ? null : dT;
+      }
+
+      // Fallback
+      const fb = new Date(s);
+      _debugTime('fallback', s, fb.toISOString());
+      return isNaN(fb.getTime()) ? null : fb;
     }
 
     function formatIST(dateObj) {
@@ -373,12 +395,12 @@
       }).replace(',', '');
     }
 
-    const fmtDate = (s) => {
-      if (!s) return '—';
-      const dt = parseDBTimestamp(s);
-      if (!dt) return '—';
-      return formatIST(dt);
+    const fmtDate = (val) => {
+      const dt = parseDBTimestamp(val);
+      return dt ? formatIST(dt) : '—';
     };
+
+    console.log('TIME PATCH ACTIVE v2');
     // --- TIME PARSING & FORMATTING PATCH END ---
 
     const fmtDur = sec => {
@@ -390,7 +412,7 @@
     };
     const escapeHTML = str => String(str)
       .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
+      .replace(/<//g,'&lt;')
       .replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#39;');
