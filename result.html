@@ -414,7 +414,7 @@
       setStatus('Ready.');
     };
 
-    // --- renderRows FUNCTION with Details tab below Student/Email cell ---
+    // ------------ MODIFIED renderRows FUNCTION ------------
     function renderRows(rows) {
       currentRows = rows;
       count.textContent = rows.length;
@@ -448,7 +448,7 @@
         }
         const totalMarks = (scoreNum || 0) + (marksVal || 0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum) ? '?' : totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
-        
+
         // Assignment column: show correct button for PDF/image
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canViewAssignment = isAdmin || (currentUser && r.user_id === currentUser.id);
@@ -479,7 +479,6 @@
             `;
           }
         }
-        // Student can resubmit if marks are not allotted or admin has allowed resubmission
         if (!isAdmin && currentUser && r.user_id === currentUser.id &&
             (r.assignment_marks == null || r.resubmission_allowed)) {
           resubmitCell += `
@@ -489,19 +488,12 @@
         resubmitCell += `<div class="debug-log">Row ID: ${r.id}, resubmission_allowed: ${r.resubmission_allowed}</div>`;
         resubmitCell += '</div>';
 
-        // --- DETAILS TAB: put below email in Student column ---
-        const studentCell = `
-          ${escapeHTML(r.user_name || email || r.user_id || '—')}
-          <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
-          <details>
-            <summary>Details</summary>
-            <pre style="text-align:left;overflow:auto;max-width:350px;max-height:200px;">${escapeHTML(JSON.stringify(r, null, 2))}</pre>
-          </details>
-        `;
-
+        // Normal result row
         parts.push(`
           <tr>
-            <td>${studentCell}</td>
+            <td>${escapeHTML(r.user_name || email || r.user_id || '—')}
+              <div class="muted" style="font-size:11px">${escapeHTML(email)}</div>
+            </td>
             <td>${escapeHTML(assessmentTitle)}</td>
             <td>${escapeHTML(prn)}</td>
             <td>${escapeHTML(batch)}</td>
@@ -515,10 +507,56 @@
             <td>${resubmitCell}</td>
           </tr>
         `);
+
+        // Details row (spanning all columns)
+        let detailsContent = "";
+        if (Array.isArray(r.breakdown)) {
+          detailsContent = r.breakdown.map((q, idx) => {
+            const isCorrect = (q.answer === q.student_answer);
+            const optionList = Array.isArray(q.options)
+              ? q.options.map(opt =>
+                  `<div style="margin-left:8px;">
+                    <span style="font-weight:${q.answer === opt ? 'bold' : 'normal'};color:${q.answer === opt ? '#1b5e20' : '#222'};">
+                      ${escapeHTML(opt)}
+                    </span>
+                    ${q.student_answer === opt ? `<span style="color:${isCorrect ? '#1b5e20' : '#c62828'};font-weight:600;"> ← Student</span>` : ""}
+                  </div>`
+                ).join("")
+              : "";
+            return `
+              <div style="margin-bottom:10px;">
+                <div style="font-weight:600;margin-bottom:2px;">Q${idx+1}: ${escapeHTML(q.question||'')}</div>
+                <div>${optionList}</div>
+                <div>
+                  <span style="color:${isCorrect ? '#1b5e20' : '#c62828'};font-weight:600;">
+                    Your answer: ${escapeHTML(q.student_answer ?? '—')}
+                    ${isCorrect ? '(Correct)' : '(Wrong)'}
+                  </span>
+                  ${!isCorrect && q.answer != null ? `<span style="margin-left:12px;color:#388e3c;">Correct answer: ${escapeHTML(q.answer)}</span>` : ""}
+                </div>
+              </div>
+            `;
+          }).join("");
+        } else {
+          detailsContent = `<div class="fallback-json"><pre>${escapeHTML(JSON.stringify(r.breakdown, null, 2))}</pre></div>`;
+        }
+
+        parts.push(`
+          <tr>
+            <td colspan="12">
+              <details>
+                <summary style="font-size:15px;font-weight:600;color:#1976d2;">Details</summary>
+                <div style="padding:8px 0;">
+                  ${detailsContent}
+                </div>
+              </details>
+            </td>
+          </tr>
+        `);
       });
       tbody.innerHTML = parts.join('');
     }
-    // --- END renderRows FUNCTION ---
+    // ------------ END MODIFIED renderRows FUNCTION ------------
 
     async function applyFilters() {
       try {
