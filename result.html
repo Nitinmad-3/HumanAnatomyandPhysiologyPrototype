@@ -37,7 +37,7 @@
     .details-q-options { margin-left:16px; margin-bottom:4px; }
     .details-q-option { display:block; margin-bottom:2px; }
     .details-q-option.correct { color:#1b5e20; font-weight:600; }
-    .details-q-option.student { color:#1565c0; }
+    .details-q-option.incorrect { color:#c62828; font-weight:600; }
     .details-q-answer { margin-top:2px; }
     .details-q-ans-correct { color:#1b5e20; font-weight:600; }
     .details-q-ans-wrong { color:#c62828; font-weight:600; }
@@ -520,30 +520,38 @@
           </tr>
         `);
 
-        // Details row (spanning all columns, formatted)
+        // Details row (spanning all columns, full question/options, answer coloring)
         let detailsContent = "";
         if (Array.isArray(r.breakdown)) {
-          detailsContent = r.breakdown.map((q, idx) => {
-            const isCorrect = (q.answer === q.student_answer);
-            const optionList = Array.isArray(q.options)
-              ? q.options.map((opt, optIdx) =>
-                  `<span class="details-q-option${q.answer === opt ? " correct" : ""}${q.student_answer === opt ? " student" : ""}">
-                    ${String.fromCharCode(65+optIdx)}. ${escapeHTML(opt)}
-                    ${q.answer === opt ? " <b>(Correct)</b>" : ""}
-                    ${q.student_answer === opt ? (isCorrect ? " <b>(Your Answer - Correct)</b>" : " <b>(Your Answer - Wrong)</b>") : ""}
-                  </span>`
-                ).join("")
-              : "";
+          detailsContent = r.breakdown.map((q) => {
+            let optionsHtml = "";
+            if (Array.isArray(q.options)) {
+              optionsHtml = q.options.map(opt => {
+                let style = "details-q-option";
+                if (q.student_answer === opt && q.answer === opt) {
+                  style += " correct";
+                } else if (q.student_answer === opt && q.answer !== opt) {
+                  style += " incorrect";
+                } else if (q.answer === opt) {
+                  style += " correct";
+                }
+                return `<span class="${style}">${escapeHTML(opt)}</span>`;
+              }).join("");
+            }
+            let answerFeedback = "";
+            if (q.student_answer === q.answer) {
+              answerFeedback = `<div class="details-q-ans-correct">Correct answer</div>`;
+            } else {
+              answerFeedback = `<div class="details-q-ans-wrong">Incorrect answer</div>
+              <div class="details-q-correct-answer">Correct answer: <span style="color:#1b5e20;font-weight:bold">${escapeHTML(q.answer)}</span></div>`;
+            }
             return `
               <div class="details-q-block">
-                <div class="details-q-title">Q${(idx+1)}: ${escapeHTML(q.question||'')}</div>
-                <div class="details-q-options">${optionList}</div>
+                <div class="details-q-title">${escapeHTML(q.question||'')}</div>
+                <div class="details-q-options">${optionsHtml}</div>
                 <div class="details-q-answer">
-                  <span class="${isCorrect ? 'details-q-ans-correct' : 'details-q-ans-wrong'}">
-                    Your answer: ${escapeHTML(q.student_answer ?? '—')}
-                    ${isCorrect ? '(Correct)' : '(Wrong)'}
-                  </span>
-                  ${!isCorrect && q.answer != null ? `<span class="details-q-correct-answer">Correct answer: ${escapeHTML(q.answer)}</span>` : ""}
+                  Your answer: <b>${escapeHTML(q.student_answer ?? '—')}</b>
+                  ${answerFeedback}
                 </div>
               </div>
             `;
