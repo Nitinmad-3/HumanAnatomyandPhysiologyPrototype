@@ -7,7 +7,6 @@
   <meta name="color-scheme" content="light dark" />
   <link rel="preconnect" href="https://hunlistfklwvpivfjmbk.supabase.co" />
   <style>
-    /* ========== Base ========== */
     :root {
       --c-bg: #f6f9ff;
       --c-panel: #fff;
@@ -29,8 +28,6 @@
       background: var(--c-bg);
       color: #222;
     }
-
-    /* ========== Layout & Panels ========== */
     header {
       padding: 0.75rem 1rem;
       background: #e3f2fd;
@@ -49,8 +46,6 @@
       margin-bottom: 16px;
       position: relative;
     }
-
-    /* ========== Reusable ========== */
     .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
     .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
     h1 { margin:0; font-size:1.35rem; color:var(--c-accent-dark); }
@@ -62,8 +57,6 @@
       border:1px solid var(--c-border); border-radius:999px;
       background:#f0f6ff; font-weight:600;
     }
-
-    /* ========== Forms & Buttons ========== */
     label { font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--c-muted); font-weight:600; }
     select, input[type="text"], input[type="number"], input[type="file"] {
       width:100%; padding:10px; border:1px solid var(--c-border);
@@ -84,15 +77,9 @@
       gap:6px;
       transition: var(--transition);
     }
-    .btn.ghost {
-      background:transparent;
-      color:var(--c-accent);
-      border:1px solid var(--c-border);
-    }
+    .btn.ghost { background:transparent; color:var(--c-accent); border:1px solid var(--c-border); }
     .btn.small { padding:5px 10px; font-size:12px; }
     .btn:disabled { opacity:.55; cursor:not-allowed; }
-
-    /* ========== Stats ========== */
     .stat {
       background:#f5faff;
       border:1px solid var(--c-border);
@@ -101,17 +88,9 @@
     }
     .stat .label { font-size:11px; color:var(--c-muted); text-transform:uppercase; letter-spacing:.5px; }
     .stat .value { font-size:22px; font-weight:700; color:var(--c-accent-dark); }
-
-    /* ========== Table ========== */
     .results-wrap { overflow:auto; max-height: 65vh; }
     table { width:100%; border-collapse: collapse; font-size: 13.5px; line-height:1.35; }
-    caption {
-      text-align:left;
-      font-weight:600;
-      color:var(--c-accent-dark);
-      padding:4px 0 10px;
-      font-size:14px;
-    }
+    caption { text-align:left; font-weight:600; color:var(--c-accent-dark); padding:4px 0 10px; font-size:14px; }
     th, td {
       padding:8px 6px;
       border-bottom:1px dashed var(--c-border);
@@ -136,12 +115,7 @@
       animation: shimmer 1.4s infinite;
       color:transparent;
     }
-    @keyframes shimmer {
-      0% { background-position:0 0; }
-      100% { background-position: -300% 0; }
-    }
-
-    /* ========== Details (Q Breakdown) ========== */
+    @keyframes shimmer { 0% { background-position:0 0; } 100% { background-position: -300% 0; } }
     details {
       background:#f9fbff;
       border:1px solid var(--c-border);
@@ -149,12 +123,7 @@
       padding:8px 10px;
       margin-top:6px;
     }
-    details summary {
-      cursor:pointer;
-      font-weight:600;
-      color:var(--c-accent-dark);
-      outline:none;
-    }
+    details summary { cursor:pointer; font-weight:600; color:var(--c-accent-dark); outline:none; }
     details[open] { background:#f0f6ff; }
     .details-q-block { margin-bottom:18px; border-bottom:1px solid #e3ecfa; padding-bottom:8px; }
     .details-q-block:last-child { border-bottom:none; }
@@ -166,35 +135,20 @@
     .details-q-ans-correct { color: var(--c-good); font-weight:600; }
     .details-q-ans-wrong { color: var(--c-bad); font-weight:600; }
     .details-q-correct-answer { color:#2e7d32; margin-left:12px; }
-
-    /* ========== Marks & Resubmission ========== */
     .marks-input { width: 58px; padding:4px 6px; font-size:13px; }
     .marks-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .marks-status { font-size:11px; color: var(--c-good); }
     .marks-pending { color: var(--c-warn); }
     .total-marks { font-weight:700; color: var(--c-accent); }
-    .resubmission-status-box {
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:4px;
-      font-size:12px;
-    }
+    .resubmission-status-box { display:flex; flex-direction:column; align-items:flex-start; gap:4px; font-size:12px; }
     .resubmission-status-message { font-weight:600; }
     .resubmission-status-message.enabled { color:#1976d2; }
     .resubmission-status-message.disabled { color:#666; }
     .debug-log { font-size:10px; color:#888; }
-
-    /* ========== Modal ========== */
     .modal-backdrop {
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.25);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:1000;
-      animation: fadeIn .2s ease;
+      position:fixed; inset:0; background:rgba(0,0,0,.25);
+      display:none; align-items:center; justify-content:center;
+      z-index:1000; animation: fadeIn .2s ease;
     }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
     .modal {
@@ -213,8 +167,6 @@
       background:transparent; border:0; font-size:20px;
       line-height:1; cursor:pointer; color:#1976d2;
     }
-
-    /* ========== Responsive ========== */
     @media (max-width: 780px) {
       th:nth-child(3), td:nth-child(3),
       th:nth-child(4), td:nth-child(4),
@@ -234,7 +186,6 @@
   </header>
 
   <main>
-    <!-- Student Summary -->
     <section id="student-summary" class="panel" style="display:none;">
       <div class="muted" style="margin-bottom:10px;">Your Performance Summary</div>
       <div class="grid" aria-label="Performance statistics">
@@ -245,7 +196,6 @@
       </div>
     </section>
 
-    <!-- Filters -->
     <section id="filters" class="panel">
       <div class="row" style="margin-bottom:6px;">
         <div class="muted">Filters</div>
@@ -262,7 +212,7 @@
         </div>
         <div id="admin-search-wrap" style="display:none;">
           <label for="filter-search">Search (name/email/PRN)</label>
-          <input id="filter-search" type="text" placeholder="john, 2023-PRN-001, gmail.com" />
+            <input id="filter-search" type="text" placeholder="john, 2023-PRN-001, gmail.com" />
         </div>
         <div id="admin-batch-wrap" style="display:none;">
           <label for="filter-batch">Batch</label>
@@ -275,7 +225,6 @@
       </div>
     </section>
 
-    <!-- Results -->
     <section class="panel" aria-label="Results section">
       <div class="row" style="margin-bottom:8px;">
         <div class="muted">Results</div>
@@ -302,7 +251,6 @@
             </tr>
           </thead>
           <tbody id="tbody">
-            <!-- Skeleton rows while loading -->
             <tr class="skeleton"><td colspan="12">Loading</td></tr>
             <tr class="skeleton"><td colspan="12">Loading</td></tr>
           </tbody>
@@ -310,7 +258,6 @@
       </div>
     </section>
 
-    <!-- Legend / Tips -->
     <section id="legend" class="panel">
       <div id="legend-text" class="muted">
         Tip: Admins can edit assignment marks directly in the table. Admins can allow or disallow assignment resubmission. Students may only resubmit when enabled.<br>
@@ -321,7 +268,6 @@
     </section>
   </main>
 
-  <!-- Resubmit Modal -->
   <div id="edit-assignment-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
       <button class="modal-close" id="close-edit-modal" aria-label="Close dialog">×</button>
@@ -340,19 +286,15 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js" integrity="sha384-supabase-js"></script>
+  <!-- Option A: No integrity attribute -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    /************ Configuration ************/
     const SUPABASE_URL = 'https://hunlistfklwvpivfjmbk.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE'; // Replace with environment injection in production build
-    const ASSIGNMENT_MAX = 50; // Adjust if needed
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
 
-    /************ Supabase Client ************/
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    /************ DOM Helpers ************/
     const $  = (sel, parent=document) => parent.querySelector(sel);
-    const $$ = (sel, parent=document) => [...parent.querySelectorAll(sel)];
     const statusEl    = $('#status');
     const roleBadge   = $('#role-badge');
     const tbody       = $('#tbody');
@@ -372,14 +314,13 @@
     const editModalBackdrop = $('#edit-assignment-modal');
     const assignmentFileInput = $('#assignmentFile');
 
-    /************ App State ************/
     let currentUser = null;
     let isAdmin = false;
     let currentRows = [];
     let editingRowIdx = null;
+    const ASSIGNMENT_MAX = 50;
 
-    /************ Utilities ************/
-    const setStatus = (msg) => { statusEl.textContent = msg; };
+    const setStatus = msg => { statusEl.textContent = msg; };
     const fmtPct = n => {
       if (n == null || isNaN(Number(n))) return '—';
       const val = Number(n);
@@ -404,10 +345,8 @@
       .replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#39;');
+    const has = v => typeof v === 'string' ? v.trim().length>0 : !!v;
 
-    const has = v => typeof v === 'string' ? v.trim().length > 0 : !!v;
-
-    /************ Auth ************/
     async function requireLogin(){
       const { data: { session } } = await sb.auth.getSession();
       if (!session?.user) {
@@ -428,8 +367,6 @@
       }
       return (data?.role || 'unknown').toLowerCase();
     }
-
-    /************ Data Fetch ************/
     async function loadExperiments(){
       try {
         const { data, error } = await sb.rpc('list_experiments_for_results');
@@ -459,8 +396,6 @@
       if (error) throw error;
       return Array.isArray(data) ? data : [];
     }
-
-    /************ Summary (Student) ************/
     function renderSummaryForStudent(rows){
       const attempts = rows.length;
       const percents = rows
@@ -480,8 +415,6 @@
       sumLast.textContent = fmtDate(lastAttempt);
       studentSummary.style.display = 'block';
     }
-
-    /************ Assignment Helpers ************/
     async function getAssignmentSignedUrl(row){
       if (!row.assignment_path) return null;
       const bucket = row.assignment_bucket || 'assignments';
@@ -496,7 +429,6 @@
         return null;
       }
     }
-
     window.viewAssignment = async function(rowIdx){
       const row = currentRows[rowIdx];
       const canView = isAdmin || (currentUser && row.user_id === currentUser.id);
@@ -512,8 +444,6 @@
         alert('Unable to generate assignment link.');
       }
     };
-
-    /************ Marks Save ************/
     window.saveAssignmentMarks = async function(rowIdx){
       const row = currentRows[rowIdx];
       const input = document.getElementById('marks-input-' + row.id);
@@ -533,10 +463,8 @@
       if (btn) btn.disabled = true;
       setStatus('Saving assignment marks...');
       const { error } = await sb.from('assessment_results')
-        .update({
-          assignment_marks: marks,
-          resubmission_allowed: false // Auto-disable
-        }).eq('id', row.id);
+        .update({ assignment_marks: marks, resubmission_allowed: false })
+        .eq('id', row.id);
       if (error) {
         alert('Save failed: ' + error.message);
         setStatus('Save failed.');
@@ -547,8 +475,6 @@
       await reloadData();
       setStatus('Marks saved.');
     };
-
-    /************ Resubmission Toggle ************/
     window.toggleResubmission = async function(rowIdx){
       const row = currentRows[rowIdx];
       const newStatus = !row.resubmission_allowed;
@@ -567,8 +493,6 @@
       await reloadData();
       setStatus('Updated.');
     };
-
-    /************ Modal Handling ************/
     window.openEditAssignmentModal = function(rowIdx){
       editingRowIdx = rowIdx;
       assignmentFileInput.value = '';
@@ -580,25 +504,19 @@
     };
     $('#close-edit-modal').addEventListener('click', closeModal);
     $('#cancel-upload').addEventListener('click', closeModal);
-
     $('#edit-assignment-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
       if (editingRowIdx == null) return;
       const row = currentRows[editingRowIdx];
       const file = assignmentFileInput.files[0];
-      if (!file) {
-        alert('Please select a file.');
-        return;
-      }
+      if (!file) { alert('Please select a file.'); return; }
       if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
         alert('Only PDF or image files allowed.');
         return;
       }
       setStatus('Uploading assignment...');
       const bucket = row.assignment_bucket || 'assignments';
-      const ext = file.type === 'application/pdf'
-        ? 'pdf'
-        : file.type.split('/')[1];
+      const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
       const path = `${row.user_id}/${row.experiment_id}/assignment_${Date.now()}.${ext}`;
       const { error: uploadErr } = await sb.storage
         .from(bucket)
@@ -609,10 +527,8 @@
         return;
       }
       const { error: updErr } = await sb.from('assessment_results')
-        .update({
-          assignment_path: path,
-          assignment_type: file.type
-        }).eq('id', row.id);
+        .update({ assignment_path: path, assignment_type: file.type })
+        .eq('id', row.id);
       if (updErr) {
         alert('Could not update record: ' + updErr.message);
         setStatus('Update failed.');
@@ -622,8 +538,6 @@
       closeModal();
       await reloadData();
     });
-
-    /************ Rendering ************/
     function renderRows(rows){
       currentRows = rows;
       countEl.textContent = rows.length;
@@ -637,24 +551,15 @@
         const prn       = r.meta?.prn || r.prn || '—';
         const batch     = r.meta?.batch || r.batch || '—';
         const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
-
         const scoreNum = Number(r.score);
         const totalNum = Number(r.total);
         const scoreTxt = (!isNaN(scoreNum) && !isNaN(totalNum))
           ? `${scoreNum}/${totalNum}`
           : (r.score ?? '—');
-
         const assignmentMarks = r.assignment_marks != null ? Number(r.assignment_marks) : null;
-
-        // Combined marks logic (adjust if you want a different formula)
         const combinedObtained = (isNaN(scoreNum) ? 0 : scoreNum) + (assignmentMarks || 0);
-        const combinedMax = (isNaN(totalNum) ? 0 : totalNum) + (assignmentMarks != null ? ASSIGNMENT_MAX : ASSIGNMENT_MAX); // or dynamic if you store assignment max
         const combinedTxt = `${combinedObtained}/${(isNaN(totalNum)?'?': totalNum + ASSIGNMENT_MAX)}`;
-
-        // Percent display (use backend if authoritative)
         const percentVal = r.percent ?? r.percentage;
-
-        // Marks cell
         let marksCell = '';
         if (isAdmin) {
           marksCell = `
@@ -668,20 +573,16 @@
         } else {
           marksCell = `<span>${assignmentMarks != null ? assignmentMarks : '<span class="marks-pending">Pending</span>'}</span>`;
         }
-
-        // Assignment view
         const canView = isAdmin || (currentUser && r.user_id === currentUser.id);
         let assignmentBtn = '<span class="muted" style="font-size:12px;">—</span>';
         if (r.assignment_path && canView) {
           let label = 'View File';
           if (r.assignment_type === 'application/pdf') label = 'View PDF';
-            else if (r.assignment_type?.startsWith('image/')) label = 'View Image';
+          else if (r.assignment_type?.startsWith('image/')) label = 'View Image';
           assignmentBtn = `<button class="btn small ghost" onclick="viewAssignment(${rowIdx})" aria-label="View assignment for ${escapeHTML(email)}">${label}</button>`;
         } else if (r.assignment_path) {
           assignmentBtn = '<span class="muted" style="font-size:12px;">Restricted</span>';
         }
-
-        // Resubmission cell
         let resubmitCell = '<div class="resubmission-status-box">';
         if (isAdmin) {
           if (r.assignment_marks == null) {
@@ -703,8 +604,6 @@
         }
         resubmitCell += `<div class="debug-log">ID:${r.id} resub:${r.resubmission_allowed}</div>`;
         resubmitCell += '</div>';
-
-        // Main row
         out.push(`
           <tr>
             <td>
@@ -724,8 +623,6 @@
             <td>${resubmitCell}</td>
           </tr>
         `);
-
-        // Details
         let detailsContent = '';
         if (Array.isArray(r.breakdown)) {
           detailsContent = r.breakdown.map(q=>{
@@ -754,7 +651,6 @@
         } else {
           detailsContent = `<div class="debug-log"><pre>${escapeHTML(JSON.stringify(r.breakdown,null,2))}</pre></div>`;
         }
-
         out.push(`
           <tr>
             <td colspan="12">
@@ -768,13 +664,8 @@
       });
       tbody.innerHTML = out.join('');
     }
-
-    /************ CSV Export ************/
     function exportCSV(){
-      if (!currentRows.length) {
-        alert('No data to export.');
-        return;
-      }
+      if (!currentRows.length) { alert('No data to export.'); return; }
       const headers = [
         'student_name','email','prn','batch','assessment_title',
         'score','total','assignment_marks','combined_total','percent','submitted_at','duration_sec','resubmission_allowed'
@@ -789,14 +680,14 @@
         const totalNum = Number(r.total);
         const assignMarks = r.assignment_marks != null ? Number(r.assignment_marks) : '';
         const combinedObtained = (isNaN(scoreNum)?0:scoreNum) + (assignMarks||0);
-        const combinedMax = (isNaN(totalNum)?0:totalNum) + ASSIGNMENT_MAX;
+        const combinedMax = (isNaN(totalNum)?0:totalNum) + 50;
         const percent = r.percent ?? r.percentage ?? '';
         const rowArr = [
           JSON.stringify(r.user_name || email || r.user_id || ''),
           JSON.stringify(email),
           JSON.stringify(prn),
           JSON.stringify(batch),
-            JSON.stringify(assessmentTitle),
+          JSON.stringify(assessmentTitle),
           scoreNum,
           totalNum,
           assignMarks,
@@ -815,8 +706,6 @@
       a.click();
       URL.revokeObjectURL(a.href);
     }
-
-    /************ Apply / Reload ************/
     async function applyFilters(){
       try {
         setStatus('Loading…');
@@ -842,17 +731,13 @@
       renderRows(rows);
       if (!isAdmin) renderSummaryForStudent(rows);
     }
-
-    /************ Initialization ************/
     async function init(){
       if (!(await requireLogin())) return;
       const role = await getRole(currentUser.id);
       isAdmin = (role === 'admin');
-
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : 'var(--c-border)';
       roleBadge.style.color = isAdmin ? '#0a5d37' : 'var(--c-muted)';
-
       if (isAdmin) {
         whoEl.textContent = 'Viewing: all students (filtered)';
         adminSearchWrap.style.display = 'block';
@@ -861,11 +746,9 @@
         whoEl.textContent = 'Viewing: your attempts';
         studentSummary.style.display = 'block';
       }
-
       await loadExperiments();
       const urlExp = new URLSearchParams(location.search).get('exp');
       if (urlExp) filterExperiment.value = urlExp;
-
       $('#apply').addEventListener('click', ()=> applyFilters());
       $('#reset').addEventListener('click', ()=>{
         filterExperiment.value = '';
@@ -874,11 +757,9 @@
         applyFilters();
       });
       $('#export-csv').addEventListener('click', exportCSV);
-
       await applyFilters();
       setStatus('Ready.');
     }
-
     init();
   </script>
 </body>
