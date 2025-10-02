@@ -1,402 +1,499 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-<script>
-  /*************** Constants ***************/
-  const EXPERIMENT_ID = 'assessment-2-axial-skeleton';
-  const ASSESSMENT_TITLE = 'Experiment No. 2 (Axial Skeleton)';
-  const ASSIGNMENT_BUCKET = 'assignments';
-  const pageStartTime = Date.now();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assessment: Experiment No. 2 (Axial Skeleton)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f3e5f5; margin:0; }
+    header { text-align:center; padding:2rem 1rem 1rem; }
+    h1 { color:#6a1b9a; margin:0 0 .5rem; }
+    nav a { margin:0 .5rem; text-decoration:none; color:#6a1b9a; font-weight:600; }
+    .container { max-width:800px; margin:2rem auto; background:#fff; border-radius:16px; padding:2rem; box-shadow:0 2px 8px #ce93d8;}
+    .student-info label { display:block; margin:.5em 0 .2em; }
+    .student-info input, .student-info select { width:100%; padding:.55em; margin-bottom:.8em; }
+    .assignment-upload { background:#ede7f6; padding:1em; border-radius:10px; margin:1em 0 2em; }
+    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
+    .note { font-size:.75em; color:#6a1b9a; margin-top:.2em; }
+    .question { margin-bottom:1.4em; }
+    img.question-img { max-width:400px; display:block; margin:.4em 0 1em; }
+    label.dropdown-label { display:inline-block; min-width:70px; }
+    .declaration { margin:2em 0 1em; }
+    .submit-btn { padding:.85em 2em; font-size:1.05em; border:none; background:#6a1b9a; color:#fff; border-radius:6px; cursor:pointer; }
+    .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
+    .error { color:#d32f2f; margin-top:1em; font-weight:500; }
+    .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
+    @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
+  </style>
+  <!-- Supabase Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Assessment: Experiment No. 2 (Axial Skeleton)</h1>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../assessments.html">Assessments</a>
+      <a href="../references.html">References</a>
+    </nav>
+  </header>
 
-  /*************** Supabase Init ***************/
-  const sb = window.supabase.createClient(
-    'https://hunlistfklwvpivfjmbk.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-  );
+  <div class="container">
+    <form id="assessmentForm" autocomplete="off">
+      <div class="student-info">
+        <h2 style="margin-top:0;">Student Information</h2>
+        <label for="studentName">Student Name*</label>
+        <input type="text" id="studentName" name="studentName" required>
 
-  function ensureOption(selectEl, value) {
-    if (!selectEl || !value) return;
-    const exists = Array.from(selectEl.options).some(o => (o.value||'').toLowerCase() === value.toLowerCase());
-    if (!exists) {
-      const opt = document.createElement('option');
-      opt.value = value;
-      opt.textContent = value;
-      selectEl.appendChild(opt);
+        <label for="schoolName">School Name*</label>
+        <input type="text" id="schoolName" name="schoolName" required>
+
+        <label for="prnNumber">PRN Number*</label>
+        <input type="text" id="prnNumber" name="prnNumber" required>
+
+        <label for="batchNumber">Batch Number*</label>
+        <select id="batchNumber" name="batchNumber" required>
+          <option value="">Select Batch</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+
+        <label for="emailId">Email ID (institutional)*</label>
+        <input type="email" id="emailId" name="emailId" required>
+
+        <div class="note" id="profileNote"></div>
+      </div>
+
+      <!-- Assignment Upload -->
+      <div class="assignment-upload">
+        <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
+        <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
+        <div id="assignmentStatus" class="assignment-status"></div>
+        <div class="note">Must finish uploading before submitting the assessment.</div>
+      </div>
+
+      <hr>
+
+      <!-- Questions container (critical: ID must match script) -->
+      <div id="questionsSection"></div>
+
+      <div class="declaration">
+        <input type="checkbox" id="declaration" required>
+        <label for="declaration">
+          I declare this assessment is my own work and not generated by AI or other students.
+        </label>
+      </div>
+
+      <button type="submit" id="submitBtn" class="submit-btn">Submit</button>
+      <div id="errorMsg" class="error"></div>
+      <div id="resultMsg" class="result"></div>
+    </form>
+  </div>
+
+  <script>
+    /***************** Constants *****************/
+    const EXPERIMENT_ID    = 'assessment-2-axial-skeleton';
+    const ASSESSMENT_TITLE = 'Experiment No. 2 (Axial Skeleton)';
+    const ASSIGNMENT_BUCKET = 'assignments';
+    const pageStartTime = Date.now();
+
+    /***************** Supabase Init *****************/
+    const sb = window.supabase.createClient(
+      'https://hunlistfklwvpivfjmbk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+    );
+
+    function ensureOption(selectEl, value){
+      if(!selectEl || !value) return;
+      const exists = Array.from(selectEl.options).some(o => (o.value||'').toLowerCase() === value.toLowerCase());
+      if(!exists){
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        selectEl.appendChild(opt);
+      }
+      selectEl.value = value;
     }
-    selectEl.value = value;
-  }
 
-  async function autofillFromProfile() {
-    try {
+    async function autofillFromProfile(){
+      const note = document.getElementById('profileNote');
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        if(!session?.user){
+          note.textContent = 'Not logged in: autofill disabled.';
+          return;
+        }
+        const uid = session.user.id;
+        const { data: profile, error } = await sb
+          .from('profiles')
+          .select('name, email, prn, batch, school_name')
+          .eq('id', uid)
+          .maybeSingle();
+        if(error){
+          note.textContent = 'Profile load error.';
+          return;
+        }
+        if(!profile){
+          note.textContent = 'No profile record found.';
+          return;
+        }
+        const nameEl  = document.getElementById('studentName');
+        const schoolEl= document.getElementById('schoolName');
+        const prnEl   = document.getElementById('prnNumber');
+        const batchEl = document.getElementById('batchNumber');
+        const emailEl = document.getElementById('emailId');
+
+        if(nameEl && !nameEl.value) nameEl.value = profile.name || '';
+        if(schoolEl && !schoolEl.value) schoolEl.value = profile.school_name || '';
+        if(prnEl && !prnEl.value) prnEl.value = profile.prn || '';
+        if(batchEl && !batchEl.value && profile.batch) ensureOption(batchEl, String(profile.batch));
+        if(emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
+
+        note.textContent = 'Autofilled from profile.';
+      } catch {
+        note.textContent = 'Autofill failed.';
+      }
+    }
+    sb.auth.onAuthStateChange(() => autofillFromProfile());
+    autofillFromProfile();
+
+    /***************** Utility *****************/
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    /***************** Questions *****************/
+    const questions = [
+      {
+        type: "mcq-image",
+        text: "1. Match the bones with their correct anatomical locations.",
+        image: "../assets/images/experiment-2/EXPERIMENT/Q1.png",
+        options: [
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck",
+          "Coccyx - Neck, Frontal - Tailbone, Cervical - Skull",
+          "Coccyx - Skull, Frontal - Neck, Cervical - Tailbone",
+          "Coccyx - Tailbone, Frontal - Skull, Cervical - Thorax"
+        ],
+        answer: "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
+      },
+      {
+        type: "mcq",
+        text: "2. Which bone forms the posterior part of the cranium?",
+        options: ["Frontal","Parietal","Occipital","Temporal"],
+        answer: "Occipital"
+      },
+      {
+        type: "mcq",
+        text: "3. Assertion–Reason: <br>Assertion (A): The cervical vertebrae allow for a wide range of head movements.<br>Reason (R): Cervical vertebrae include the atlas and axis, which support rotation and nodding.<br>Choose the correct option:",
+        options: [
+          "Both A and R are true, and R is the correct explanation of A",
+          "Both A and R are true, but R is not the correct explanation of A",
+          "A is true, R is false",
+          "A is false, R is true"
+        ],
+        answer: "Both A and R are true, and R is the correct explanation of A"
+      },
+      {
+        type: "mcq",
+        text: "4. A patient presents with difficulty in neck movement and pain in the upper spine. Which vertebrae are most likely affected?",
+        options: ["Lumbar","Thoracic","Cervical","Sacral"],
+        answer: "Cervical"
+      },
+      {
+        type: "mcq",
+        text: "5. Which part of the sternum is located at the superior end?",
+        options: ["Body","Manubrium","Xiphoid","Clavicle"],
+        answer: "Manubrium"
+      },
+      {
+        type: "mcq",
+        text: "6. Which bone supports the tongue and is involved in speech and swallowing?",
+        options: ["Mandible","Maxilla","Hyoid","Zygomatic"],
+        answer: "Hyoid"
+      },
+      {
+        type: "mcq",
+        text: "7. Identify the bone that is not part of the axial skeleton:",
+        options: ["Sacrum","Mandible","Femur","Sternum"],
+        answer: "Femur"
+      },
+      {
+        type: "mcq",
+        text: "8. Arrange the vertebrae in correct anatomical order from top to bottom:",
+        options: [
+          "Lumbar → Thoracic → Cervical",
+          "Cervical → Thoracic → Lumbar",
+          "Thoracic → Cervical → Lumbar",
+          "Cervical → Lumbar → Thoracic"
+        ],
+        answer: "Cervical → Thoracic → Lumbar"
+      },
+      {
+        type: "image-labels",
+        text: "9. Identify the labelled bones in the diagram below:",
+        image: "../assets/images/experiment-2/EXPERIMENT/Q9.png",
+        labels: [
+          { name: "1", answer: "Frontal bone",  options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
+          { name: "2", answer: "Parietal bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
+          { name: "3", answer: "Sphenoid bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
+          { name: "4", answer: "Temporal bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
+          { name: "5", answer: "Occipital bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
+          { name: "6", answer: "Ethmoid bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] }
+        ]
+      },
+      {
+        type: "image-labels",
+        text: "10. Identify the labelled parts of the rib and sternum diagram below:",
+        image: "../assets/images/experiment-2/EXPERIMENT/Q10.png",
+        labels: [
+          { name: "1", answer: "True ribs",       options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
+          { name: "2", answer: "False ribs",      options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
+          { name: "3", answer: "Manubrium",       options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
+          { name: "4", answer: "Body",            options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
+          { name: "5", answer: "Xiphoid Process", options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
+          { name: "6", answer: "Floating ribs",   options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] }
+        ]
+      }
+    ];
+
+    // Shuffle options / label options
+    questions.forEach(q => {
+      if(q.options) shuffleArray(q.options);
+      if(q.labels) q.labels.forEach(l => shuffleArray(l.options));
+    });
+
+    /***************** Render *****************/
+    function renderQuestions(){
+      const qs = document.getElementById('questionsSection');
+      if(!qs){
+        console.error('questionsSection not found in DOM.');
+        return;
+      }
+      qs.innerHTML = '<h2>Assessment Questions</h2>';
+      questions.forEach((q, idx) => {
+        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        if(q.type === 'mcq' || q.type === 'mcq-image'){
+          if(q.type === 'mcq-image'){
+            html += `<img src="${q.image}" alt="Question Diagram" class="question-img">`;
+          }
+          q.options.forEach(opt => {
+            html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
+          });
+        } else if(q.type === 'dropdown'){
+          html += `<select name="q${idx}" required><option value="">Select...</option>`;
+          q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+          html += `</select>`;
+        } else if(q.type === 'image-labels'){
+          html += `<img src="${q.image}" alt="Labelled diagram" class="question-img">`;
+          q.labels.forEach((label, lid) => {
+            html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+            html += `<option value="">Select...</option>`;
+            label.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+            html += `</select><br>`;
+          });
+        }
+        html += `</div>`;
+        qs.innerHTML += html;
+      });
+    }
+    renderQuestions();
+
+    /***************** Assignment Upload *****************/
+    let uploadedAssignmentPath = null;
+    let uploadedAssignmentUrl  = null;
+    let uploadingAssignment = false;
+
+    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('assignmentStatus');
+      const file = e.target.files[0];
+      statusEl.textContent = '';
+      uploadedAssignmentPath = null;
+      uploadedAssignmentUrl  = null;
+
+      if(!file) return;
+      if(file.type !== 'application/pdf'){
+        statusEl.textContent = 'Only PDF files allowed.';
+        e.target.value = '';
+        return;
+      }
+
+      uploadingAssignment = true;
+      statusEl.textContent = 'Uploading PDF...';
+
       const { data:{ session } } = await sb.auth.getSession();
-      if (!session?.user) {
-        document.getElementById('profileNote').textContent = 'Not logged in: autofill disabled.';
+      if(!session?.user){
+        statusEl.textContent = 'Login required before upload.';
+        uploadingAssignment = false;
+        e.target.value = '';
         return;
       }
       const uid = session.user.id;
-      const { data: profile, error } = await sb
-        .from('profiles')
-        .select('name, email, prn, batch, school_name')
-        .eq('id', uid)
-        .maybeSingle();
-      if (error) {
-        document.getElementById('profileNote').textContent = 'Profile load error.';
+      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
+
+      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
+        filePath, file, { upsert:true, contentType:'application/pdf' }
+      );
+      if(upErr){
+        statusEl.textContent = 'Upload failed: ' + upErr.message;
+        uploadingAssignment = false;
         return;
       }
-      if (!profile) {
-        document.getElementById('profileNote').textContent = 'No profile row yet.';
+
+      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
+      uploadedAssignmentPath = filePath;
+      uploadedAssignmentUrl  = urlData?.publicUrl || null;
+      uploadingAssignment = false;
+      statusEl.textContent = 'PDF uploaded successfully.';
+    });
+
+    /***************** Submission *****************/
+    document.getElementById('assessmentForm').onsubmit = async function(e){
+      e.preventDefault();
+      const errEl = document.getElementById('errorMsg');
+      const resEl = document.getElementById('resultMsg');
+      const submitBtn = document.getElementById('submitBtn');
+      errEl.textContent = '';
+      resEl.textContent = '';
+
+      // Assignment must be uploaded
+      if(!uploadedAssignmentPath){
+        errEl.textContent = uploadingAssignment
+          ? 'Please wait: assignment is still uploading...'
+          : 'Please upload the assignment PDF before submitting.';
         return;
       }
-      const nameEl = document.getElementById('studentName');
-      const schoolEl = document.getElementById('schoolName');
-      const prnEl = document.getElementById('prnNumber');
-      const batchEl = document.getElementById('batchNumber');
-      const emailEl = document.getElementById('emailId');
 
-      if (nameEl && !nameEl.value) nameEl.value = profile.name || '';
-      if (schoolEl && !schoolEl.value) schoolEl.value = profile.school_name || '';
-      if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
-      if (batchEl && !batchEl.value && profile.batch) ensureOption(batchEl, String(profile.batch));
-      if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
+      const form = e.target;
 
-      document.getElementById('profileNote').textContent = 'Autofilled from profile.';
-    } catch {
-      document.getElementById('profileNote').textContent = 'Autofill failed.';
-    }
-  }
-  sb.auth.onAuthStateChange(() => autofillFromProfile());
-  autofillFromProfile();
-
-  /*************** Utility ***************/
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
-
-  /*************** Questions ***************/
-  const questions = [
-    {
-      type: "mcq-image",
-      text: "1. Match the bones with their correct anatomical locations.",
-      image: "../assets/images/experiment-2/EXPERIMENT/Q1.png",
-      options: [
-        "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck",
-        "Coccyx - Neck, Frontal - Tailbone, Cervical - Skull",
-        "Coccyx - Skull, Frontal - Neck, Cervical - Tailbone",
-        "Coccyx - Tailbone, Frontal - Skull, Cervical - Thorax"
-      ],
-      answer: "Coccyx - Tailbone, Frontal - Skull, Cervical - Neck"
-    },
-    {
-      type: "mcq",
-      text: "2. Which bone forms the posterior part of the cranium?",
-      options: ["Frontal","Parietal","Occipital","Temporal"],
-      answer: "Occipital"
-    },
-    {
-      type: "mcq",
-      text: "3. Assertion–Reason: <br>Assertion (A): The cervical vertebrae allow for a wide range of head movements.<br>Reason (R): Cervical vertebrae include the atlas and axis, which support rotation and nodding.<br>Choose the correct option:",
-      options: [
-        "Both A and R are true, and R is the correct explanation of A",
-        "Both A and R are true, but R is not the correct explanation of A",
-        "A is true, R is false",
-        "A is false, R is true"
-      ],
-      answer: "Both A and R are true, and R is the correct explanation of A"
-    },
-    {
-      type: "mcq",
-      text: "4. A patient presents with difficulty in neck movement and pain in the upper spine. Which vertebrae are most likely affected?",
-      options: ["Lumbar","Thoracic","Cervical","Sacral"],
-      answer: "Cervical"
-    },
-    {
-      type: "mcq",
-      text: "5. Which part of the sternum is located at the superior end?",
-      options: ["Body","Manubrium","Xiphoid","Clavicle"],
-      answer: "Manubrium"
-    },
-    {
-      type: "mcq",
-      text: "6. Which bone supports the tongue and is involved in speech and swallowing?",
-      options: ["Mandible","Maxilla","Hyoid","Zygomatic"],
-      answer: "Hyoid"
-    },
-    {
-      type: "mcq",
-      text: "7. Identify the bone that is not part of the axial skeleton:",
-      options: ["Sacrum","Mandible","Femur","Sternum"],
-      answer: "Femur"
-    },
-    {
-      type: "mcq",
-      text: "8. Arrange the vertebrae in correct anatomical order from top to bottom:",
-      options: [
-        "Lumbar → Thoracic → Cervical",
-        "Cervical → Thoracic → Lumbar",
-        "Thoracic → Cervical → Lumbar",
-        "Cervical → Lumbar → Thoracic"
-      ],
-      answer: "Cervical → Thoracic → Lumbar"
-    },
-    {
-      type: "image-labels",
-      text: "9. Identify the labelled bones in the diagram below:",
-      image: "../assets/images/experiment-2/EXPERIMENT/Q9.png",
-      labels: [
-        { name: "1", answer: "Frontal bone",  options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
-        { name: "2", answer: "Parietal bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
-        { name: "3", answer: "Sphenoid bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
-        { name: "4", answer: "Temporal bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
-        { name: "5", answer: "Occipital bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] },
-        { name: "6", answer: "Ethmoid bone", options: ["Frontal bone","Parietal bone","Sphenoid bone","Temporal bone","Occipital bone","Ethmoid bone"] }
-      ]
-    },
-    {
-      type: "image-labels",
-      text: "10. Identify the labelled parts of the rib and sternum diagram below:",
-      image: "../assets/images/experiment-2/EXPERIMENT/Q10.png",
-      labels: [
-        { name: "1", answer: "True ribs",       options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
-        { name: "2", answer: "False ribs",      options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
-        { name: "3", answer: "Manubrium",       options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
-        { name: "4", answer: "Body",            options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
-        { name: "5", answer: "Xiphoid Process", options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] },
-        { name: "6", answer: "Floating ribs",   options: ["True ribs","False ribs","Manubrium","Body","Xiphoid Process","Floating ribs"] }
-      ]
-    }
-  ];
-
-  // Shuffle options
-  questions.forEach(q => {
-    if (q.options) shuffleArray(q.options);
-    if (q.labels) q.labels.forEach(l => shuffleArray(l.options));
-  });
-
-  /*************** Render Questions ***************/
-  function renderQuestions() {
-    const qs = document.getElementById("questionsSection");
-    qs.innerHTML = "<h2>Assessment Questions</h2>";
-    questions.forEach((q, idx) => {
-      let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-      if (q.type === "mcq" || q.type === "mcq-image") {
-        if (q.type === "mcq-image") {
-          html += `<img src="${q.image}" alt="Question Diagram" class="question-img"><br>`;
+      // Collect answers
+      let allAnswered = true;
+      const answers = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown','mcq-image'].includes(q.type)){
+          const v = form[`q${i}`]?.value?.trim() || '';
+            if(!v) allAnswered = false;
+          answers.push(v);
+        } else if(q.type === 'image-labels'){
+          const labelVals = [];
+          for(let lid=0; lid<q.labels.length; lid++){
+            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
+            if(!v) allAnswered = false;
+            labelVals.push(v);
+          }
+          answers.push(labelVals.join('; '));
         }
-        q.options.forEach(opt => {
-          html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
-        });
-      } else if (q.type === "dropdown") {
-        html += `<select name="q${idx}" required><option value="">Select...</option>`;
-        q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-        html += `</select>`;
-      } else if (q.type === "image-labels") {
-        html += `<img src="${q.image}" alt="Labelled diagram" class="question-img"><br>`;
-        q.labels.forEach((label, lid) => {
-          html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
-          html += `<option value="">Select...</option>`;
-          label.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select><br>`;
-        });
       }
-      html += `</div>`;
-      qs.innerHTML += html;
-    });
-  }
-  renderQuestions();
-
-  /*************** Assignment Upload ***************/
-  let uploadedAssignmentPath = null;
-  let uploadedAssignmentUrl = null;
-  let uploadingAssignment = false;
-
-  document.getElementById('assignmentFile').addEventListener('change', async (e) => {
-    const statusEl = document.getElementById('assignmentStatus');
-    const file = e.target.files[0];
-    statusEl.textContent = '';
-    uploadedAssignmentPath = null;
-    uploadedAssignmentUrl = null;
-
-    if (!file) return;
-    if (file.type !== 'application/pdf') {
-      statusEl.textContent = 'Only PDF files allowed.';
-      e.target.value = '';
-      return;
-    }
-
-    uploadingAssignment = true;
-    statusEl.textContent = 'Uploading PDF...';
-
-    const { data:{ session } } = await sb.auth.getSession();
-    if (!session?.user) {
-      statusEl.textContent = 'Login required before upload.';
-      uploadingAssignment = false;
-      e.target.value = '';
-      return;
-    }
-    const uid = session.user.id;
-    const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
-
-    const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(filePath, file, {
-      upsert: true,
-      contentType: 'application/pdf'
-    });
-    if (upErr) {
-      statusEl.textContent = 'Upload failed: ' + upErr.message;
-      uploadingAssignment = false;
-      return;
-    }
-
-    const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
-    uploadedAssignmentPath = filePath;
-    uploadedAssignmentUrl = urlData?.publicUrl || null;
-    uploadingAssignment = false;
-    statusEl.textContent = 'PDF uploaded successfully.';
-  });
-
-  /*************** Submission ***************/
-  document.getElementById("assessmentForm").onsubmit = async function(e) {
-    e.preventDefault();
-    const errEl = document.getElementById("errorMsg");
-    const resEl = document.getElementById("resultMsg");
-    const submitBtn = document.getElementById("submitBtn");
-    errEl.textContent = '';
-    resEl.textContent = '';
-
-    // Assignment check
-    if (!uploadedAssignmentPath) {
-      errEl.textContent = uploadingAssignment
-        ? 'Please wait: assignment is still uploading...'
-        : 'Please upload the assignment PDF before submitting.';
-      return;
-    }
-
-    const form = e.target;
-
-    // Collect answers
-    let allAnswered = true;
-    let answers = [];
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (["mcq","dropdown","mcq-image"].includes(q.type)) {
-        const v = form[`q${i}`]?.value?.trim() || "";
-        if (!v) allAnswered = false;
-        answers.push(v);
-      } else if (q.type === "image-labels") {
-        let labelVals = [];
-        for (let lid = 0; lid < q.labels.length; lid++) {
-          const v = form[`q${i}_label${lid}`]?.value?.trim() || "";
-          if (!v) allAnswered = false;
-          labelVals.push(v);
-        }
-        answers.push(labelVals.join("; "));
+      if(!allAnswered){
+        errEl.textContent = 'Please answer all questions.';
+        return;
       }
-    }
-    if (!allAnswered) {
-      errEl.textContent = 'Please answer all questions.';
-      return;
-    }
-    if (!form.declaration.checked) {
-      errEl.textContent = 'You must agree to the declaration.';
-      return;
-    }
-
-    // Score
-    let marks = 0;
-    let maxMarks = 0;
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (["mcq","dropdown","mcq-image"].includes(q.type)) {
-        maxMarks += 1;
-        if (answers[i] === q.answer) marks++;
-      } else if (q.type === "image-labels") {
-        maxMarks += q.labels.length;
-        const parts = answers[i].split(";").map(s => s.trim());
-        q.labels.forEach((label, lid) => {
-          if (parts[lid] && parts[lid] === label.answer) marks++;
-        });
+      if(!form.declaration.checked){
+        errEl.textContent = 'You must agree to the declaration.';
+        return;
       }
-    }
 
-    // Minimal user feedback (no per-question breakdown)
-    submitBtn.disabled = true;
-    resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
-
-    // Auth
-    const { data:{ session } } = await sb.auth.getSession();
-    if (!session?.user) {
-      alert('Please log in so your result is stored.');
-      window.location.href = '../login_Version4.html';
-      return;
-    }
-    const uid = session.user.id;
-
-    // Breakdown (kept for result.html Details)
-    const breakdown = [];
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (["mcq","dropdown","mcq-image"].includes(q.type)) {
-        breakdown.push({
-          question: q.text,
-          type: q.type,
-          answer: answers[i],
-          correct: q.answer,
-          isCorrect: answers[i] === q.answer
-        });
-      } else if (q.type === "image-labels") {
-        const parts = answers[i].split(";").map(s=>s.trim());
-        q.labels.forEach((label, lid) => {
-          breakdown.push({
-            question: `${q.text} (Label ${label.name})`,
-            type: "image-label",
-            answer: parts[lid],
-            correct: label.answer,
-            isCorrect: parts[lid] === label.answer
+      // Scoring
+      let marks = 0;
+      let maxMarks = 0;
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown','mcq-image'].includes(q.type)){
+          maxMarks += 1;
+          if(answers[i] === q.answer) marks++;
+        } else if(q.type === 'image-labels'){
+          maxMarks += q.labels.length;
+          const parts = answers[i].split(';').map(s => s.trim());
+          q.labels.forEach((label, lid) => {
+            if(parts[lid] && parts[lid] === label.answer) marks++;
           });
-        });
+        }
       }
-    }
-    breakdown.push({
-      type: "meta",
-      assignment: {
-        bucket: ASSIGNMENT_BUCKET,
-        path: uploadedAssignmentPath,
-        publicUrl: uploadedAssignmentUrl || null
+
+      submitBtn.disabled = true;
+      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
+
+      // Auth
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        alert('Please log in so your result is stored.');
+        window.location.href = '../login_Version4.html';
+        return;
       }
-    });
+      const uid = session.user.id;
 
-    const durationSec = Math.round((Date.now() - pageStartTime) / 1000);
+      // Breakdown for result page
+      const breakdown = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown','mcq-image'].includes(q.type)){
+          breakdown.push({
+            question: q.text,
+            type: q.type,
+            answer: answers[i],
+            correct: q.answer,
+            isCorrect: answers[i] === q.answer
+          });
+        } else if(q.type === 'image-labels'){
+          const parts = answers[i].split(';').map(s=>s.trim());
+          q.labels.forEach((label, lid) => {
+            breakdown.push({
+              question: `${q.text} (Label ${label.name})`,
+              type: 'image-label',
+              answer: parts[lid],
+              correct: label.answer,
+              isCorrect: parts[lid] === label.answer
+            });
+          });
+        }
+      }
+      breakdown.push({
+        type: 'meta',
+        assignment: {
+          bucket: ASSIGNMENT_BUCKET,
+          path: uploadedAssignmentPath,
+          publicUrl: uploadedAssignmentUrl || null
+        }
+      });
 
-    const row = {
-      user_id: uid,
-      user_name: form.studentName.value.trim(),
-      experiment_id: EXPERIMENT_ID,
-      score: marks,
-      total: maxMarks,
-      submitted_at: new Date().toISOString(),
-      duration_sec: durationSec,
-      breakdown,
-      meta: {
-        email: form.emailId.value.trim(),
-        prn: form.prnNumber.value.trim(),
-        batch: form.batchNumber.value.trim(),
-        school_name: form.schoolName.value.trim(),
-        assessment_title: ASSESSMENT_TITLE
-      },
-      assignment_bucket: ASSIGNMENT_BUCKET,
-      assignment_path: uploadedAssignmentPath
+      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
+
+      const row = {
+        user_id: uid,
+        user_name: form.studentName.value.trim(),
+        experiment_id: EXPERIMENT_ID,
+        score: marks,
+        total: maxMarks,
+        submitted_at: new Date().toISOString(),
+        duration_sec: durationSec,
+        breakdown,
+        meta: {
+          email: form.emailId.value.trim(),
+          prn: form.prnNumber.value.trim(),
+          batch: form.batchNumber.value.trim(),
+          school_name: form.schoolName.value.trim(),
+          assessment_title: ASSESSMENT_TITLE
+        },
+        assignment_bucket: ASSIGNMENT_BUCKET,
+        assignment_path: uploadedAssignmentPath
+      };
+
+      const { error } = await sb.from('assessment_results').insert(row);
+      if(error){
+        console.error('Supabase insert error:', error);
+        errEl.textContent = 'Could not save result. Please retry.';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Redirect
+      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
-
-    const { error } = await sb.from('assessment_results').insert(row);
-    if (error) {
-      console.error('Supabase insert error:', error);
-      errEl.textContent = 'Could not save result. Please retry.';
-      submitBtn.disabled = false;
-      return;
-    }
-
-    // Redirect immediately
-    window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-  };
-</script>
+  </script>
+</body>
+</html>
