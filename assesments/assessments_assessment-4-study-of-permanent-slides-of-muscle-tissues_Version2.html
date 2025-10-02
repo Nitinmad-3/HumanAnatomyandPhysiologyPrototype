@@ -3,27 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <title>Experiment 4: Microscopic Study of Epithelial and Connective Tissue</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
     h1 { color: #1565c0; }
+    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
     .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
     .question { margin-bottom: 1.5em;}
     .student-info label { display: block; margin: 0.5em 0 0.2em;}
     .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
+    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
+    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
+    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
     .declaration { margin: 2em 0 1em 0; }
     .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px;}
     .submit-btn:disabled { background: #90caf9; }
     .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
     .error { color: #d32f2f; margin-bottom: 1em;}
-    .feedback-wrong { color: #d32f2f; }
-    .feedback-correct { color: #388e3c; }
-    @media (max-width: 600px) { .container { padding: 1rem; } }
     img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
     label.dropdown-label { display: inline-block; min-width: 80px; }
-    .explanation { color: #444; font-size: 0.97em; display: none; }
-    .feedback-visible .explanation { display: block; }
+    @media (max-width: 600px) { .container { padding: 1rem; } }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <header>
@@ -41,18 +43,26 @@
         <h2>Student Information</h2>
         <label for="studentName">Student Name*</label>
         <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name</label>
-        <input type="text" id="schoolName" name="schoolName">
-        <label for="prnNumber">PRN Number</label>
-        <input type="text" id="prnNumber" name="prnNumber">
+        <label for="schoolName">School Name*</label>
+        <input type="text" id="schoolName" name="schoolName" required>
+        <label for="prnNumber">PRN Number*</label>
+        <input type="text" id="prnNumber" name="prnNumber" required>
         <label for="batchNumber">Batch Number*</label>
         <select id="batchNumber" name="batchNumber" required>
           <option value="">Select Batch</option>
           <option value="A">A</option>
           <option value="B">B</option>
         </select>
-        <label for="emailId">Email ID (add your institutional email id)</label>
-        <input type="email" id="emailId" name="emailId">
+        <label for="emailId">Email ID (add your institutional email id)*</label>
+        <input type="email" id="emailId" name="emailId" required>
+        <div class="note" id="profileNote"></div>
+      </div>
+      <!-- Assignment Upload -->
+      <div class="assignment-upload">
+        <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
+        <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
+        <div id="assignmentStatus" class="assignment-status"></div>
+        <div class="note">Must finish uploading before submitting the assessment.</div>
       </div>
       <hr>
       <div id="questionsSection"></div>
@@ -68,18 +78,91 @@
     </form>
   </div>
   <script>
-    // --- Utility shuffle function --- //
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    // ---- Supabase Constants & Init ----
+    const EXPERIMENT_ID = 'assessment-4-epithelial-connective';
+    const ASSESSMENT_TITLE = 'Experiment No. 4 (Microscopic Study of Epithelial and Connective Tissue)';
+    const ASSIGNMENT_BUCKET = 'assignments';
+    const pageStartTime = Date.now();
+
+    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
+    let sb = null;
+    if (supabaseAvailable) {
+      try {
+        sb = window.supabase.createClient(
+          'https://hunlistfklwvpivfjmbk.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+        );
+      } catch (e) {
+        console.warn('Supabase init failed:', e);
+        supabaseAvailable = false;
       }
-      return array;
     }
 
-    // ---------- Assessment Questions Data ---------- //
+    // ---- Autofill from Profile ----
+    async function autofillFromProfile() {
+      if (!supabaseAvailable || !sb) return;
+      try {
+        const { data: { session }, error: sessErr } = await sb.auth.getSession();
+        if (sessErr) console.warn('getSession error:', sessErr);
+        if (!session?.user) return;
+
+        const uid = session.user.id;
+        const { data: profile, error } = await sb
+          .from('profiles')
+          .select('name, email, prn, batch, school_name')
+          .eq('id', uid)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('Profile fetch error:', error.message);
+          return;
+        }
+        if (!profile) {
+          return;
+        }
+
+        const studentNameEl = document.getElementById('studentName');
+        const schoolNameEl = document.getElementById('schoolName');
+        const prnEl = document.getElementById('prnNumber');
+        const batchEl = document.getElementById('batchNumber');
+        const emailEl = document.getElementById('emailId');
+
+        if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
+        if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
+        if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
+        if (batchEl && !batchEl.value && profile.batch) {
+          const match = Array.from(batchEl.options).find(o => (o.value || '').toLowerCase() === String(profile.batch).toLowerCase());
+          if (!match && profile.batch) {
+            const opt = document.createElement('option');
+            opt.value = profile.batch;
+            opt.textContent = profile.batch;
+            batchEl.appendChild(opt);
+          }
+          batchEl.value = profile.batch;
+        }
+        if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
+      } catch (e) {
+        console.warn('autofillFromProfile error:', e);
+      }
+    }
+    if (supabaseAvailable && sb) {
+      sb.auth.onAuthStateChange((_evt, _session) => {
+        autofillFromProfile();
+      });
+      autofillFromProfile();
+    }
+
+    // ---- Utility ----
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // ---- Questions ----
     const questions = [
-      // MCQ 8 to 15
       {
         type: "mcq",
         text: "1. Which of the following is not a general characteristic of epithelial tissue?",
@@ -168,200 +251,274 @@
         ],
         answer: "Pseudostratified columnar epithelium"
       },
-      // Dropdown 9 to 15 with explanations (hidden until feedback)
+      // IMAGE LABELS Q9
       {
-        type: "dropdown",
-        text: "9. Which epithelial tissue is best suited for gas exchange in the lungs?",
-        options: [
-          "Simple cuboidal",
-          "Simple squamous",
-          "Stratified squamous",
-          "Transitional"
-        ],
-        answer: "Simple squamous",
-        explanation: "Simple squamous epithelium is thin and flat, allowing easy diffusion of gases in alveoli."
+        type: "image-labels",
+        text: "9. Identify the labelled types of epithelium in the diagram below:",
+        image: "../assets/images/experiment-4/Assessment/types of epithelium.png", // <-- update path as needed
+        labels: [
+          {
+            name: "1",
+            answer: "simple columnar",
+            options: ["simple columnar", "simple squamous", "Stratifies squamous", "simple cuboidal"]
+          },
+          {
+            name: "2",
+            answer: "simple squamous",
+            options: ["simple columnar", "simple squamous", "Stratifies squamous", "simple cuboidal"]
+          },
+          {
+            name: "3",
+            answer: "Stratifies squamous",
+            options: ["simple columnar", "simple squamous", "Stratifies squamous", "simple cuboidal"]
+          },
+          {
+            name: "4",
+            answer: "simple cuboidal",
+            options: ["simple columnar", "simple squamous", "Stratifies squamous", "simple cuboidal"]
+          }
+        ]
       },
+      // IMAGE LABELS Q10
       {
-        type: "dropdown",
-        text: "10. Which connective tissue stores fat and cushions organs?",
-        options: [
-          "Areolar",
-          "Reticular",
-          "Adipose",
-          "Dense regular"
-        ],
-        answer: "Adipose",
-        explanation: "Adipose tissue contains fat-storing cells (adipocytes) that insulate and protect organs."
-      },
-      {
-        type: "dropdown",
-        text: "11. Which epithelial tissue lines the kidney tubules and helps in absorption?",
-        options: [
-          "Simple squamous",
-          "Simple cuboidal",
-          "Stratified cuboidal",
-          "Pseudostratified columnar"
-        ],
-        answer: "Simple cuboidal",
-        explanation: "Cuboidal cells are ideal for secretion and absorption, especially in kidney tubules."
-      },
-      {
-        type: "dropdown",
-        text: "12. Which connective tissue is found in tendons and ligaments?",
-        options: [
-          "Dense regular",
-          "Dense irregular",
-          "Areolar",
-          "Reticular"
-        ],
-        answer: "Dense regular",
-        explanation: "Dense regular connective tissue has parallel collagen fibers that provide strong tensile strength."
-      },
-      {
-        type: "dropdown",
-        text: "13. Which epithelial tissue has multiple layers and protects against friction?",
-        options: [
-          "Simple squamous",
-          "Stratified squamous",
-          "Simple cuboidal",
-          "Transitional"
-        ],
-        answer: "Stratified squamous",
-        explanation: "Multiple layers of squamous cells protect surfaces like the skin and oral cavity from abrasion."
-      },
-      {
-        type: "dropdown",
-        text: "14. Which connective tissue has a gel-like matrix and supports inflammation?",
-        options: [
-          "Areolar",
-          "Adipose",
-          "Dense regular",
-          "Reticular"
-        ],
-        answer: "Areolar",
-        explanation: "Areolar tissue contains various immune cells and fibers, making it ideal for defense and fluid exchange."
-      },
-      {
-        type: "dropdown",
-        text: "15. Which connective tissue is most flexible and found in the external ear?",
-        options: [
-          "Hyaline cartilage",
-          "Elastic cartilage",
-          "Fibrocartilage",
-          "Bone"
-        ],
-        answer: "Elastic cartilage",
-        explanation: "Elastic cartilage contains elastic fibers that allow the ear to bend and return to shape."
+        type: "image-labels",
+        text: "10. Identify the labelled parts of the simple epithelium structure in the diagram below:",
+        image: "../assets/images/experiment-4/Assessment/epithelium.png", // <-- update path as needed
+        labels: [
+          { name: "1", answer: "cytoplasm", options: ["cytoplasm", "basement membrane", "connective tissue", "nucleus"] },
+          { name: "2", answer: "basement membrane", options: ["cytoplasm", "basement membrane", "connective tissue", "nucleus"] },
+          { name: "3", answer: "connective tissue", options: ["cytoplasm", "basement membrane", "connective tissue", "nucleus"] },
+          { name: "4", answer: "nucleus", options: ["cytoplasm", "basement membrane", "connective tissue", "nucleus"] }
+        ]
       }
     ];
 
-    // Shuffle options for MCQs/Dropdowns //
     questions.forEach(q => {
-      if (q.options) shuffleArray(q.options);
+      if(q.options) shuffleArray(q.options);
+      if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
     });
 
-    // ---------- Render Questions ---------- //
-    function renderQuestions(feedbackMode = false) {
-      const questionsSection = document.getElementById("questionsSection");
-      questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
+    // ---- Render Questions ----
+    function renderQuestions(){
+      const qs = document.getElementById('questionsSection');
+      if(!qs){
+        console.error('questionsSection not found in DOM.');
+        return;
+      }
+      qs.innerHTML = '<h2>Assessment Questions</h2>';
       questions.forEach((q, idx) => {
-        let html = `<div class="question${feedbackMode ? ' feedback-visible' : ''}" id="question-${idx}"><label><b>${q.text}</b></label><br>`;
-        if(q.type === "mcq") {
+        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        if(q.type === "mcq"){
           q.options.forEach(opt => {
-            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+            html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
           });
-        } else if(q.type === "dropdown") {
+        } else if(q.type === "dropdown"){
           html += `<select name="q${idx}" required><option value="">Select...</option>`;
-          q.options.forEach(opt => {
-            html += `<option value="${opt}">${opt}</option>`;
+          q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+          html += '</select>';
+        } else if(q.type === "image-labels"){
+          html += `<img src="${q.image}" alt="Labelled diagram" class="question-img"><br>`;
+          q.labels.forEach((label, lid) => {
+            html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
+            html += `<option value="">Select...</option>`;
+            label.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+            html += `</select><br>`;
           });
-          html += `</select>`;
         }
-        // Explanation is hidden unless feedbackMode is true
-        if(q.explanation){
-          html += `<div class="explanation">${q.explanation}</div>`;
-        }
-        html += `</div>`;
-        questionsSection.innerHTML += html;
+        html += '</div>';
+        qs.innerHTML += html;
       });
     }
     renderQuestions();
 
-    // ---------- Submission Handler ---------- //
-    document.getElementById("assessmentForm").onsubmit = async function(e) {
+    // ---- Assignment Upload ----
+    let uploadedAssignmentPath = null;
+    let uploadedAssignmentUrl  = null;
+    let uploadingAssignment    = false;
+
+    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('assignmentStatus');
+      const file = e.target.files[0];
+      statusEl.textContent = '';
+      uploadedAssignmentPath = null;
+      uploadedAssignmentUrl  = null;
+
+      if(!file) return;
+      if(file.type !== 'application/pdf'){
+        statusEl.textContent = 'Only PDF files allowed.';
+        e.target.value = '';
+        return;
+      }
+
+      uploadingAssignment = true;
+      statusEl.textContent = 'Uploading PDF...';
+
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        statusEl.textContent = 'Login required before upload.';
+        uploadingAssignment = false;
+        e.target.value = '';
+        return;
+      }
+
+      const uid = session.user.id;
+      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
+
+      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
+        filePath, file, { upsert:true, contentType:'application/pdf' }
+      );
+      if(upErr){
+        statusEl.textContent = 'Upload failed: ' + upErr.message;
+        uploadingAssignment = false;
+        return;
+      }
+
+      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
+      uploadedAssignmentPath = filePath;
+      uploadedAssignmentUrl  = urlData?.publicUrl || null;
+      uploadingAssignment = false;
+      statusEl.textContent = 'PDF uploaded successfully.';
+    });
+
+    // ---- Submission ----
+    document.getElementById('assessmentForm').onsubmit = async function(e){
       e.preventDefault();
-      document.getElementById("errorMsg").textContent = "";
-      document.getElementById("resultMsg").textContent = "";
+      const errEl = document.getElementById('errorMsg');
+      const resEl = document.getElementById('resultMsg');
+      const submitBtn = document.getElementById('submitBtn');
+      errEl.textContent = '';
+      resEl.textContent = '';
+
+      if(!uploadedAssignmentPath){
+        errEl.textContent = uploadingAssignment
+          ? 'Please wait: assignment is still uploading...'
+          : 'Please upload the assignment PDF before submitting.';
+        return;
+      }
 
       const form = e.target;
+
       let allAnswered = true;
-      let answers = [];
-      for(let i=0; i<questions.length; i++) {
-        let val = form[`q${i}`]?.value?.trim() || "";
-        if(val === "") allAnswered = false;
-        answers.push(val);
+      const answers = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown'].includes(q.type)){
+          const v = form[`q${i}`]?.value?.trim() || '';
+          if(!v) allAnswered = false;
+          answers.push(v);
+        } else if(q.type === 'image-labels'){
+          const labelVals = [];
+          for(let lid=0; lid<q.labels.length; lid++){
+            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
+            if(!v) allAnswered = false;
+            labelVals.push(v);
+          }
+          answers.push(labelVals.join('; '));
+        }
       }
-      if(!allAnswered) {
-        document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
+
+      if(!allAnswered){
+        errEl.textContent = 'Please answer all questions.';
         return;
       }
-      if(!form.declaration.checked) {
-        document.getElementById("errorMsg").textContent = "You must agree to the declaration to submit.";
+      if(!form.declaration.checked){
+        errEl.textContent = 'You must agree to the declaration.';
         return;
       }
 
-      // --- Calculate marks (auto-graded) --- //
+      // Scoring
       let marks = 0;
-      let maxMarks = questions.length;
-      for(let i=0; i<questions.length; i++) {
-        if(answers[i] === questions[i].answer) marks++;
-      }
-      let scoreSummary = `${marks}/${maxMarks}`;
-
-      // --- Prepare FormData for Apps Script (must match sheet headers) --- //
-      const data = new FormData();
-      data.append('timestamp', new Date().toISOString());
-      data.append('studentName', form.studentName.value.trim());
-      data.append('schoolName', form.schoolName.value.trim());
-      data.append('prnNumber', form.prnNumber.value.trim());
-      data.append('batchNumber', form.batchNumber.value.trim());
-      data.append('emailId', form.emailId.value.trim());
-      data.append('experiment', "Microscopic Study of Epithelial and Connective Tissue");
-      answers.forEach((ans,i) => data.append('q'+i, ans));
-      data.append('marks', marks);
-      data.append('scoreSummary', scoreSummary);
-
-      // --- Your deployed Apps Script endpoint (provided by you) --- //
-      const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
-
-      try {
-        await fetch(scriptURL, { method: "POST", body: data });
-      } catch(e) {
-        console.error(e);
+      let maxMarks = 0;
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown'].includes(q.type)){
+          maxMarks += 1;
+          if(answers[i] === q.answer) marks++;
+        } else if(q.type === 'image-labels'){
+          maxMarks += q.labels.length;
+          const parts = answers[i].split(';').map(s => s.trim());
+          q.labels.forEach((label, lid) => {
+            if(parts[lid] && parts[lid] === label.answer) marks++;
+          });
+        }
       }
 
-      document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of ${maxMarks} on the auto-graded questions.`;
+      submitBtn.disabled = true;
+      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
 
-      // --- Feedback for all answers (correct and wrong) --- //
-      let feedbackHtml = "<hr><b>Review your answers:</b><br>";
-      // Show explanations after submission (feedback)
-      renderQuestions(true);
-      for (let i = 0; i < questions.length; i++) {
-        let userAns = answers[i];
-        let correctAns = questions[i].answer;
-        let isCorrect = (userAns === correctAns);
-        feedbackHtml += `<div style="margin-bottom:1em;">
-          <b>Q${i+1}:</b> ${questions[i].text}<br>
-          <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-            Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-          </span><br>
-          ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
-          ${questions[i].explanation ? `<br><span style="color:#444;font-size:0.97em;"><b>Explanation:</b> ${questions[i].explanation}</span>` : ""}
-        </div>`;
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        alert('Please log in so your result is stored.');
+        window.location.href = '../login_Version4.html';
+        return;
       }
-      document.getElementById("resultMsg").innerHTML += feedbackHtml;
+      const uid = session.user.id;
 
-      document.getElementById("submitBtn").disabled = true;
+      // Breakdown for result page
+      const breakdown = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown'].includes(q.type)){
+          breakdown.push({
+            question: q.text,
+            type: q.type,
+            answer: answers[i],
+            correct: q.answer,
+            isCorrect: answers[i] === q.answer
+          });
+        } else if(q.type === 'image-labels'){
+          const parts = answers[i].split(';').map(s=>s.trim());
+          q.labels.forEach((label, lid) => {
+            breakdown.push({
+              question: `${q.text} (Label ${label.name})`,
+              type: 'image-label',
+              answer: parts[lid],
+              correct: label.answer,
+              isCorrect: parts[lid] === label.answer
+            });
+          });
+        }
+      }
+      breakdown.push({
+        type: 'meta',
+        assignment: {
+          bucket: ASSIGNMENT_BUCKET,
+          path: uploadedAssignmentPath,
+          publicUrl: uploadedAssignmentUrl || null
+        }
+      });
+
+      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
+
+      const row = {
+        user_id: uid,
+        user_name: form.studentName.value.trim(),
+        experiment_id: EXPERIMENT_ID,
+        score: marks,
+        total: maxMarks,
+        submitted_at: new Date().toISOString(),
+        duration_sec: durationSec,
+        breakdown,
+        meta: {
+          email: form.emailId.value.trim(),
+          prn: form.prnNumber.value.trim(),
+          batch: form.batchNumber.value.trim(),
+          school_name: form.schoolName.value.trim(),
+          assessment_title: ASSESSMENT_TITLE
+        },
+        assignment_bucket: ASSIGNMENT_BUCKET,
+        assignment_path: uploadedAssignmentPath
+      };
+
+      const { error } = await sb.from('assessment_results').insert(row);
+      if(error){
+        console.error('Supabase insert error:', error);
+        errEl.textContent = 'Could not save result. Please retry.';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
   </script>
 </body>
