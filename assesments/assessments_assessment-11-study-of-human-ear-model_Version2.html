@@ -2,30 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assessment: Identification of Appendicular Bones</title>
+  <title>Assessment: Enumeration of Total Red Blood Corpuscles (RBC) Count</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
     h1 { color: #1565c0; }
+    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
     .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
     .question { margin-bottom: 1.5em;}
     .student-info label { display: block; margin: 0.5em 0 0.2em;}
     .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
+    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
+    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
+    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
     .declaration { margin: 2em 0 1em 0; }
     .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px;}
     .submit-btn:disabled { background: #90caf9; }
     .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
     .error { color: #d32f2f; margin-bottom: 1em;}
-    .feedback-wrong { color: #d32f2f; }
-    .feedback-correct { color: #388e3c; }
-    @media (max-width: 600px) { .container { padding: 1rem; } }
     img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
     label.dropdown-label { display: inline-block; min-width: 80px; }
+    @media (max-width: 600px) { .container { padding: 1rem; } }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>Assessment: Identification of Appendicular Bones</h1>
+    <h1>Assessment: Enumeration of Total Red Blood Corpuscles (RBC) Count</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
@@ -39,18 +43,26 @@
         <h2>Student Information</h2>
         <label for="studentName">Student Name*</label>
         <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name</label>
-        <input type="text" id="schoolName" name="schoolName">
-        <label for="prnNumber">PRN Number</label>
-        <input type="text" id="prnNumber" name="prnNumber">
+        <label for="schoolName">School Name*</label>
+        <input type="text" id="schoolName" name="schoolName" required>
+        <label for="prnNumber">PRN Number*</label>
+        <input type="text" id="prnNumber" name="prnNumber" required>
         <label for="batchNumber">Batch Number*</label>
         <select id="batchNumber" name="batchNumber" required>
           <option value="">Select Batch</option>
           <option value="A">A</option>
           <option value="B">B</option>
         </select>
-        <label for="emailId">Email ID (add your institutional email id)</label>
-        <input type="email" id="emailId" name="emailId">
+        <label for="emailId">Email ID (add your institutional email id)*</label>
+        <input type="email" id="emailId" name="emailId" required>
+        <div class="note" id="profileNote"></div>
+      </div>
+      <!-- Assignment Upload -->
+      <div class="assignment-upload">
+        <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
+        <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
+        <div id="assignmentStatus" class="assignment-status"></div>
+        <div class="note">Must finish uploading before submitting the assessment.</div>
       </div>
       <hr>
       <div id="questionsSection"></div>
@@ -66,334 +78,420 @@
     </form>
   </div>
   <script>
-    // --- Utility shuffle function --- //
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    // ---- Supabase Constants & Init ----
+    const EXPERIMENT_ID = 'assessment-11-rbc-count';
+    const ASSIGNMENT_BUCKET = 'assignments';
+    const ASSESSMENT_TITLE = 'Experiment No. 11 (Enumeration of Total Red Blood Corpuscles (RBC) Count)';
+    const pageStartTime = Date.now();
+
+    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
+    let sb = null;
+    if (supabaseAvailable) {
+      try {
+        sb = window.supabase.createClient(
+          'https://hunlistfklwvpivfjmbk.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+        );
+      } catch (e) {
+        console.warn('Supabase init failed:', e);
+        supabaseAvailable = false;
       }
-      return array;
     }
-    // --- End Utility shuffle function --- //
 
-    // ---------- Assessment Questions Data ---------- //
-    const questions = [
-      // Multiple Choice Questions //
-      {
-        type: "mcq",
-        text: "1. The largest bone of the hip is:",
-        options: [
-          "Ischium",
-          "Ilium",
-          "Pubis",
-          "Femur"
-        ],
-        answer: "Ilium"
-      },
-      {
-        type: "mcq",
-        text: "2. How many bones are found in each human arm?",
-        options: [
-          "30",
-          "26",
-          "14",
-          "80"
-        ],
-        answer: "30"
-      },
-      {
-        type: "mcq",
-        text: "3. The scapula is also known as the:",
-        options: [
-          "Collarbone",
-          "Hip bone",
-          "Shoulder blade",
-          "Wrist bone"
-        ],
-        answer: "Shoulder blade"
-      },
-      {
-        type: "mcq",
-        text: "4. Which bone forms the knee cap?",
-        options: [
-          "Tibia",
-          "Patella",
-          "Fibula",
-          "Femur"
-        ],
-        answer: "Patella"
-      },
-      // --- End Multiple Choice Questions --- //
+    // ---- Autofill from Profile ----
+    async function autofillFromProfile() {
+      if (!supabaseAvailable || !sb) return;
+      try {
+        const { data: { session }, error: sessErr } = await sb.auth.getSession();
+        if (sessErr) console.warn('getSession error:', sessErr);
+        if (!session?.user) return;
 
-      // One Word/Short Answer Questions (Dropdown) //
-      {
-        type: "dropdown",
-        text: "5. Name the bones that make up the pectoral girdle.",
-        options: [
-          "Radius and Ulna",
-          "Clavicle and Scapula",
-          "Femur and Tibia",
-          "Humerus and Radius"
-        ],
-        answer: "Clavicle and Scapula"
-      },
-      {
-        type: "dropdown",
-        text: "6. What is the longest bone in the human body?",
-        options: [
-          "Tibia",
-          "Humerus",
-          "Femur",
-          "Spine"
-        ],
-        answer: "Femur"
-      },
-      {
-        type: "dropdown",
-        text: "7. Which bones form the palm of the hand?",
-        options: [
-          "Carpals",
-          "Phalanges",
-          "Metacarpals",
-          "Tarsals"
-        ],
-        answer: "Metacarpals"
-      },
-      {
-        type: "dropdown",
-        text: "8. How many phalanges are there in one human foot?",
-        options: [
-          "10",
-          "14",
-          "26",
-          "5"
-        ],
-        answer: "14"
-      },
-      // --- End One Word/Short Answer Questions (Dropdown) --- //
+        const uid = session.user.id;
+        const { data: profile, error } = await sb
+          .from('profiles')
+          .select('name, email, prn, batch, school_name')
+          .eq('id', uid)
+          .maybeSingle();
 
-      // Application/Diagram-Based Questions (Image-Labels) //
-      {
-        type: "image-labels",
-        text: "9. Identify the labelled bones in the diagram below:",
-        image: "../assets/images/experiment-3/Assessment/Assessment exptno7appendicular.png",
-        labels: [
-          {
-            name: "1",
-            answer: "Phalanges",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "2",
-            answer: "Scapula",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "3",
-            answer: "Ulna",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "4",
-            answer: "Carpals",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "5",
-            answer: "Tarsals",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "6",
-            answer: "Patella",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
-          },
-          {
-            name: "7",
-            answer: "Tibia",
-            options: [
-              "Phalanges", "Scapula", "Ulna", "Carpals", "Tarsals", "Patella", "Tibia"
-            ]
+        if (error) {
+          console.warn('Profile fetch error:', error.message);
+          return;
+        }
+        if (!profile) {
+          return;
+        }
+
+        const studentNameEl = document.getElementById('studentName');
+        const schoolNameEl = document.getElementById('schoolName');
+        const prnEl = document.getElementById('prnNumber');
+        const batchEl = document.getElementById('batchNumber');
+        const emailEl = document.getElementById('emailId');
+
+        if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
+        if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
+        if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
+        if (batchEl && !batchEl.value && profile.batch) {
+          const match = Array.from(batchEl.options).find(o => (o.value || '').toLowerCase() === String(profile.batch).toLowerCase());
+          if (!match && profile.batch) {
+            const opt = document.createElement('option');
+            opt.value = profile.batch;
+            opt.textContent = profile.batch;
+            batchEl.appendChild(opt);
           }
-        ]
+          batchEl.value = profile.batch;
+        }
+        if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
+      } catch (e) {
+        console.warn('autofillFromProfile error:', e);
       }
-      // --- End Application/Diagram-Based Questions (Image-Labels) --- //
+    }
+    if (supabaseAvailable && sb) {
+      sb.auth.onAuthStateChange((_evt, _session) => {
+        autofillFromProfile();
+      });
+      autofillFromProfile();
+    }
+
+    // ---- Utility ----
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // ---- Questions ----
+    const questions = [
+      {
+        type: "mcq",
+        text: "1. What is the main purpose of performing a total RBC count?",
+        options: [
+          "To determine white blood cell count",
+          "To measure blood pressure",
+          "To assess the number of red blood cells in blood",
+          "To check for blood glucose"
+        ],
+        answer: "To assess the number of red blood cells in blood"
+      },
+      {
+        type: "mcq",
+        text: "2. Which instrument is specifically used to count RBCs manually?",
+        options: [
+          "Colorimeter",
+          "Neubauer’s counting chamber (hemocytometer)",
+          "Centrifuge",
+          "Spectrophotometer"
+        ],
+        answer: "Neubauer’s counting chamber (hemocytometer)"
+      },
+      {
+        type: "mcq",
+        text: "3. In the RBC count procedure, blood is drawn into the pipette up to which mark before adding diluting fluid?",
+        options: [
+          "0.5",
+          "1.0",
+          "10",
+          "101"
+        ],
+        answer: "0.5"
+      },
+      {
+        type: "mcq",
+        text: "4. Which fluid is commonly used for diluting blood in RBC count?",
+        options: [
+          "Distilled water",
+          "Hayem’s fluid",
+          "Saline",
+          "Acetic acid"
+        ],
+        answer: "Hayem’s fluid"
+      },
+      {
+        type: "mcq",
+        text: "5. What is the dilution factor typically used in a standard RBC count procedure?",
+        options: [
+          "1:10",
+          "1:100",
+          "1:200",
+          "1:500"
+        ],
+        answer: "1:200"
+      },
+      {
+        type: "mcq",
+        text: "6. Which part of the hemocytometer is used for counting RBCs?",
+        options: [
+          "Four large corner squares",
+          "Central square subdivided into 25 smaller squares",
+          "Entire chamber",
+          "Triple lines of the grid"
+        ],
+        answer: "Central square subdivided into 25 smaller squares"
+      },
+      {
+        type: "mcq",
+        text: "7. What is the depth (height) of the Neubauer chamber?",
+        options: [
+          "0.01 mm",
+          "0.1 mm",
+          "1 mm",
+          "0.5 mm"
+        ],
+        answer: "0.1 mm"
+      },
+      {
+        type: "mcq",
+        text: "8. Why is the pipette rolled between palms after mixing blood and diluting fluid?",
+        options: [
+          "To warm the sample",
+          "To prevent air bubbles",
+          "To mix thoroughly and ensure even dilution",
+          "To remove impurities"
+        ],
+        answer: "To mix thoroughly and ensure even dilution"
+      },
+      {
+        type: "mcq",
+        text: "9. What is the general shape of a mature human red blood cell?",
+        options: [
+          "Spherical",
+          "Irregular",
+          "Biconcave disc",
+          "Cylindrical"
+        ],
+        answer: "Biconcave disc"
+      },
+      {
+        type: "mcq",
+        text: "10. Which stain or fluid is used to preserve RBCs and prevent clumping during counting?",
+        options: [
+          "Hayem’s fluid",
+          "Gentian violet",
+          "Methylene blue",
+          "Giemsa stain"
+        ],
+        answer: "Hayem’s fluid"
+      }
     ];
-    // --- End Assessment Questions Data --- //
 
-    // Shuffle options for MCQ/Dropdowns and labels //
     questions.forEach(q => {
-      if (q.options) shuffleArray(q.options);
-      if (q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
+      if(q.options) shuffleArray(q.options);
+      if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
     });
-    // --- End Shuffle options for MCQ/Dropdowns and labels --- //
 
-    // ---------- Render Questions ---------- //
-    function renderQuestions() {
-      const questionsSection = document.getElementById("questionsSection");
-      questionsSection.innerHTML = `<h2>Assessment Questions</h2>`;
+    // ---- Render Questions ----
+    function renderQuestions(){
+      const qs = document.getElementById('questionsSection');
+      if(!qs){
+        console.error('questionsSection not found in DOM.');
+        return;
+      }
+      qs.innerHTML = '<h2>Assessment Questions</h2>';
       questions.forEach((q, idx) => {
         let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-        if(q.type === "mcq") {
+        if(q.type === "mcq"){
           q.options.forEach(opt => {
-            html += `<input type="radio" name="q${idx}" value="${opt}" required> ${opt}<br>`;
+            html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
           });
-        } else if(q.type === "dropdown") {
+        } else if(q.type === "dropdown"){
           html += `<select name="q${idx}" required><option value="">Select...</option>`;
-          q.options.forEach(opt => {
-            html += `<option value="${opt}">${opt}</option>`;
-          });
-          html += `</select>`;
-        } else if(q.type === "image-labels") {
-          html += `<img src="${q.image}" alt="Labelled diagram for question" class="question-img"><br>`;
+          q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+          html += '</select>';
+        } else if(q.type === "image-labels"){
+          html += `<img src="${q.image}" alt="Labelled diagram" class="question-img"><br>`;
           q.labels.forEach((label, lid) => {
             html += `<label class="dropdown-label">${label.name}:</label> <select name="q${idx}_label${lid}" required>`;
             html += `<option value="">Select...</option>`;
-            label.options.forEach(opt => {
-              html += `<option value="${opt}">${opt}</option>`;
-            });
+            label.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
             html += `</select><br>`;
           });
         }
-        html += `</div>`;
-        questionsSection.innerHTML += html;
+        html += '</div>';
+        qs.innerHTML += html;
       });
     }
     renderQuestions();
-    // --- End Render Questions --- //
 
-    // ---------- Submission Handler ---------- //
-    document.getElementById("assessmentForm").onsubmit = async function(e) {
+    // ---- Assignment Upload ----
+    let uploadedAssignmentPath = null;
+    let uploadedAssignmentUrl  = null;
+    let uploadingAssignment    = false;
+
+    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('assignmentStatus');
+      const file = e.target.files[0];
+      statusEl.textContent = '';
+      uploadedAssignmentPath = null;
+      uploadedAssignmentUrl  = null;
+
+      if(!file) return;
+      if(file.type !== 'application/pdf'){
+        statusEl.textContent = 'Only PDF files allowed.';
+        e.target.value = '';
+        return;
+      }
+
+      uploadingAssignment = true;
+      statusEl.textContent = 'Uploading PDF...';
+
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        statusEl.textContent = 'Login required before upload.';
+        uploadingAssignment = false;
+        e.target.value = '';
+        return;
+      }
+
+      const uid = session.user.id;
+      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
+
+      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
+        filePath, file, { upsert:true, contentType:'application/pdf' }
+      );
+      if(upErr){
+        statusEl.textContent = 'Upload failed: ' + upErr.message;
+        uploadingAssignment = false;
+        return;
+      }
+
+      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
+      uploadedAssignmentPath = filePath;
+      uploadedAssignmentUrl  = urlData?.publicUrl || null;
+      uploadingAssignment = false;
+      statusEl.textContent = 'PDF uploaded successfully.';
+    });
+
+    // ---- Submission ----
+    document.getElementById('assessmentForm').onsubmit = async function(e){
       e.preventDefault();
-      document.getElementById("errorMsg").textContent = "";
-      document.getElementById("resultMsg").textContent = "";
+      const errEl = document.getElementById('errorMsg');
+      const resEl = document.getElementById('resultMsg');
+      const submitBtn = document.getElementById('submitBtn');
+      errEl.textContent = '';
+      resEl.textContent = '';
+
+      if(!uploadedAssignmentPath){
+        errEl.textContent = uploadingAssignment
+          ? 'Please wait: assignment is still uploading...'
+          : 'Please upload the assignment PDF before submitting.';
+        return;
+      }
 
       const form = e.target;
+
       let allAnswered = true;
-      let answers = [];
-      for(let i=0; i<questions.length; i++) {
-        let val;
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          val = form[`q${i}`]?.value?.trim() || "";
-          if(val === "") allAnswered = false;
-          answers.push(val);
-        } else if(questions[i].type === "image-labels") {
-          let labelAnswers = [];
-          for(let lid=0; lid<questions[i].labels.length; lid++) {
-            let v = form[`q${i}_label${lid}`]?.value?.trim() || "";
-            if(v === "") allAnswered = false;
-            labelAnswers.push(v);
+      const answers = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown'].includes(q.type)){
+          const v = form[`q${i}`]?.value?.trim() || '';
+          if(!v) allAnswered = false;
+          answers.push(v);
+        } else if(q.type === 'image-labels'){
+          const labelVals = [];
+          for(let lid=0; lid<q.labels.length; lid++){
+            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
+            if(!v) allAnswered = false;
+            labelVals.push(v);
           }
-          answers.push(labelAnswers.join("; ")); // Store as joined string for Google Sheet
+          answers.push(labelVals.join('; '));
         }
       }
-      if(!allAnswered) {
-        document.getElementById("errorMsg").textContent = "Please answer all questions before submitting.";
+
+      if(!allAnswered){
+        errEl.textContent = 'Please answer all questions.';
         return;
       }
-      if(!form.declaration.checked) {
-        document.getElementById("errorMsg").textContent = "You must agree to the declaration to submit.";
+      if(!form.declaration.checked){
+        errEl.textContent = 'You must agree to the declaration.';
         return;
       }
 
-      // --- Calculate marks (auto-graded) --- //
+      // Scoring
       let marks = 0;
-      let maxMarks = 0;
-      for(let i=0; i<questions.length; i++) {
-        if(questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          maxMarks += 1;
-          if(answers[i] === questions[i].answer) marks++;
-        } else if(questions[i].type === "image-labels") {
-          const input = answers[i].split(";").map(s => s.trim());
-          questions[i].labels.forEach((label, lid) => {
-            maxMarks += 1;
-            if(input[lid] && input[lid] === label.answer) marks++;
+      let maxMarks = questions.length;
+      for(let i=0; i<questions.length; i++){
+        if(answers[i] === questions[i].answer) marks++;
+      }
+
+      submitBtn.disabled = true;
+      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
+
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        alert('Please log in so your result is stored.');
+        window.location.href = '../login_Version4.html';
+        return;
+      }
+      const uid = session.user.id;
+
+      // Breakdown for result page
+      const breakdown = [];
+      for(let i=0; i<questions.length; i++){
+        const q = questions[i];
+        if(['mcq','dropdown'].includes(q.type)){
+          breakdown.push({
+            question: q.text,
+            type: q.type,
+            answer: answers[i],
+            correct: q.answer,
+            isCorrect: answers[i] === q.answer
+          });
+        } else if(q.type === 'image-labels'){
+          const parts = answers[i].split(';').map(s=>s.trim());
+          q.labels.forEach((label, lid) => {
+            breakdown.push({
+              question: `${q.text} (Label ${label.name})`,
+              type: 'image-label',
+              answer: parts[lid],
+              correct: label.answer,
+              isCorrect: parts[lid] === label.answer
+            });
           });
         }
       }
-      // --- End Calculate marks (auto-graded) --- //
-
-      let scoreSummary = `${marks}/${maxMarks}`;
-
-      // --- Prepare FormData for Apps Script (must match sheet headers) --- //
-      const data = new FormData();
-      data.append('timestamp', new Date().toISOString());
-      data.append('studentName', form.studentName.value.trim());
-      data.append('schoolName', form.schoolName.value.trim());
-      data.append('prnNumber', form.prnNumber.value.trim());
-      data.append('batchNumber', form.batchNumber.value.trim());
-      data.append('emailId', form.emailId.value.trim());
-      data.append('experiment', "Identification of Appendicular Bones");
-      answers.forEach((ans,i) => data.append('q'+i, ans));
-      data.append('marks', marks);
-      data.append('scoreSummary', scoreSummary);
-      // --- End Prepare FormData for Apps Script (must match sheet headers) --- //
-
-      // --- Your deployed Apps Script endpoint (provided by you) --- //
-      const scriptURL = "https://script.google.com/macros/s/AKfycbzLQnDFqd_HWLAh9r1PVGUWHdKRvtSHY_MZYWF7zu8hEKeswjd_C233tHsuxwcUTPos/exec";
-      // --- End Your deployed Apps Script endpoint (provided by you) --- //
-
-      try {
-        await fetch(scriptURL, { method: "POST", body: data });
-      } catch(e) {
-        console.error(e);
-      }
-
-      document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of ${maxMarks} on the auto-graded questions.`;
-
-      // --- Feedback for all answers (correct and wrong) --- //
-      let feedbackHtml = "<hr><b>Review your answers:</b><br>";
-      for (let i = 0; i < questions.length; i++) {
-        let userAns = answers[i];
-        let correctAns = null;
-        let isCorrect = false;
-
-        if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
-          correctAns = questions[i].answer;
-          isCorrect = (userAns === correctAns);
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text}<br>
-            <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-              Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-            </span><br>
-            ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
-          </div>`;
-        } else if (questions[i].type === "image-labels") {
-          let userLabels = userAns.split(";").map(s => s.trim());
-          let subFeedback = "";
-          questions[i].labels.forEach((label, lid) => {
-            let labelAns = userLabels[lid] || "";
-            let labelCorrect = labelAns === label.answer;
-            subFeedback += `<br>
-              <span class="${labelCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-                <b>Label ${label.name}:</b> Your answer: <i>${labelAns || "(blank)"}</i> – <b>${labelCorrect ? "Correct" : "Wrong"}</b>
-              </span>
-              ${!labelCorrect ? `<span class="feedback-correct"> Correct: ${label.answer}</span>` : ""}
-            `;
-          });
-          feedbackHtml += `<div style="margin-bottom:1em;">
-            <b>Q${i+1}:</b> ${questions[i].text} ${subFeedback}
-          </div>`;
+      breakdown.push({
+        type: 'meta',
+        assignment: {
+          bucket: ASSIGNMENT_BUCKET,
+          path: uploadedAssignmentPath,
+          publicUrl: uploadedAssignmentUrl || null
         }
-      }
-      document.getElementById("resultMsg").innerHTML += feedbackHtml;
-      // --- End Feedback for all answers (correct and wrong) --- //
+      });
 
-      document.getElementById("submitBtn").disabled = true;
+      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
+
+      const row = {
+        user_id: uid,
+        user_name: form.studentName.value.trim(),
+        experiment_id: EXPERIMENT_ID,
+        score: marks,
+        total: maxMarks,
+        submitted_at: new Date().toISOString(),
+        duration_sec: durationSec,
+        breakdown,
+        meta: {
+          email: form.emailId.value.trim(),
+          prn: form.prnNumber.value.trim(),
+          batch: form.batchNumber.value.trim(),
+          school_name: form.schoolName.value.trim(),
+          assessment_title: ASSESSMENT_TITLE
+        },
+        assignment_bucket: ASSIGNMENT_BUCKET,
+        assignment_path: uploadedAssignmentPath
+      };
+
+      const { error } = await sb.from('assessment_results').insert(row);
+      if(error){
+        console.error('Supabase insert error:', error);
+        errEl.textContent = 'Could not save result. Please retry.';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
-    // --- End Submission Handler --- //
   </script>
 </body>
 </html>
