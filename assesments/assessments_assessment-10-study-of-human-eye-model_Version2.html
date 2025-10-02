@@ -514,38 +514,7 @@
         }
       });
 
-      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
-
-      const row = {
-        user_id: uid,
-        user_name: form.studentName.value.trim(),
-        experiment_id: EXPERIMENT_ID,
-        score: marks,
-        total: maxMarks,
-        submitted_at: new Date().toISOString(),
-        duration_sec: durationSec,
-        breakdown,
-        meta: {
-          email: form.emailId.value.trim(),
-          prn: form.prnNumber.value.trim(),
-          batch: form.batchNumber.value.trim(),
-          school_name: form.schoolName.value.trim(),
-          assessment_title: ASSESSMENT_TITLE
-        },
-        assignment_bucket: ASSIGNMENT_BUCKET,
-        assignment_path: uploadedAssignmentPath
-      };
-
-      const { error } = await sb.from('assessment_results').insert(row);
-      if(error){
-        console.error('Supabase insert error:', error);
-        errEl.textContent = 'Could not save result. Please retry.';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-    };
+      
   </script>
 </body>
 </html>
