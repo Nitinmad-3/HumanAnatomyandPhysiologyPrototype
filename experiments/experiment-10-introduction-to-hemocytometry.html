@@ -2,550 +2,215 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assessment: Introduction to Hemocytometry</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Experiment 10: Introduction to Hemocytometry</title>
+  <link rel="stylesheet" href="../style.css">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #1565c0; }
-    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
-    .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    .question { margin-bottom: 1.5em;}
-    .student-info label { display: block; margin: 0.5em 0 0.2em;}
-    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
-    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
-    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
-    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
-    .declaration { margin: 2em 0 1em 0; }
-    .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px;}
-    .submit-btn:disabled { background: #90caf9; }
-    .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
-    .error { color: #d32f2f; margin-bottom: 1em;}
-    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
-    label.dropdown-label { display: inline-block; min-width: 80px; }
-    @media (max-width: 600px) { .container { padding: 1rem; } }
+    body {
+      background: 
+        linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
+        url('../assets/images/experiment-10/hemocytometer-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .exp-container {
+      max-width: 800px;
+      margin: 3rem auto 2rem auto;
+      background: rgba(255,255,255,0.96);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #90caf9;
+      padding: 2rem 2.5rem;
+    }
+    h1, h2, h3 {
+      color: #1a237e;
+      text-align: center;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #1565c0;
+      text-decoration: none;
+      margin: 0 1.1em;
+      font-weight: 500;
+      font-size: 1.08em;
+      transition: color 0.17s;
+    }
+    nav a:hover {
+      color: #512da8;
+      text-decoration: underline;
+    }
+    details {
+      margin-bottom: 1.5rem;
+      background: rgba(187, 222, 251, 0.35);
+      border-radius: 8px;
+      padding: 1em;
+    }
+    img {
+      display: block;
+      max-width: 90%;
+      margin: 18px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 14px 0;
+    }
+    table, th, td {
+      border: 1px solid #b3c2e0;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background: #e3ecfc;
+    }
+    @media (max-width: 600px) {
+      .exp-container { padding: 1rem; }
+      h1 { font-size: 1.4rem; }
+      nav a { font-size: 1em; margin: 0 0.6em; }
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Assessment: Introduction to Hemocytometry</h1>
+  <div class="exp-container">
+    <h1 id="experiment-10-hemocytometry">Experiment 10: Introduction to Hemocytometry</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
       <a href="../assessments.html">Assessments</a>
       <a href="../references.html">References</a>
     </nav>
-  </header>
-  <div class="container">
-    <form id="assessmentForm" autocomplete="off">
-      <div class="student-info">
-        <h2>Student Information</h2>
-        <label for="studentName">Student Name*</label>
-        <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name*</label>
-        <input type="text" id="schoolName" name="schoolName" required>
-        <label for="prnNumber">PRN Number*</label>
-        <input type="text" id="prnNumber" name="prnNumber" required>
-        <label for="batchNumber">Batch Number*</label>
-        <select id="batchNumber" name="batchNumber" required>
-          <option value="">Select Batch</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-        <label for="emailId">Email ID (add your institutional email id)*</label>
-        <input type="email" id="emailId" name="emailId" required>
-        <div class="note" id="profileNote"></div>
-      </div>
-      <!-- Assignment Upload -->
-      <div class="assignment-upload">
-        <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
-        <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
-        <div id="assignmentStatus" class="assignment-status"></div>
-        <div class="note">Must finish uploading before submitting the assessment.</div>
-      </div>
-      <hr>
-      <div id="questionsSection"></div>
-      <div class="declaration">
-        <input type="checkbox" id="declaration" required>
-        <label for="declaration">
-          I hereby declare that this assessment is for my own progress and benefit. All answers submitted are my own and not generated by AI or provided by friends.
-        </label>
-      </div>
-      <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
-      <div class="error" id="errorMsg"></div>
-      <div class="result" id="resultMsg"></div>
-    </form>
+
+    <details open>
+      <summary><strong>Aim</strong></summary>
+      Introduction to hemocytometry.
+    </details>
+
+    <details>
+      <summary><strong>Requirements</strong></summary>
+      <ul>
+        <li>Hemocytometer (Neubauer’s counting chamber)</li>
+        <li>RBC diluting pipette</li>
+        <li>WBC diluting pipette</li>
+        <li>RBC diluting fluid</li>
+        <li>WBC diluting fluid</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary><strong>References</strong></summary>
+      Practical Handbook of Human Anatomy and Physiology by S.R. Kale. Nirali Prakashan, Eighth Edition, 2002, Page 11-12.
+    </details>
+
+    <details>
+      <summary><strong>Introduction</strong></summary>
+      <p>Hemo for blood, cyto for cell; meter for measuring or counting. So, altogether it is for counting or measuring the blood cells.</p>
+      <p>It is a device used for determining the number of cells per unit volume of suspension is called a counting chamber. It is the most widely used type of chamber which is used for performing blood cell counts.</p>
+      <p>Haemocytometers set consist of:</p>
+      <ul>
+        <li>Neubauer’s Counting chamber</li>
+        <li>Diluting pipetter (RBC and WBC)</li>
+      </ul>
+      <img src="../assets/images/experiment-10/newbars chamber.png" alt="Neubauer's Chamber Diagram"/>
+    </details>
+
+    <details>
+      <summary><strong>Neubauer’s Counting Chamber</strong></summary>
+      <p>
+        It is a thick glass slide with two identical ruled areas separated by empty space and having two elevated ridges on their both sides. Either of the ruled areas is used for counting the cells. The counting square is of 9 sq.mm area (3mm × 3mm). The four corner squares of area 1 sq.mm. each (1mm × 1mm) are used for white blood cell count. In this the triple lines which dividing the central large square are very much closer to each other. The central ruled area is divided into 25 large squares. These squares are subdivided to form 16 smaller squares each with an area of 1/400 of 1 sq.mm. The four corners and one middle subsquares are used for red blood cell count. The depth of improved neubauer chamber is same that is 0.1mm.
+      </p>
+      <img src="../assets/images/experiment-10/counting-cell.webp" alt="Counting Cell Grid"/>
+    </details>
+
+    <details>
+      <summary><strong>Diluting Pipette</strong></summary>
+      <p>
+        It is a glass tube pipette with rubber sucking arrangement. The tubular part of the pipette is graduated from 0 to 1 with the division of 0.1 units. The bulb portion can accommodate 100 units of volume graduated from 1 to 101 on both sides of the bulb. Bulb serves as diluting and mixing chamber for blood.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>RBC Pipette</th>
+            <th>WBC Pipette</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bead Colour</td>
+            <td>Red</td>
+            <td>White</td>
+          </tr>
+          <tr>
+            <td>Markings</td>
+            <td>0.5, 1, 101</td>
+            <td>0.5, 1, 11</td>
+          </tr>
+          <tr>
+            <td>Dilution Ratio</td>
+            <td>4:20</td>
+            <td>1:20</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>Diluting Fluids</strong></summary>
+      <h3>RBC Diluting fluids</h3>
+      <ul>
+        <li><strong>Sodium chloride:</strong> Maintains osmolarity and isotonicity</li>
+        <li><strong>Sodium sulfate:</strong> Prevents RBC aggregation, acts as an anticoagulant, and acts as a fixative</li>
+        <li><strong>Mercuric chloride:</strong> Acts as a preservative, is antifungal and antibacterial, and prevents contamination by microorganisms</li>
+        <li><strong>Glacial acetic acid:</strong> Used in some RBC diluting fluids</li>
+      </ul>
+      <p>RBC diluting fluids are used to dilute blood prior to counting red blood cells with a hemocytometer.</p>
+      <br>
+      <h3>WBC Diluting fluids</h3>
+      <ul>
+        <li><strong>Glacial acetic acid:</strong> 2.0 milliliters</li>
+        <li><strong>Distilled water:</strong> 97.0 milliliters</li>
+        <li><strong>Gentian violet:</strong> 1.0 gram (1% w/v)</li>
+      </ul>
+      <p>WBC diluting fluid is used to perform a WBC count. The glacial acetic acid in the solution lyses red blood cells, while the gentian violet stains the nuclei of white blood cells.</p>
+    </details>
+
+    <details>
+      <summary><strong>Procedure</strong></summary>
+      <ol>
+        <li>Clean the hemocytometer and the cover glass with ethanol. Ensure the ethanol evaporates completely, so it does not affect your cells.</li>
+        <li>Place the cover glass on top of the hemocytometer’s chambers to stop your sample from evaporating.</li>
+        <li>Load 10 µl of your stained sample into one or both counting chambers with a micropipette. Capillary action ensures even distribution of the suspension within the chamber.</li>
+        <li>Place the hemocytometer under the microscope.</li>
+        <li>Adjust the microscope’s focus until you can clearly see the cells.</li>
+        <li>Count the cells using a tally counter (see below for details about the rules of cell counting using a hemocytometer). Keep track of the total number of cells and the number of dead cells.</li>
+        <li>When you are finished, clean the hemocytometer and the cover glass with ethanol.</li>
+      </ol>
+      <img src="../assets/images/experiment-10/Procedure.png" alt="Hemocytometer Procedure Diagram"/>
+      <img src="../assets/images/experiment-10/cell counting.jpg" alt="Cell Counting Example"/>
+    </details>
+
+    <details>
+      <summary><strong>Precautions</strong></summary>
+      <p>
+        Cell counting with a hemocytometer is typically error-prone, with errors often as high as 20-30%. Common sources of error range from human error with procedures and calculations, to errors caused by non-uniform cell staining and cell debris.
+      </p>
+      <p>
+        You can minimize errors by ensuring you work as consistently and precisely as possible. Take care to prepare dilutions correctly, pipette carefully, set clear counting guidelines, and be diligent about what you count as a cell. Remember, consistency is king! Performing additional counts can also ensure that your results are reliable and may help you catch errors before it’s too late. Typically, we repeat all cell counts three times, but “when in doubt, do another count!”
+      </p>
+      <img src="../assets/images/experiment-10/tips.png" alt="Hemocytometer Tips & Precautions"/>
+    </details>
+
+    <details>
+      <summary><strong>Report</strong></summary>
+      The introduction to hemocytometry was studied.
+    </details>
   </div>
-  <script>
-    // ---- Supabase Constants & Init ----
-    const EXPERIMENT_ID = 'assessment-10-hemocytometry';
-    const ASSIGNMENT_BUCKET = 'assignments';
-    const ASSESSMENT_TITLE = 'Experiment No. 10 (Introduction to Hemocytometry)';
-    const pageStartTime = Date.now();
-
-    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
-    let sb = null;
-    if (supabaseAvailable) {
-      try {
-        sb = window.supabase.createClient(
-          'https://hunlistfklwvpivfjmbk.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-        );
-      } catch (e) {
-        console.warn('Supabase init failed:', e);
-        supabaseAvailable = false;
-      }
-    }
-
-    // ---- Autofill from Profile ----
-    async function autofillFromProfile() {
-      if (!supabaseAvailable || !sb) return;
-      try {
-        const { data: { session }, error: sessErr } = await sb.auth.getSession();
-        if (sessErr) console.warn('getSession error:', sessErr);
-        if (!session?.user) return;
-
-        const uid = session.user.id;
-        const { data: profile, error } = await sb
-          .from('profiles')
-          .select('name, email, prn, batch, school_name')
-          .eq('id', uid)
-          .maybeSingle();
-
-        if (error) {
-          console.warn('Profile fetch error:', error.message);
-          return;
-        }
-        if (!profile) {
-          return;
-        }
-
-        const studentNameEl = document.getElementById('studentName');
-        const schoolNameEl = document.getElementById('schoolName');
-        const prnEl = document.getElementById('prnNumber');
-        const batchEl = document.getElementById('batchNumber');
-        const emailEl = document.getElementById('emailId');
-
-        if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
-        if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
-        if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
-        if (batchEl && !batchEl.value && profile.batch) {
-          const match = Array.from(batchEl.options).find(o => (o.value || '').toLowerCase() === String(profile.batch).toLowerCase());
-          if (!match && profile.batch) {
-            const opt = document.createElement('option');
-            opt.value = profile.batch;
-            opt.textContent = profile.batch;
-            batchEl.appendChild(opt);
-          }
-          batchEl.value = profile.batch;
-        }
-        if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-      } catch (e) {
-        console.warn('autofillFromProfile error:', e);
-      }
-    }
-    if (supabaseAvailable && sb) {
-      sb.auth.onAuthStateChange((_evt, _session) => {
-        autofillFromProfile();
-      });
-      autofillFromProfile();
-    }
-
-    // ---- Utility ----
-    function shuffleArray(arr){
-      for(let i = arr.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    // ---- Questions ----
-    const questions = [
-      {
-        type: "mcq",
-        text: "1. The primary instrument used for manual blood cell counting is the:",
-        options: [
-          "Spectrophotometer",
-          "Hemocytometer",
-          "Colorimeter",
-          "Centrifuge"
-        ],
-        answer: "Hemocytometer"
-      },
-      {
-        type: "mcq",
-        text: "2. What is the main function of the glacial acetic acid in WBC diluting fluid?",
-        options: [
-          "Stains cell nuclei",
-          "Lyses red blood cells",
-          "Maintains isotonicity",
-          "Acts as an anticoagulant"
-        ],
-        answer: "Lyses red blood cells"
-      },
-      {
-        type: "mcq",
-        text: "3. In the Neubauer chamber, the area used for counting white blood cells is:",
-        options: [
-          "Central square",
-          "Four large corner squares",
-          "All 25 squares",
-          "Triple-lined central square"
-        ],
-        answer: "Four large corner squares"
-      },
-      {
-        type: "mcq",
-        text: "4. The bead inside an RBC pipette is usually what color?",
-        options: [
-          "Red",
-          "Blue",
-          "White",
-          "Green"
-        ],
-        answer: "Red"
-      },
-      {
-        type: "mcq",
-        text: "5. Which of the following helps to prevent RBC aggregation and also acts as an anticoagulant in RBC diluting fluid?",
-        options: [
-          "Sodium chloride",
-          "Sodium sulfate",
-          "Mercuric chloride",
-          "Glacial acetic acid"
-        ],
-        answer: "Sodium sulfate"
-      },
-      {
-        type: "mcq",
-        text: "6. The depth of the improved Neubauer chamber is:",
-        options: [
-          "0.1 mm",
-          "1 mm",
-          "0.01 mm",
-          "0.5 mm"
-        ],
-        answer: "0.1 mm"
-      },
-      {
-        type: "mcq",
-        text: "7. Which of the following best describes the dilution ratio in an RBC pipette?",
-        options: [
-          "4:20",
-          "1:20",
-          "10:100",
-          "1:10"
-        ],
-        answer: "4:20"
-      },
-      {
-        type: "mcq",
-        text: "8. What is the main reason for using a cover glass on a hemocytometer?",
-        options: [
-          "To prevent evaporation",
-          "To increase magnification",
-          "To stain the cells",
-          "To color the grid lines"
-        ],
-        answer: "To prevent evaporation"
-      },
-      {
-        type: "mcq",
-        text: "9. Which component of the RBC diluting fluid acts as a preservative and antimicrobial?",
-        options: [
-          "Sodium chloride",
-          "Sodium sulfate",
-          "Mercuric chloride",
-          "Glacial acetic acid"
-        ],
-        answer: "Mercuric chloride"
-      },
-      {
-        type: "image-labels",
-        text: "10. Fill in the blanks:\n\n__________ maintains isotonicity\n__________ prevents RBC clumping and acts as anticoagulant\n__________ is a preservative and antimicrobial\n__________ is used in RBC diluting fluids",
-        image: "",
-        labels: [
-          {
-            name: "A",
-            answer: "Sodium chloride",
-            options: [
-              "Sodium chloride",
-              "Sodium sulfate",
-              "Mercuric chloride",
-              "Glacial acetic acid"
-            ]
-          },
-          {
-            name: "B",
-            answer: "Sodium sulfate",
-            options: [
-              "Sodium chloride",
-              "Sodium sulfate",
-              "Mercuric chloride",
-              "Glacial acetic acid"
-            ]
-          },
-          {
-            name: "C",
-            answer: "Mercuric chloride",
-            options: [
-              "Sodium chloride",
-              "Sodium sulfate",
-              "Mercuric chloride",
-              "Glacial acetic acid"
-            ]
-          },
-          {
-            name: "D",
-            answer: "Glacial acetic acid",
-            options: [
-              "Sodium chloride",
-              "Sodium sulfate",
-              "Mercuric chloride",
-              "Glacial acetic acid"
-            ]
-          }
-        ]
-      }
-    ];
-
-    questions.forEach(q => {
-      if(q.options) shuffleArray(q.options);
-      if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
-    });
-
-    // ---- Render Questions ----
-    function renderQuestions(){
-      const qs = document.getElementById('questionsSection');
-      if(!qs){
-        console.error('questionsSection not found in DOM.');
-        return;
-      }
-      qs.innerHTML = '<h2>Assessment Questions</h2>';
-      questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-        if(q.type === "mcq"){
-          q.options.forEach(opt => {
-            html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
-          });
-        } else if(q.type === "dropdown"){
-          html += `<select name="q${idx}" required><option value="">Select...</option>`;
-          q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += '</select>';
-        } else if(q.type === "image-labels"){
-          // Masked fill-in-the-blanks style
-          html += `<div>`;
-          html += `<select name="q${idx}_label0" required><option value="">Select...</option>`;
-          q.labels[0].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> maintains isotonicity<br><br>`;
-          html += `<select name="q${idx}_label1" required><option value="">Select...</option>`;
-          q.labels[1].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> prevents RBC clumping and acts as anticoagulant<br><br>`;
-          html += `<select name="q${idx}_label2" required><option value="">Select...</option>`;
-          q.labels[2].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> is a preservative and antimicrobial<br><br>`;
-          html += `<select name="q${idx}_label3" required><option value="">Select...</option>`;
-          q.labels[3].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> is used in RBC diluting fluids<br>`;
-          html += `</div>`;
-        }
-        html += '</div>';
-        qs.innerHTML += html;
-      });
-    }
-    renderQuestions();
-
-    // ---- Assignment Upload ----
-    let uploadedAssignmentPath = null;
-    let uploadedAssignmentUrl  = null;
-    let uploadingAssignment    = false;
-
-    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
-      const statusEl = document.getElementById('assignmentStatus');
-      const file = e.target.files[0];
-      statusEl.textContent = '';
-      uploadedAssignmentPath = null;
-      uploadedAssignmentUrl  = null;
-
-      if(!file) return;
-      if(file.type !== 'application/pdf'){
-        statusEl.textContent = 'Only PDF files allowed.';
-        e.target.value = '';
-        return;
-      }
-
-      uploadingAssignment = true;
-      statusEl.textContent = 'Uploading PDF...';
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        statusEl.textContent = 'Login required before upload.';
-        uploadingAssignment = false;
-        e.target.value = '';
-        return;
-      }
-
-      const uid = session.user.id;
-      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
-
-      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
-        filePath, file, { upsert:true, contentType:'application/pdf' }
-      );
-      if(upErr){
-        statusEl.textContent = 'Upload failed: ' + upErr.message;
-        uploadingAssignment = false;
-        return;
-      }
-
-      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
-      uploadedAssignmentPath = filePath;
-      uploadedAssignmentUrl  = urlData?.publicUrl || null;
-      uploadingAssignment = false;
-      statusEl.textContent = 'PDF uploaded successfully.';
-    });
-
-    // ---- Submission ----
-    document.getElementById('assessmentForm').onsubmit = async function(e){
-      e.preventDefault();
-      const errEl = document.getElementById('errorMsg');
-      const resEl = document.getElementById('resultMsg');
-      const submitBtn = document.getElementById('submitBtn');
-      errEl.textContent = '';
-      resEl.textContent = '';
-
-      if(!uploadedAssignmentPath){
-        errEl.textContent = uploadingAssignment
-          ? 'Please wait: assignment is still uploading...'
-          : 'Please upload the assignment PDF before submitting.';
-        return;
-      }
-
-      const form = e.target;
-
-      let allAnswered = true;
-      const answers = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          const v = form[`q${i}`]?.value?.trim() || '';
-          if(!v) allAnswered = false;
-          answers.push(v);
-        } else if(q.type === 'image-labels'){
-          const labelVals = [];
-          for(let lid=0; lid<q.labels.length; lid++){
-            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
-            if(!v) allAnswered = false;
-            labelVals.push(v);
-          }
-          answers.push(labelVals.join('; '));
-        }
-      }
-
-      if(!allAnswered){
-        errEl.textContent = 'Please answer all questions.';
-        return;
-      }
-      if(!form.declaration.checked){
-        errEl.textContent = 'You must agree to the declaration.';
-        return;
-      }
-
-      // Scoring
-      let marks = 0;
-      let maxMarks = 0;
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          maxMarks += 1;
-          if(answers[i] === q.answer) marks++;
-        } else if(q.type === 'image-labels'){
-          maxMarks += q.labels.length;
-          const parts = answers[i].split(';').map(s => s.trim());
-          q.labels.forEach((label, lid) => {
-            if(parts[lid] && parts[lid] === label.answer) marks++;
-          });
-        }
-      }
-
-      submitBtn.disabled = true;
-      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        alert('Please log in so your result is stored.');
-        window.location.href = '../login_Version4.html';
-        return;
-      }
-      const uid = session.user.id;
-
-      // Breakdown for result page
-      const breakdown = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          breakdown.push({
-            question: q.text,
-            type: q.type,
-            answer: answers[i],
-            correct: q.answer,
-            isCorrect: answers[i] === q.answer
-          });
-        } else if(q.type === 'image-labels'){
-          const parts = answers[i].split(';').map(s=>s.trim());
-          q.labels.forEach((label, lid) => {
-            breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
-              type: 'image-label',
-              answer: parts[lid],
-              correct: label.answer,
-              isCorrect: parts[lid] === label.answer
-            });
-          });
-        }
-      }
-      breakdown.push({
-        type: 'meta',
-        assignment: {
-          bucket: ASSIGNMENT_BUCKET,
-          path: uploadedAssignmentPath,
-          publicUrl: uploadedAssignmentUrl || null
-        }
-      });
-
-      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
-
-      const row = {
-        user_id: uid,
-        user_name: form.studentName.value.trim(),
-        experiment_id: EXPERIMENT_ID,
-        score: marks,
-        total: maxMarks,
-        submitted_at: new Date().toISOString(),
-        duration_sec: durationSec,
-        breakdown,
-        meta: {
-          email: form.emailId.value.trim(),
-          prn: form.prnNumber.value.trim(),
-          batch: form.batchNumber.value.trim(),
-          school_name: form.schoolName.value.trim(),
-          assessment_title: ASSESSMENT_TITLE
-        },
-        assignment_bucket: ASSIGNMENT_BUCKET,
-        assignment_path: uploadedAssignmentPath
-      };
-
-      const { error } = await sb.from('assessment_results').insert(row);
-      if(error){
-        console.error('Supabase insert error:', error);
-        errEl.textContent = 'Could not save result. Please retry.';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-    };
-  </script>
 </body>
 </html>
