@@ -2,542 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assessment: Hemoglobin Estimation by Sahli’s Method</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Experiment 9: Hemoglobin Estimation by Sahli’s Method</title>
+  <link rel="stylesheet" href="../style.css">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #1565c0; }
-    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
-    .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    .question { margin-bottom: 1.5em;}
-    .student-info label { display: block; margin: 0.5em 0 0.2em;}
-    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
-    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
-    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
-    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
-    .declaration { margin: 2em 0 1em 0; }
-    .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px;}
-    .submit-btn:disabled { background: #90caf9; }
-    .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
-    .error { color: #d32f2f; margin-bottom: 1em;}
-    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
-    label.dropdown-label { display: inline-block; min-width: 80px; }
-    @media (max-width: 600px) { .container { padding: 1rem; } }
+    body {
+      background: 
+        linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
+        url('../assets/images/experiment-9/pexels-pixabay-40568-bloodlab.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .exp-container {
+      max-width: 800px;
+      margin: 3rem auto 2rem auto;
+      background: rgba(255,255,255,0.96);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #90caf9;
+      padding: 2rem 2.5rem;
+    }
+    h1, h2, h3 {
+      color: #1a237e;
+      text-align: center;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #1565c0;
+      text-decoration: none;
+      margin: 0 1.1em;
+      font-weight: 500;
+      font-size: 1.08em;
+      transition: color 0.17s;
+    }
+    nav a:hover {
+      color: #512da8;
+      text-decoration: underline;
+    }
+    details {
+      margin-bottom: 1.5rem;
+      background: rgba(187, 222, 251, 0.35);
+      border-radius: 8px;
+      padding: 1em;
+    }
+    img {
+      display: block;
+      max-width: 90%;
+      margin: 18px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    @media (max-width: 600px) {
+      .exp-container { padding: 1rem; }
+      h1 { font-size: 1.4rem; }
+      nav a { font-size: 1em; margin: 0 0.6em; }
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Assessment: Hemoglobin Estimation by Sahli’s Method</h1>
+  <div class="exp-container">
+    <h1 id="experiment-9-hemoglobin-sahli">Experiment 9: Hemoglobin Estimation by Sahli’s Method</h1>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../experiments.html">Experiments</a>
       <a href="../assessments.html">Assessments</a>
       <a href="../references.html">References</a>
     </nav>
-  </header>
-  <div class="container">
-    <form id="assessmentForm" autocomplete="off">
-      <div class="student-info">
-        <h2>Student Information</h2>
-        <label for="studentName">Student Name*</label>
-        <input type="text" id="studentName" name="studentName" required>
-        <label for="schoolName">School Name*</label>
-        <input type="text" id="schoolName" name="schoolName" required>
-        <label for="prnNumber">PRN Number*</label>
-        <input type="text" id="prnNumber" name="prnNumber" required>
-        <label for="batchNumber">Batch Number*</label>
-        <select id="batchNumber" name="batchNumber" required>
-          <option value="">Select Batch</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-        <label for="emailId">Email ID (add your institutional email id)*</label>
-        <input type="email" id="emailId" name="emailId" required>
-        <div class="note" id="profileNote"></div>
-      </div>
-      <!-- Assignment Upload -->
-      <div class="assignment-upload">
-        <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
-        <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
-        <div id="assignmentStatus" class="assignment-status"></div>
-        <div class="note">Must finish uploading before submitting the assessment.</div>
-      </div>
-      <hr>
-      <div id="questionsSection"></div>
-      <div class="declaration">
-        <input type="checkbox" id="declaration" required>
-        <label for="declaration">
-          I hereby declare that this assessment is for my own progress and benefit. All answers submitted are my own and not generated by AI or provided by friends.
-        </label>
-      </div>
-      <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
-      <div class="error" id="errorMsg"></div>
-      <div class="result" id="resultMsg"></div>
-    </form>
+
+    <details open>
+      <summary><strong>Aim</strong></summary>
+      To estimate the hemoglobin content using Sahli’s Hellige method.
+    </details>
+
+    <details>
+      <summary><strong>Requirements</strong></summary>
+      <ul>
+        <li>Lancet</li>
+        <li>Denatured spirit or ethanol (70%)</li>
+        <li>Cotton swab</li>
+        <li>Sahli-Hellige Hemoglobinometer</li>
+        <li>Distilled water</li>
+        <li>0.1 N Hydrochloric acid (HCl)</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary><strong>Reference</strong></summary>
+      Practical Handbook of Human Anatomy and Physiology by S.R. Kale, Nirali Prakashan, 8th Edition (2002), pages 5 to 9
+    </details>
+
+    <details>
+      <summary><strong>Introduction</strong></summary>
+      Hemoglobin (Hb) is an iron-containing protein in red blood cells that transports oxygen from the lungs to tissues and returns carbon dioxide back to the lungs. Estimating hemoglobin levels is important for diagnosing conditions like anemia and monitoring overall health.
+      <img src="../assets/images/experiment-9/oxygen and carbon dio-xide exchange.jpg" alt="Oxygen and Carbon Dioxide Exchange"/>
+    </details>
+
+    <details>
+      <summary><strong>Principle</strong></summary>
+      This method is based on the acid hematin reaction. Hemoglobin reacts with hydrochloric acid to form brown-colored acid hematin. The solution is then diluted with distilled water until its color matches the standard comparator. The hemoglobin concentration is read directly from the calibrated tube.
+      <img src="../assets/images/experiment-9/Principle for determination of haemoglobin.png" alt="Principle for determination of haemoglobin"/>
+    </details>
+
+    <details>
+      <summary><strong>Hb Estimation Methods</strong></summary>
+      <ul>
+        <li><strong>Colorimetric Methods</strong>
+          <ul>
+            <li><strong>Cyanmethemoglobin Method:</strong> Converts hemoglobin to cyanmethemoglobin and measures absorbance using a spectrophotometer. Highly accurate.</li>
+            <li><strong>Sahli's Method:</strong> Visual comparison with a color standard. Simple but less precise.</li>
+          </ul>
+        </li>
+        <li><strong>Other Methods</strong>
+          <ul>
+            <li><strong>Gasometric Method:</strong> Measures oxygen released from hemoglobin. Used mainly for research.</li>
+            <li><strong>Chemical Method:</strong> Estimates iron content in hemoglobin. Complex and less common.</li>
+            <li><strong>Specific Gravity Method:</strong> Based on blood density. Rapid but less accurate.</li>
+            <li><strong>Point-of-Care Testing:</strong> Portable devices like Hemocue provide quick and reliable results.</li>
+          </ul>
+        </li>
+      </ul>
+      <img src="../assets/images/experiment-9/Methods available.png" alt="Methods available for Hb estimation"/>
+    </details>
+
+    <details>
+      <summary><strong>Procedure</strong></summary>
+      <ol>
+        <li>Fill the graduated tube with 0.1 N HCl up to the lowest mark.</li>
+        <li>Sterilize the fingertip with 70 percent alcohol and perform a bold prick using a lancet.</li>
+        <li>Draw 20 microliters of blood using the hemoglobin pipette.</li>
+        <li>Add the blood to the acid in the graduated tube.</li>
+        <li>Mix thoroughly with the stirrer and let it stand for 2 to 5 minutes.</li>
+        <li>Add distilled water drop by drop, stirring gently.</li>
+        <li>Continue dilution until the solution color matches the brown glass comparator.</li>
+        <li>Record the final reading from the graduated tube in grams per deciliter (g/dL).</li>
+      </ol>
+      <img src="../assets/images/experiment-9/Sahli hb determination Procedure.png" alt="Sahli Hb determination Procedure"/>
+    </details>
+
+    <details>
+      <summary><strong>Normal Hemoglobin Levels</strong></summary>
+      <ul>
+        <li><strong>Men:</strong> 13.5 to 17.5 g/dL</li>
+        <li><strong>Women:</strong> 12.0 to 15.5 g/dL</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary><strong>Report</strong></summary>
+      The hemoglobin level was found to be _______ g/dL.
+    </details>
   </div>
-  <script>
-    // ---- Supabase Constants & Init ----
-    const EXPERIMENT_ID = 'assessment-9-hemoglobin-sahli';
-    const ASSESSMENT_TITLE = 'Experiment No. 9 (Hemoglobin Estimation by Sahli’s Method)';
-    const ASSIGNMENT_BUCKET = 'assignments';
-    const pageStartTime = Date.now();
-
-    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
-    let sb = null;
-    if (supabaseAvailable) {
-      try {
-        sb = window.supabase.createClient(
-          'https://hunlistfklwvpivfjmbk.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-        );
-      } catch (e) {
-        console.warn('Supabase init failed:', e);
-        supabaseAvailable = false;
-      }
-    }
-
-    // ---- Autofill from Profile ----
-    async function autofillFromProfile() {
-      if (!supabaseAvailable || !sb) return;
-      try {
-        const { data: { session }, error: sessErr } = await sb.auth.getSession();
-        if (sessErr) console.warn('getSession error:', sessErr);
-        if (!session?.user) return;
-
-        const uid = session.user.id;
-        const { data: profile, error } = await sb
-          .from('profiles')
-          .select('name, email, prn, batch, school_name')
-          .eq('id', uid)
-          .maybeSingle();
-
-        if (error) {
-          console.warn('Profile fetch error:', error.message);
-          return;
-        }
-        if (!profile) {
-          return;
-        }
-
-        const studentNameEl = document.getElementById('studentName');
-        const schoolNameEl = document.getElementById('schoolName');
-        const prnEl = document.getElementById('prnNumber');
-        const batchEl = document.getElementById('batchNumber');
-        const emailEl = document.getElementById('emailId');
-
-        if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
-        if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
-        if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
-        if (batchEl && !batchEl.value && profile.batch) {
-          const match = Array.from(batchEl.options).find(o => (o.value || '').toLowerCase() === String(profile.batch).toLowerCase());
-          if (!match && profile.batch) {
-            const opt = document.createElement('option');
-            opt.value = profile.batch;
-            opt.textContent = profile.batch;
-            batchEl.appendChild(opt);
-          }
-          batchEl.value = profile.batch;
-        }
-        if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-      } catch (e) {
-        console.warn('autofillFromProfile error:', e);
-      }
-    }
-    if (supabaseAvailable && sb) {
-      sb.auth.onAuthStateChange((_evt, _session) => {
-        autofillFromProfile();
-      });
-      autofillFromProfile();
-    }
-
-    // ---- Utility ----
-    function shuffleArray(arr){
-      for(let i = arr.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    // ---- Questions ----
-    const questions = [
-      {
-        type: "mcq",
-        text: "1. What is the main principle of Sahli’s method for hemoglobin estimation?",
-        options: [
-          "Hemoglobin is converted to oxyhemoglobin and measured spectrophotometrically",
-          "Hemoglobin reacts with dilute HCl to form acid hematin, which is visually matched to a color standard",
-          "Hemoglobin precipitates and is weighed",
-          "Hemoglobin is oxidized to methemoglobin and measured by its color"
-        ],
-        answer: "Hemoglobin reacts with dilute HCl to form acid hematin, which is visually matched to a color standard"
-      },
-      {
-        type: "mcq",
-        text: "2. What is the color of acid hematin formed in Sahli’s method?",
-        options: [
-          "Bright red",
-          "Dark blue",
-          "Brown",
-          "Yellow"
-        ],
-        answer: "Brown"
-      },
-      {
-        type: "mcq",
-        text: "3. Which of the following is NOT a step in Sahli’s method?",
-        options: [
-          "Adding blood to dilute HCl",
-          "Adding potassium cyanide",
-          "Matching color with a comparator",
-          "Measuring the level in the graduated tube"
-        ],
-        answer: "Adding potassium cyanide"
-      },
-      {
-        type: "mcq",
-        text: "4. In Sahli’s method, 0.1 N HCl is used to:",
-        options: [
-          "Lyse RBCs and convert hemoglobin to acid hematin",
-          "Precipitate hemoglobin",
-          "Convert hemoglobin to methemoglobin",
-          "Dissolve plasma proteins"
-        ],
-        answer: "Lyse RBCs and convert hemoglobin to acid hematin"
-      },
-      {
-        type: "mcq",
-        text: "5. Which of the following conditions can cause a falsely low hemoglobin value in Sahli’s method?",
-        options: [
-          "Incomplete mixing of blood with acid",
-          "Waiting more than 10 minutes before reading",
-          "Using distilled water instead of HCl",
-          "Overfilling the graduated tube"
-        ],
-        answer: "Incomplete mixing of blood with acid"
-      },
-      {
-        type: "mcq",
-        text: "6. Which type of error is most likely if the color in the tube is matched too rapidly with the comparator?",
-        options: [
-          "Value will be too high",
-          "Value will be too low",
-          "No effect on value",
-          "Hemoglobin will not react"
-        ],
-        answer: "Value will be too low"
-      },
-      {
-        type: "mcq",
-        text: "7. The hemoglobin pipette in Sahli’s method is used to measure:",
-        options: [
-          "20 microliters of blood",
-          "1 mL of blood",
-          "100 microliters of blood",
-          "0.5 mL of blood"
-        ],
-        answer: "20 microliters of blood"
-      },
-      {
-        type: "mcq",
-        text: "8. The Sahli-Hellige hemoglobinometer provides a direct reading of hemoglobin concentration in:",
-        options: [
-          "mg/dL",
-          "g/L",
-          "g/dL",
-          "mm Hg"
-        ],
-        answer: "g/dL"
-      },
-      {
-        type: "mcq",
-        text: "9. Which of the following methods is considered more accurate than Sahli’s method for hemoglobin estimation?",
-        options: [
-          "Color matching method",
-          "Cyanmethemoglobin method",
-          "Specific gravity method",
-          "Talquist method"
-        ],
-        answer: "Cyanmethemoglobin method"
-      },
-      {
-        type: "image-labels",
-        text: "10. Fill in the blanks in the following flow chart for Sahli’s method:\n\n→ Add dilute HCl to blood sample\n→ RBCs break down → __________\n→ Hemoglobin (Hb) reacts with HCl\n→ Forms __________ (brownish solution)\n→ Wait for ~10 minutes\n→ __________ develops",
-        image: "",
-        labels: [
-          {
-            name: "A",
-            answer: "Hemolysis",
-            options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
-            ]
-          },
-          {
-            name: "B",
-            answer: "Acid Hematin",
-            options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
-            ]
-          },
-          {
-            name: "C",
-            answer: "Color",
-            options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
-            ]
-          }
-        ]
-      }
-    ];
-
-    questions.forEach(q => {
-      if(q.options) shuffleArray(q.options);
-      if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
-    });
-
-    // ---- Render Questions ----
-    function renderQuestions(){
-      const qs = document.getElementById('questionsSection');
-      if(!qs){
-        console.error('questionsSection not found in DOM.');
-        return;
-      }
-      qs.innerHTML = '<h2>Assessment Questions</h2>';
-      questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
-        if(q.type === "mcq"){
-          q.options.forEach(opt => {
-            html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
-          });
-        } else if(q.type === "dropdown"){
-          html += `<select name="q${idx}" required><option value="">Select...</option>`;
-          q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += '</select>';
-        } else if(q.type === "image-labels"){
-          // Flow chart style (no image)
-          html += `<div>`;
-          html += `→ Add dilute HCl to blood sample<br>`;
-          html += `→ RBCs break down → <select name="q${idx}_label0" required><option value="">Select...</option>`;
-          q.labels[0].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select><br><br>`;
-          html += `→ Hemoglobin (Hb) reacts with HCl<br>`;
-          html += `→ Forms <select name="q${idx}_label1" required><option value="">Select...</option>`;
-          q.labels[1].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> (brownish solution)<br><br>`;
-          html += `→ Wait for ~10 minutes<br>`;
-          html += `→ <select name="q${idx}_label2" required><option value="">Select...</option>`;
-          q.labels[2].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> develops</div>`;
-        }
-        html += '</div>';
-        qs.innerHTML += html;
-      });
-    }
-    renderQuestions();
-
-    // ---- Assignment Upload ----
-    let uploadedAssignmentPath = null;
-    let uploadedAssignmentUrl  = null;
-    let uploadingAssignment    = false;
-
-    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
-      const statusEl = document.getElementById('assignmentStatus');
-      const file = e.target.files[0];
-      statusEl.textContent = '';
-      uploadedAssignmentPath = null;
-      uploadedAssignmentUrl  = null;
-
-      if(!file) return;
-      if(file.type !== 'application/pdf'){
-        statusEl.textContent = 'Only PDF files allowed.';
-        e.target.value = '';
-        return;
-      }
-
-      uploadingAssignment = true;
-      statusEl.textContent = 'Uploading PDF...';
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        statusEl.textContent = 'Login required before upload.';
-        uploadingAssignment = false;
-        e.target.value = '';
-        return;
-      }
-
-      const uid = session.user.id;
-      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
-
-      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
-        filePath, file, { upsert:true, contentType:'application/pdf' }
-      );
-      if(upErr){
-        statusEl.textContent = 'Upload failed: ' + upErr.message;
-        uploadingAssignment = false;
-        return;
-      }
-
-      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
-      uploadedAssignmentPath = filePath;
-      uploadedAssignmentUrl  = urlData?.publicUrl || null;
-      uploadingAssignment = false;
-      statusEl.textContent = 'PDF uploaded successfully.';
-    });
-
-    // ---- Submission ----
-    document.getElementById('assessmentForm').onsubmit = async function(e){
-      e.preventDefault();
-      const errEl = document.getElementById('errorMsg');
-      const resEl = document.getElementById('resultMsg');
-      const submitBtn = document.getElementById('submitBtn');
-      errEl.textContent = '';
-      resEl.textContent = '';
-
-      if(!uploadedAssignmentPath){
-        errEl.textContent = uploadingAssignment
-          ? 'Please wait: assignment is still uploading...'
-          : 'Please upload the assignment PDF before submitting.';
-        return;
-      }
-
-      const form = e.target;
-
-      let allAnswered = true;
-      const answers = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          const v = form[`q${i}`]?.value?.trim() || '';
-          if(!v) allAnswered = false;
-          answers.push(v);
-        } else if(q.type === 'image-labels'){
-          const labelVals = [];
-          for(let lid=0; lid<q.labels.length; lid++){
-            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
-            if(!v) allAnswered = false;
-            labelVals.push(v);
-          }
-          answers.push(labelVals.join('; '));
-        }
-      }
-
-      if(!allAnswered){
-        errEl.textContent = 'Please answer all questions.';
-        return;
-      }
-      if(!form.declaration.checked){
-        errEl.textContent = 'You must agree to the declaration.';
-        return;
-      }
-
-      // Scoring
-      let marks = 0;
-      let maxMarks = 0;
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          maxMarks += 1;
-          if(answers[i] === q.answer) marks++;
-        } else if(q.type === 'image-labels'){
-          maxMarks += q.labels.length;
-          const parts = answers[i].split(';').map(s => s.trim());
-          q.labels.forEach((label, lid) => {
-            if(parts[lid] && parts[lid] === label.answer) marks++;
-          });
-        }
-      }
-
-      submitBtn.disabled = true;
-      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        alert('Please log in so your result is stored.');
-        window.location.href = '../login_Version4.html';
-        return;
-      }
-      const uid = session.user.id;
-
-      // Breakdown for result page
-      const breakdown = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          breakdown.push({
-            question: q.text,
-            type: q.type,
-            answer: answers[i],
-            correct: q.answer,
-            isCorrect: answers[i] === q.answer
-          });
-        } else if(q.type === 'image-labels'){
-          const parts = answers[i].split(';').map(s=>s.trim());
-          q.labels.forEach((label, lid) => {
-            breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
-              type: 'image-label',
-              answer: parts[lid],
-              correct: label.answer,
-              isCorrect: parts[lid] === label.answer
-            });
-          });
-        }
-      }
-      breakdown.push({
-        type: 'meta',
-        assignment: {
-          bucket: ASSIGNMENT_BUCKET,
-          path: uploadedAssignmentPath,
-          publicUrl: uploadedAssignmentUrl || null
-        }
-      });
-
-      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
-
-      const row = {
-        user_id: uid,
-        user_name: form.studentName.value.trim(),
-        experiment_id: EXPERIMENT_ID,
-        score: marks,
-        total: maxMarks,
-        submitted_at: new Date().toISOString(),
-        duration_sec: durationSec,
-        breakdown,
-        meta: {
-          email: form.emailId.value.trim(),
-          prn: form.prnNumber.value.trim(),
-          batch: form.batchNumber.value.trim(),
-          school_name: form.schoolName.value.trim(),
-          assessment_title: ASSESSMENT_TITLE
-        },
-        assignment_bucket: ASSIGNMENT_BUCKET,
-        assignment_path: uploadedAssignmentPath
-      };
-
-      const { error } = await sb.from('assessment_results').insert(row);
-      if(error){
-        console.error('Supabase insert error:', error);
-        errEl.textContent = 'Could not save result. Please retry.';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-    };
-  </script>
 </body>
 </html>
