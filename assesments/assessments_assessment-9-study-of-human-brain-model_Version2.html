@@ -263,41 +263,49 @@
         answer: "Cyanmethemoglobin method"
       },
       {
+        // 10th question replaced by image and dropdowns
         type: "image-labels",
-        text: "10. Fill in the blanks in the following flow chart for Sahli’s method:\n\n→ Add dilute HCl to blood sample\n→ RBCs break down → __________\n→ Hemoglobin (Hb) reacts with HCl\n→ Forms __________ (brownish solution)\n→ Wait for ~10 minutes\n→ __________ develops",
-        image: "",
+        text: "",
+        image: "../assets/images/experiment-9/Assessment/haemoglobin question.png",
         labels: [
           {
             name: "A",
-            answer: "Hemolysis",
+            answer: "Citrate",
             options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
+              "Citrate",
+              "Hematin",
+              "Water",
+              "Bicarbonate"
             ]
           },
           {
             name: "B",
-            answer: "Acid Hematin",
+            answer: "Pipette",
             options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
+              "Pipette",
+              "Test tube",
+              "Beaker",
+              "Centrifuge"
             ]
           },
           {
             name: "C",
-            answer: "Color",
+            answer: "Vertical",
             options: [
-              "Hemolysis",
-              "Acid Hematin",
-              "Color",
-              "Clotting",
-              "Sedimentation"
+              "Vertical",
+              "Horizontal",
+              "Inclined",
+              "Upside down"
+            ]
+          },
+          {
+            name: "D",
+            answer: "60",
+            options: [
+              "10",
+              "30",
+              "60",
+              "120"
             ]
           }
         ]
@@ -318,8 +326,9 @@
       }
       qs.innerHTML = '<h2>Assessment Questions</h2>';
       questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        let html = `<div class="question">`;
         if(q.type === "mcq"){
+          html += `<label><b>${q.text}</b></label><br>`;
           q.options.forEach(opt => {
             html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
           });
@@ -328,20 +337,22 @@
           q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
           html += '</select>';
         } else if(q.type === "image-labels"){
-          // Flow chart style (no image)
+          // IMAGE + DROPDOWN : NO TITLE, IMAGE ONLY, THEN OPTIONS
+          html += `<img src="${q.image}" alt="Assessment Question 10" class="question-img"><br>`;
           html += `<div>`;
-          html += `→ Add dilute HCl to blood sample<br>`;
-          html += `→ RBCs break down → <select name="q${idx}_label0" required><option value="">Select...</option>`;
+          html += `<select name="q${idx}_label0" required><option value="">Select...</option>`;
           q.labels[0].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select><br><br>`;
-          html += `→ Hemoglobin (Hb) reacts with HCl<br>`;
-          html += `→ Forms <select name="q${idx}_label1" required><option value="">Select...</option>`;
+          html += `</select> `;
+          html += `<select name="q${idx}_label1" required><option value="">Select...</option>`;
           q.labels[1].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> (brownish solution)<br><br>`;
-          html += `→ Wait for ~10 minutes<br>`;
-          html += `→ <select name="q${idx}_label2" required><option value="">Select...</option>`;
+          html += `</select> `;
+          html += `<select name="q${idx}_label2" required><option value="">Select...</option>`;
           q.labels[2].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> develops</div>`;
+          html += `</select> `;
+          html += `<select name="q${idx}_label3" required><option value="">Select...</option>`;
+          q.labels[3].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+          html += `</select>`;
+          html += `</div>`;
         }
         html += '</div>';
         qs.innerHTML += html;
@@ -488,7 +499,7 @@
           const parts = answers[i].split(';').map(s=>s.trim());
           q.labels.forEach((label, lid) => {
             breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
+              question: `Q10 (Label ${label.name})`,
               type: 'image-label',
               answer: parts[lid],
               correct: label.answer,
