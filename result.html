@@ -44,11 +44,9 @@
     .resubmission-status-message.disabled { color:#888; }
     .resubmission-toggle-btn { margin-bottom:4px; }
     .debug-log { font-size:11px; color:#666; line-height:1.3; }
-    /* Modal */
     #edit-assignment-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); z-index:1000; align-items:center; justify-content:center; }
     #edit-assignment-modal > div { background:#fff; border-radius:10px; max-width:420px; width:92%; margin:auto; padding:20px; box-shadow:0 4px 18px rgba(0,0,0,0.25); }
     #modal-debug { max-height:80px; overflow:auto; width:100%; background:#f7f9fe; border:1px solid #d4e4ff; padding:4px 6px; border-radius:4px; font-size:11px; }
-    /* Details row */
     tr.details-row td { background:#f5f9ff; border-bottom:1px solid #cfe0ff; }
     .details-wrapper { width:100%; }
     .details-header { font-weight:600; color:#0d47a1; margin:4px 0 10px; display:flex; flex-wrap:wrap; gap:14px; font-size:13px; }
@@ -117,7 +115,7 @@
         <button id="reset" class="btn ghost">Reset</button>
         <div class="export-bar">
           <button id="export-summary" class="btn ghost" title="Export summary sheet (no question details)">Export (Summary)</button>
-          <button id="export-details" class="btn ghost" title="Export results + question breakdown">Export (With Details)</button>
+            <button id="export-details" class="btn ghost" title="Export results + question breakdown">Export (With Details)</button>
         </div>
       </div>
     </section>
@@ -186,6 +184,8 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
+    console.log('Result script loaded (IST formatter active)');
+
     /***************** Utilities & Globals *****************/
     function debug(msg){
       console.log("[DEBUG]", msg);
@@ -231,29 +231,32 @@
       if(Number.isNaN(num)) return '—';
       return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
+
+    // IST date formatter (with fallback)
     function fmtDate(s){
       if(!s) return '—';
       try {
         return new Date(s).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
+            year:'numeric', month:'2-digit', day:'2-digit',
+          hour:'2-digit', minute:'2-digit', second:'2-digit',
+          hour12:false
         });
       } catch(e){
-        // fallback for old browsers
         const d = new Date(s);
-        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-        const ist = new Date(utc + (5.5 * 3600000));
+        const utc = d.getTime() + d.getTimezoneOffset()*60000;
+        const ist = new Date(utc + 5.5*3600000);
         const pad = n => String(n).padStart(2,'0');
         return `${pad(ist.getDate())}/${pad(ist.getMonth()+1)}/${ist.getFullYear()}, ${pad(ist.getHours())}:${pad(ist.getMinutes())}:${pad(ist.getSeconds())}`;
       }
     }
-    function fmtDur(sec){ if(sec==null) return '—'; const s=Number(sec)||0; const m=Math.floor(s/60); return m+'m '+(s%60)+'s'; }
+
+    function fmtDur(sec){
+      if(sec==null) return '—';
+      const s=Number(sec)||0;
+      const m=Math.floor(s/60);
+      return m+'m '+(s%60)+'s';
+    }
     function has(v){ return typeof v==='string'? v.trim().length>0 : !!v; }
     function escapeHTML(str){
       return String(str)
@@ -490,7 +493,6 @@
         if(toggleBtn){ toggleBtn.classList.remove('open'); toggleBtn.textContent='Details'; }
         return;
       }
-      // Insert after base row
       const detailsTr = document.createElement('tr');
       detailsTr.className = 'details-row';
       detailsTr.id = 'details-for-'+currentRows[rowIdx].id;
@@ -577,7 +579,6 @@
         const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
         const totalMarks = (scoreNum||0) + (marksVal||0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum)?'?': totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
-        // Marks cell
         let marksCell = '';
         if(isAdmin){
           marksCell = `<div class="marks-cell">
@@ -588,7 +589,6 @@
         } else {
           marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
         }
-        // Assignment
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canView = isAdmin || (currentUser && r.user_id===currentUser.id);
         if(r.assignment_path && canView){
@@ -599,7 +599,6 @@
         } else if(r.assignment_path){
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
-        // Resubmission
         const effective = effectiveResubAllowed(r);
         let resubmitCell = '<div class="resubmission-status-box">';
         if(isAdmin){
@@ -670,7 +669,7 @@
         const totalMarks = (scoreNum||0)+(marksVal||0);
         return {
           RowID: r.id,
-            StudentName: r.user_name || email || r.user_id || '',
+          StudentName: r.user_name || email || r.user_id || '',
           Email: email,
           Assessment: assessmentTitle,
           PRN: prn,
