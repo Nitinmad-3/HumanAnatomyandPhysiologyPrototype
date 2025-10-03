@@ -17,8 +17,6 @@
     .submit-btn:disabled { background: #b39ddb; }
     .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
     .error { color: #d32f2f; margin-bottom: 1em;}
-    .feedback-wrong { color: #d32f2f; }
-    .feedback-correct { color: #388e3c; }
     .assignment-upload { background: #ede7f6; padding: 1em; border-radius: 8px; margin-bottom: 2em; }
     .assignment-upload label { font-weight: bold; }
     .assignment-upload input[type="file"] { margin-top: 0.5em; }
@@ -26,7 +24,6 @@
     @media (max-width: 600px) { .container { padding: 1rem; } }
     .note { font-size: 0.9em; color: #6a1b9a; margin-bottom: 0.5rem; }
   </style>
-  <!-- Supabase for authentication, storage, and database -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -75,7 +72,6 @@
       </div>
       <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
       <div class="error" id="errorMsg"></div>
-      <div class="result" id="resultMsg"></div>
     </form>
   </div>
 
@@ -333,77 +329,23 @@
 
         // Calculate marks
         let marks = 0;
+        let maxMarks = 0;
         for (let i = 0; i < questions.length; i++) {
           if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
+            maxMarks += 1;
             if (answers[i].toLowerCase() === questions[i].answer.toLowerCase()) marks++;
           } else if (questions[i].type === "image-labels") {
             const input = answers[i].split(";").map(s => s.trim());
             questions[i].labels.forEach((label, lid) => {
+              maxMarks += 1;
               if (input[lid] && input[lid].toLowerCase() === label.answer.toLowerCase()) marks++;
             });
           }
         }
 
-        // Google Sheet submission (unchanged)
-        const data = new FormData();
-        data.append('timestamp', new Date().toISOString());
-        data.append('studentName', form.studentName.value.trim());
-        data.append('schoolName', form.schoolName.value.trim());
-        data.append('prnNumber', form.prnNumber.value.trim());
-        data.append('batchNumber', form.batchNumber.value.trim());
-        data.append('emailId', form.emailId.value.trim());
-        data.append('experiment', "Study of Compound Microscope");
-        answers.forEach((ans,i) => data.append('q'+i, ans));
-        data.append('marks', marks);
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxUCZ3_w4QW9oonYVc5O0jb-tzpd_IRKz0KddkWZjpeH_BsDof5KLlBJwUSSmZhCvho/exec";
-        try { await fetch(scriptURL, { method: "POST", body: data }); } catch(e) { console.error(e); }
-
-        // Feedback
-        let maxMarks = 0;
-        for (let i = 0; i < questions.length; i++) {
-          if (questions[i].type === "mcq" || questions[i].type === "dropdown") maxMarks += 1;
-          else if (questions[i].type === "image-labels") maxMarks += questions[i].labels.length;
-        }
-        document.getElementById("resultMsg").innerHTML = `Quiz submitted! You scored ${marks} out of ${maxMarks} on the auto-graded questions.`;
-
-        let feedbackHtml = "<hr><b>Review your answers:</b><br>";
-        for (let i = 0; i < questions.length; i++) {
-          let userAns = answers[i];
-          if (questions[i].type === "mcq" || questions[i].type === "dropdown") {
-            const correctAns = questions[i].answer;
-            const isCorrect = (userAns.toLowerCase() === correctAns.toLowerCase());
-            feedbackHtml += `<div style="margin-bottom:1em;">
-              <b>Q${i+1}:</b> ${questions[i].text}<br>
-              <span class="${isCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-                Your answer: <i>${userAns || "(blank)"}</i> – <b>${isCorrect ? "Correct" : "Wrong"}</b>
-              </span><br>
-              ${!isCorrect ? `<span class="feedback-correct">Correct answer: <b>${correctAns}</b></span>` : ""}
-            </div>`;
-          } else if (questions[i].type === "image-labels") {
-            let userLabels = userAns.split(";").map(s => s.trim());
-            let subFeedback = "";
-            questions[i].labels.forEach((label, lid) => {
-              let labelAns = userLabels[lid] || "";
-              let labelCorrect = labelAns.toLowerCase() === label.answer.toLowerCase();
-              subFeedback += `<br>
-                <span class="${labelCorrect ? 'feedback-correct' : 'feedback-wrong'}">
-                  <b>Label ${label.name}:</b> Your answer: <i>${labelAns || "(blank)"}</i> – <b>${labelCorrect ? "Correct" : "Wrong"}</b>
-                </span>
-                ${!labelCorrect ? `<span class="feedback-correct"> Correct: ${label.answer}</span>` : ""}
-              `;
-            });
-            feedbackHtml += `<div style="margin-bottom:1em;">
-              <b>Q${i+1}:</b> ${questions[i].text} ${subFeedback}
-            </div>`;
-          }
-        }
-        document.getElementById("resultMsg").innerHTML += feedbackHtml;
-
-        document.getElementById("submitBtn").disabled = true;
-
-        // ---------- Supabase Save ----------
+        // Supabase Save
         if (!supabaseAvailable || !sb) {
-          alert('Supabase is not available in this preview. Your answers were recorded to Google Sheet, but result cannot be saved to the portal.');
+          alert('Supabase is not available in this preview. Your result cannot be saved to the portal.');
           return;
         }
 
@@ -432,7 +374,6 @@
 
         const durationSec = Math.round((Date.now() - pageStartTime) / 1000);
 
-        // ---------- IMPORTANT: DO NOT SEND 'percentage' ----------
         const row = {
           user_id: uid,
           user_name: document.getElementById('studentName').value.trim(),
@@ -460,7 +401,7 @@
           return;
         }
 
-        // Redirect to results page, pre-filtered
+        // Redirect to results page
         window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
       };
     });
