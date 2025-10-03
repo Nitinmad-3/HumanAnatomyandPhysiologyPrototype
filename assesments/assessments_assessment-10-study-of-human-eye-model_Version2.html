@@ -263,9 +263,10 @@
         answer: "Mercuric chloride"
       },
       {
+        // Replacing Q10 with image and dropdowns, no title, just image and 4 dropdowns
         type: "image-labels",
-        text: "10. Fill in the blanks:\n\n__________ maintains isotonicity\n__________ prevents RBC clumping and acts as anticoagulant\n__________ is a preservative and antimicrobial\n__________ is used in RBC diluting fluids",
-        image: "",
+        text: "",
+        image: "../assets/images/experiment-10/Assessment/intro to hemocytometry.png",
         labels: [
           {
             name: "A",
@@ -325,8 +326,9 @@
       }
       qs.innerHTML = '<h2>Assessment Questions</h2>';
       questions.forEach((q, idx) => {
-        let html = `<div class="question"><label><b>${q.text}</b></label><br>`;
+        let html = `<div class="question">`;
         if(q.type === "mcq"){
+          html += `<label><b>${q.text}</b></label><br>`;
           q.options.forEach(opt => {
             html += `<label><input type="radio" name="q${idx}" value="${opt}" required> ${opt}</label><br>`;
           });
@@ -335,20 +337,20 @@
           q.options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
           html += '</select>';
         } else if(q.type === "image-labels"){
-          // Masked fill-in-the-blanks style
+          html += `<img src="${q.image}" alt="Assessment Question 10" class="question-img"><br>`;
           html += `<div>`;
           html += `<select name="q${idx}_label0" required><option value="">Select...</option>`;
           q.labels[0].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> maintains isotonicity<br><br>`;
+          html += `</select> `;
           html += `<select name="q${idx}_label1" required><option value="">Select...</option>`;
           q.labels[1].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> prevents RBC clumping and acts as anticoagulant<br><br>`;
+          html += `</select> `;
           html += `<select name="q${idx}_label2" required><option value="">Select...</option>`;
           q.labels[2].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> is a preservative and antimicrobial<br><br>`;
+          html += `</select> `;
           html += `<select name="q${idx}_label3" required><option value="">Select...</option>`;
           q.labels[3].options.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
-          html += `</select> is used in RBC diluting fluids<br>`;
+          html += `</select>`;
           html += `</div>`;
         }
         html += '</div>';
@@ -496,7 +498,7 @@
           const parts = answers[i].split(';').map(s=>s.trim());
           q.labels.forEach((label, lid) => {
             breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
+              question: `Q10 (Label ${label.name})`,
               type: 'image-label',
               answer: parts[lid],
               correct: label.answer,
