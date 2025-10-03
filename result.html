@@ -231,33 +231,28 @@
       if(Number.isNaN(num)) return '—';
       return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
-
-    // --- IST formatting additions ---
-    function fmtIST(date){
-      return date.toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-        year:'numeric', month:'2-digit', day:'2-digit',
-        hour:'2-digit', minute:'2-digit', second:'2-digit',
-        hour12:false
-      });
-    }
-    function fmtISTRaw(s){
-      if(!s) return '';
-      const d = new Date(s);
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Kolkata',
-        year:'numeric', month:'2-digit', day:'2-digit',
-        hour:'2-digit', minute:'2-digit', second:'2-digit',
-        hour12:false
-      }).formatToParts(d).reduce((a,p)=>{a[p.type]=p.value;return a;}, {});
-      return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
-    }
     function fmtDate(s){
       if(!s) return '—';
-      return fmtIST(new Date(s));
+      try {
+        return new Date(s).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      } catch(e){
+        // fallback for old browsers
+        const d = new Date(s);
+        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        const ist = new Date(utc + (5.5 * 3600000));
+        const pad = n => String(n).padStart(2,'0');
+        return `${pad(ist.getDate())}/${pad(ist.getMonth()+1)}/${ist.getFullYear()}, ${pad(ist.getHours())}:${pad(ist.getMinutes())}:${pad(ist.getSeconds())}`;
+      }
     }
-    // --- end IST additions ---
-
     function fmtDur(sec){ if(sec==null) return '—'; const s=Number(sec)||0; const m=Math.floor(s/60); return m+'m '+(s%60)+'s'; }
     function has(v){ return typeof v==='string'? v.trim().length>0 : !!v; }
     function escapeHTML(str){
@@ -495,6 +490,7 @@
         if(toggleBtn){ toggleBtn.classList.remove('open'); toggleBtn.textContent='Details'; }
         return;
       }
+      // Insert after base row
       const detailsTr = document.createElement('tr');
       detailsTr.className = 'details-row';
       detailsTr.id = 'details-for-'+currentRows[rowIdx].id;
@@ -590,7 +586,7 @@
             <span id="marks-status-${r.id}" class="marks-status">${marksVal!=null ? 'Saved' : '<span class="marks-pending">Pending</span>'}</span>
           </div>`;
         } else {
-            marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
+          marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
         }
         // Assignment
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
@@ -674,7 +670,7 @@
         const totalMarks = (scoreNum||0)+(marksVal||0);
         return {
           RowID: r.id,
-          StudentName: r.user_name || email || r.user_id || '',
+            StudentName: r.user_name || email || r.user_id || '',
           Email: email,
           Assessment: assessmentTitle,
           PRN: prn,
@@ -683,8 +679,7 @@
           AssignmentMarks: marksVal,
           TotalMarks: totalMarks,
           Percentage: r.percent ?? r.percentage,
-          SubmittedAt: r.submitted_at,              // original UTC ISO
-          SubmittedAtIST: fmtISTRaw(r.submitted_at), // new IST display
+          SubmittedAt: r.submitted_at,
           DurationSec: r.duration_sec,
           ResubmissionAllowedStored: r.resubmission_allowed,
           EffectiveResubmission: effectiveResubAllowed(r)
