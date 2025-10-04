@@ -172,6 +172,31 @@
       margin-top:8px;
     }
 
+    /* Chat styles */
+    .chat-card{
+      margin-top:14px;
+      border:1px solid var(--chip-bd);
+      background:#fff;
+      border-radius:14px;
+      box-shadow: var(--shadow-soft);
+      padding:12px;
+    }
+    .chat-head{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
+    .chat-head .left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .chat-title{ font-weight:800; color:var(--blue-600); }
+    .room-select{ padding:6px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#f9fbff; }
+    .chat-box{
+      margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe;
+      border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px;
+    }
+    .chat-line{ display:flex; gap:8px; }
+    .msg{ padding:8px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#fff; max-width:75%; }
+    .me .msg{ background:#e8f5e9; border-color:#c8e6c9; }
+    .meta{ font-size:11px; color:#6b84c7; margin-top:4px; }
+    .chat-input-row{ display:flex; gap:8px; margin-top:10px; }
+    .chat-input{ flex:1; padding:10px; border-radius:10px; border:1px solid var(--chip-bd); }
+    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background:var(--blue); color:#fff; font-weight:800; }
+
     .intro {
       max-width: 920px;
       margin: 14px auto 0 auto;
@@ -231,6 +256,28 @@
             <a href="admin_portal.html" class="btn btn-primary" id="pc-admin-portal" style="display:none;">Open Admin Portal</a>
           </div>
           <div id="pc-note" class="note" style="display:none;"></div>
+
+          <!-- Student Chat -->
+          <div id="chat-section" class="chat-card" style="display:none;">
+            <div class="chat-head">
+              <div class="left">
+                <div class="chat-title">Messages</div>
+                <select id="chat-room" class="room-select" aria-label="Select chat audience">
+                  <option value="global">Global (everyone)</option>
+                  <option value="dm">Admin (private)</option>
+                </select>
+              </div>
+              <div id="chat-status" class="muted">—</div>
+            </div>
+            <div id="chat-box" class="chat-box" aria-live="polite"></div>
+            <div class="chat-input-row">
+              <input id="chat-input" class="chat-input" placeholder="Type a message…" />
+              <button id="chat-send" class="chat-send">Send</button>
+            </div>
+            <div id="chat-setup-hint" class="muted" style="margin-top:6px; display:none;">
+              Chat backend is not set up yet. Ask admin to run setup_portal.sql (portal_chat).
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -289,6 +336,20 @@
       const pcAdminBtn = document.getElementById('pc-admin-portal');
       const pcNote = document.getElementById('pc-note');
 
+      // Chat elements
+      const chatSection = document.getElementById('chat-section');
+      const chatRoomSel = document.getElementById('chat-room');
+      const chatBox = document.getElementById('chat-box');
+      const chatInput = document.getElementById('chat-input');
+      const chatSend = document.getElementById('chat-send');
+      const chatStatus = document.getElementById('chat-status');
+      const chatSetupHint = document.getElementById('chat-setup-hint');
+
+      let currentUser = null;
+      let currentRole = 'unknown';
+      let dmRoom = null;
+      let chatSubscription = null;
+
       // Signed avatar helpers
       async function setSignedAvatar(path) {
         if (!pcAvatar) return;
@@ -325,6 +386,7 @@
           if (resultsTab) resultsTab.style.display = 'none';
           if (adminPortalLink) adminPortalLink.style.display = 'none';
           if (profileCard) profileCard.style.display = 'none';
+          if (chatSection) chatSection.style.display = 'none';
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
         }
       }
@@ -337,29 +399,113 @@
 
       const has = (v) => typeof v === 'string' ? v.trim().length > 0 : !!v;
 
+      function renderMsg(m){
+        const me = m.sender_id === currentUser?.id;
+        const line = document.createElement('div');
+        line.className = 'chat-line ' + (me ? 'me' : 'them');
+        const bubble = document.createElement('div');
+        bubble.className = 'msg';
+        const who = m.sender_name || (me ? 'You' : (m.role === 'admin' ? 'Admin' : 'User'));
+        bubble.innerHTML = `<div style="font-size:12px; color:#0d47a1; font-weight:700;">${who}</div>${(m.message || '').replace(/</g,'&lt;')}<div class="meta">${new Date(m.created_at).toLocaleString()}</div>`;
+        line.appendChild(bubble);
+        chatBox.appendChild(line);
+      }
+
+      async function loadChat(room){
+        chatBox.innerHTML = '';
+        chatStatus.textContent = 'Loading…';
+        try{
+          const { data, error } = await sb.from('portal_chat')
+            .select('id,room,sender_id,sender_name,role,message,created_at')
+            .eq('room', room)
+            .order('created_at', { ascending:true })
+            .limit(200);
+          if(error){
+            if(String(error.code)==='42P01'){ chatSetupHint.style.display='block'; chatStatus.textContent='Unavailable'; return; }
+            console.warn('loadChat', error);
+            chatStatus.textContent = 'Error';
+            return;
+          }
+          chatSetupHint.style.display='none';
+          (data||[]).forEach(renderMsg);
+          chatBox.scrollTop = chatBox.scrollHeight;
+          chatStatus.textContent = 'Live';
+        }catch(e){
+          chatStatus.textContent = 'Error';
+        }
+      }
+
+      function subscribeChat(room){
+        if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
+        chatSubscription = sb.channel('portal_chat_room_'+room)
+          .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
+            renderMsg(payload.new);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          })
+          .subscribe(status => {
+            chatStatus.textContent = status === 'SUBSCRIBED' ? 'Live' : ('Status: ' + status);
+          });
+      }
+
+      async function sendChat(){
+        const txt = chatInput.value.trim();
+        if(!txt) return;
+        const roomSel = chatRoomSel.value;
+        const room = roomSel === 'dm' ? dmRoom : 'global';
+        chatInput.value = '';
+        const { data:prof } = await sb.from('profiles').select('full_name,role').eq('id', currentUser.id).maybeSingle();
+        const senderName = prof?.full_name || currentUser.email || 'User';
+        const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
+        const { error } = await sb.from('portal_chat').insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
+        if(error){
+          if(String(error.code)==='42P01'){ chatSetupHint.style.display='block'; }
+          alert('Send failed: ' + error.message);
+        }
+      }
+
+      async function initChat(){
+        if(!currentUser){ chatSection.style.display='none'; return; }
+        dmRoom = 'dm:' + currentUser.id;
+        chatSection.style.display='block';
+        const roomSel = chatRoomSel.value;
+        const room = roomSel === 'dm' ? dmRoom : 'global';
+        await loadChat(room);
+        subscribeChat(room);
+
+        chatRoomSel.onchange = async ()=>{
+          const nextRoom = chatRoomSel.value === 'dm' ? dmRoom : 'global';
+          await loadChat(nextRoom);
+          subscribeChat(nextRoom);
+        };
+        chatSend.onclick = sendChat;
+        chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
+      }
+
       async function refreshUI() {
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) {
+            currentUser = null;
+            currentRole = 'unknown';
             setNav(false);
             return;
           }
           setNav(true);
+          currentUser = session.user;
 
-          const userId = session.user.id;
           // Profile
           const { data: profile, error: profErr } = await sb
             .from('profiles')
             .select('name, role, prn, batch, avatar_path')
-            .eq('id', userId)
+            .eq('id', currentUser.id)
             .maybeSingle();
           if (profErr) console.warn('Profile fetch error:', profErr);
 
-          const role = (profile?.role || 'unknown').toString().trim().toLowerCase();
+          currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
           const name = profile?.name || (session.user.email || 'User');
 
           // Show Admin Portal links only for admins
-          if (role === 'admin') {
+          if (currentRole === 'admin') {
             if (adminPortalLink) adminPortalLink.style.display = 'inline';
             if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
           } else {
@@ -370,10 +516,10 @@
           // Fill the Profile Dashboard Card
           if (profileCard) profileCard.style.display = 'block';
           pcName.textContent = `Welcome ${has(profile?.name) ? profile.name : ''}`.trim() || 'Welcome';
-          pcRole.textContent = role === 'admin' ? 'Admin' : (role === 'student' ? 'Student' : 'Role: Unknown');
+          pcRole.textContent = currentRole === 'admin' ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
 
           // Meta chips (students)
-          if (role === 'student') {
+          if (currentRole === 'student') {
             const showPRN = has(profile?.prn);
             const showBatch = has(profile?.batch);
             pcPRN.textContent = `PRN: ${showPRN ? profile.prn : '—'}`;
@@ -384,26 +530,24 @@
           }
 
           // Friendly message
-          if (role === 'admin') {
+          if (currentRole === 'admin') {
             pcMessage.textContent = `You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.`;
-          } else if (role === 'student') {
+          } else if (currentRole === 'student') {
             pcMessage.textContent = `Access your assessments and track your progress. Ensure your profile is up to date.`;
           } else {
             pcMessage.textContent = `Set up your profile to get the best experience.`;
           }
 
-          // Completion hint (no hard redirect; we encourage update instead)
+          // Completion hint
           const baseComplete = has(profile?.name) && has(profile?.role);
           const studentComplete = baseComplete && has(profile?.prn) && has(profile?.batch);
           const adminComplete = baseComplete;
-          const isComplete = role === 'admin' ? adminComplete : (role === 'student' ? studentComplete : baseComplete);
+          const isComplete = currentRole === 'admin' ? adminComplete : (currentRole === 'student' ? studentComplete : baseComplete);
           if (!isComplete) {
             pcNote.style.display = 'block';
-            if (role === 'student') {
-              pcNote.textContent = 'Your profile looks incomplete. Please add your PRN and Batch.';
-            } else {
-              pcNote.textContent = 'Please complete your profile details for a better experience.';
-            }
+            pcNote.textContent = currentRole === 'student'
+              ? 'Your profile looks incomplete. Please add your PRN and Batch.'
+              : 'Please complete your profile details for a better experience.';
           } else {
             pcNote.style.display = 'none';
           }
@@ -412,6 +556,9 @@
           const avatarPath = profile?.avatar_path || null;
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
+
+          // Init chat for logged-in users (students or admins)
+          await initChat();
 
         } catch (e) {
           console.error('refreshUI error:', e);
