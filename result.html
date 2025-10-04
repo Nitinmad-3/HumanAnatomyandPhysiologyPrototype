@@ -115,7 +115,7 @@
         <button id="reset" class="btn ghost">Reset</button>
         <div class="export-bar">
           <button id="export-summary" class="btn ghost" title="Export summary sheet (no question details)">Export (Summary)</button>
-            <button id="export-details" class="btn ghost" title="Export results + question breakdown">Export (With Details)</button>
+          <button id="export-details" class="btn ghost" title="Export results + question breakdown">Export (With Details)</button>
         </div>
       </div>
     </section>
@@ -184,7 +184,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
-    console.log('Result script loaded (IST formatter active)');
+    console.log('Result script loaded (IST formatter, submitted_at_utc support)');
 
     /***************** Utilities & Globals *****************/
     function debug(msg){
@@ -215,7 +215,7 @@
     const tbody = $('#tbody');
     const countEl = $('#count');
     const btnApply = $('#apply');
-    const btnReset = $('#reset');
+    const btnReset = $('#reset';
     const btnExportSummary = $('#export-summary');
     const btnExportDetails = $('#export-details');
 
@@ -232,20 +232,29 @@
       return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
 
-    // IST date formatter (with fallback)
+    // Helper: Prefer UTC column if present
+    function getSubmittedAt(row){
+      return row.submitted_at_utc || row.submitted_at;
+    }
+
     function fmtDate(s){
       if(!s) return '—';
       try {
         return new Date(s).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
-            year:'numeric', month:'2-digit', day:'2-digit',
-          hour:'2-digit', minute:'2-digit', second:'2-digit',
-          hour12:false
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
         });
       } catch(e){
+        // fallback for old browsers
         const d = new Date(s);
-        const utc = d.getTime() + d.getTimezoneOffset()*60000;
-        const ist = new Date(utc + 5.5*3600000);
+        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        const ist = new Date(utc + (5.5 * 3600000));
         const pad = n => String(n).padStart(2,'0');
         return `${pad(ist.getDate())}/${pad(ist.getMonth()+1)}/${ist.getFullYear()}, ${pad(ist.getHours())}:${pad(ist.getMinutes())}:${pad(ist.getSeconds())}`;
       }
@@ -319,8 +328,7 @@
       const percents = rows.map(r => Number(r.percent ?? r.percentage)).filter(n => !Number.isNaN(n));
       const avg = percents.length ? percents.reduce((a,b)=>a+b,0) / percents.length : 0;
       const best = percents.length ? Math.max(...percents) : 0;
-      const last = rows.slice().sort((a,b)=> new Date(b.submitted_at||0) - new Date(a.submitted_at||0))[0]?.submitted_at;
-
+      const last = rows.slice().sort((a,b)=> new Date(getSubmittedAt(b)||0) - new Date(getSubmittedAt(a)||0))[0]?.submitted_at_utc || rows[0]?.submitted_at;
       sumAttempts.textContent = attempts;
       sumAvg.textContent = fmtPct(avg);
       sumBest.textContent = fmtPct(best);
@@ -646,7 +654,7 @@
             <td>${marksCell}</td>
             <td>${totalMarksTxt}</td>
             <td>${fmtPct(percentVal)}</td>
-            <td>${fmtDate(r.submitted_at)}</td>
+            <td>${fmtDate(getSubmittedAt(r))}</td>
             <td>${fmtDur(r.duration_sec)}</td>
             <td>${assignmentBtn}</td>
             <td>${resubmitCell}</td>
@@ -679,6 +687,8 @@
           TotalMarks: totalMarks,
           Percentage: r.percent ?? r.percentage,
           SubmittedAt: r.submitted_at,
+          SubmittedAtUTC: r.submitted_at_utc || '',
+          SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),
           DurationSec: r.duration_sec,
           ResubmissionAllowedStored: r.resubmission_allowed,
           EffectiveResubmission: effectiveResubAllowed(r)
