@@ -7,14 +7,25 @@
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3e5f5; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #6a1b9a; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
-    nav a { color: #4a148c; font-weight: bold; text-decoration: none; background: #ede7f6; padding: 0.6em 1.2em; border-radius: 4px; }
-    nav a:hover { background: #d1c4e9; }
-    .refs { max-width: 600px; margin: auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #ce93d8; }
-    .refs ul { margin: 1em 0; }
+    h1 { color: #6a1b9a; letter-spacing: 1px; }
+    nav { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    nav a, nav button {
+      color: #4a148c; font-weight: 700; text-decoration: none;
+      background: #ede7f6; padding: 0.55em 1.1em; border-radius: 10px; border: 1px solid #d1c4e9;
+      cursor: pointer; transition: transform .04s ease, background .2s ease; font-size: 1rem;
+    }
+    nav a:hover, nav button:hover { background: #d1c4e9; transform: translateY(-1px); }
+
+    .refs {
+      max-width: 780px; margin: auto; background: #fff; border-radius: 16px;
+      padding: 1.5rem; box-shadow: 0 2px 10px #ce93d8; border: 1px solid #e5d3ef;
+    }
+    .refs h2 { color: #4a148c; margin-top: 0.25rem; }
+    .refs ul { margin: 0.6em 0 1.2em 1.2em; }
     .refs li { margin-bottom: 0.5em; }
-    @media (max-width: 600px) { .refs { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
+    .refs a { color: #6a1b9a; text-decoration: none; }
+    .refs a:hover { text-decoration: underline; }
+    @media (max-width: 600px) { .refs { padding: 1rem; } nav { flex-direction: column; gap: 0.75rem; } }
   </style>
 </head>
 <body>
@@ -23,10 +34,16 @@
     <nav>
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
-      <a href="assessments.html">Assessments</a>
+      <a id="assessment-tab" href="assessments.html">Assessments</a>
+      <a id="results-tab" href="result.html" style="display:none;">Results</a>
+      <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
       <a href="references.html">References</a>
+      <a href="admin_portal.html" id="admin-portal-link" style="display:none;">Admin Portal</a>
+      <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
+      <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
+
   <div class="refs">
     <h2>Recommended Textbooks</h2>
     <ul>
@@ -37,10 +54,10 @@
     </ul>
     <h2>Useful Links</h2>
     <ul>
-      <li><a href="https://www.khanacademy.org/science/health-and-medicine/human-anatomy-and-physiology" target="_blank">Khan Academy: Human Anatomy & Physiology</a></li>
-      <li><a href="https://www.visiblebody.com/" target="_blank">Visible Body: Anatomy Atlas</a></li>
-      <li><a href="https://teachmeanatomy.info/" target="_blank">TeachMeAnatomy</a></li>
-      <li><a href="https://openstax.org/details/books/anatomy-and-physiology" target="_blank">OpenStax: Anatomy & Physiology</a></li>
+      <li><a href="https://www.khanacademy.org/science/health-and-medicine/human-anatomy-and-physiology" target="_blank" rel="noopener noreferrer">Khan Academy: Human Anatomy & Physiology</a></li>
+      <li><a href="https://www.visiblebody.com/" target="_blank" rel="noopener noreferrer">Visible Body: Anatomy Atlas</a></li>
+      <li><a href="https://teachmeanatomy.info/" target="_blank" rel="noopener noreferrer">TeachMeAnatomy</a></li>
+      <li><a href="https://openstax.org/details/books/anatomy-and-physiology" target="_blank" rel="noopener noreferrer">OpenStax: Anatomy & Physiology</a></li>
     </ul>
     <h2>Laboratory Manuals</h2>
     <ul>
@@ -48,5 +65,99 @@
       <li>Custom college/university lab manuals</li>
     </ul>
   </div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Only nav/auth logic needed on this page
+      if (!window.supabase) return;
+
+      const sb = window.sb || (window.sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      ));
+
+      // Nav elements
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const profileTab = document.getElementById('profile-tab');
+      const assessmentTab = document.getElementById('assessment-tab');
+      const resultsTab = document.getElementById('results-tab');
+      const adminPortalLink = document.getElementById('admin-portal-link');
+
+      function setNav(loggedIn) {
+        if (loggedIn) {
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'inline';
+          if (profileTab) profileTab.style.display = 'inline';
+          if (resultsTab) resultsTab.style.display = 'inline';
+        } else {
+          if (logoutBtn) logoutBtn.style.display = 'none';
+          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
+          if (profileTab) profileTab.style.display = 'none';
+          if (resultsTab) resultsTab.style.display = 'none';
+          if (adminPortalLink) adminPortalLink.style.display = 'none';
+        }
+      }
+
+      async function getUserRole(userId) {
+        const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
+        if (error) { console.warn('Role fetch error:', error); }
+        return (data?.role || 'unknown').toString().trim().toLowerCase();
+      }
+
+      async function refreshNav() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session?.user) {
+          setNav(false);
+          return;
+        }
+        setNav(true);
+        const role = await getUserRole(session.user.id);
+        if (role === 'admin') {
+          if (adminPortalLink) adminPortalLink.style.display = 'inline';
+        } else {
+          if (adminPortalLink) adminPortalLink.style.display = 'none';
+        }
+      }
+
+      // Protect links
+      function protectLink(el, requireAdmin=false){
+        if(!el) return;
+        el.addEventListener('click', async (e) => {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) {
+            e.preventDefault();
+            window.location.href = 'login_Version4.html';
+            return;
+          }
+          if (requireAdmin) {
+            const role = await getUserRole(session.user.id);
+            if (role !== 'admin') {
+              e.preventDefault();
+              alert('Admin only.');
+            }
+          }
+        });
+      }
+      protectLink(assessmentTab, false);
+      protectLink(resultsTab, false);
+      protectLink(adminPortalLink, true);
+
+      // Logout
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await sb.auth.signOut(); } catch {}
+          window.location.replace('index.html');
+        });
+      }
+
+      // Init + react to auth changes
+      refreshNav();
+      sb.auth.onAuthStateChange((_evt, _session) => refreshNav());
+    });
+  </script>
 </body>
 </html>
