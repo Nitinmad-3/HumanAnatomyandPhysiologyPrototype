@@ -186,7 +186,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
-    console.log('Result script loaded (uses submitted_at_utc, displays IST)');
+    console.log('Result script loaded (uses submitted_at_utc, displays IST, client-sorts by newest)');
 
     /***************** Utilities & Globals *****************/
     function debug(msg){
@@ -285,16 +285,11 @@
     }
 
     // EFFECTIVE RESUBMISSION RULE (frontend-only):
-    // - If admin explicitly disabled (resubmission_allowed === false): block resubmission (even if marks pending).
-    // - If marks are pending and admin did not disable: allow.
+    // - While marks are pending (assignment_marks == null): ALWAYS allow resubmission.
     // - After marks are given: allow only if resubmission_allowed === true.
     function effectiveResubAllowed(row){
-      // Admin toggle is authoritative
-      if (row.resubmission_allowed === false) return false;
-      // While marks are pending, allow unless admin explicitly disabled
-      if (row.assignment_marks == null) return true;
-      // After marks are given, allow only if enabled
-      return row.resubmission_allowed === true;
+      if (row.assignment_marks == null) return true;        // auto-enabled before marks
+      return row.resubmission_allowed === true;             // after marks, rely on toggle
     }
 
     /***************** Auth & Role *****************/
@@ -418,14 +413,18 @@
 
     window.toggleResubmission = async function(rowIdx){
       const row = currentRows[rowIdx];
-      // Toggle: If currently allowed, set to false; if currently not allowed, set to true
-      const next = !effectiveResubAllowed(row);
+
+      // Flip the stored flag (independent of pending marks).
+      const next = !(row.resubmission_allowed === true);
+
       const btn = document.getElementById('resubmission-toggle-'+row.id);
       if(btn) btn.disabled = true;
       setStatus('Updating…');
+
       const { error } = await sb.from('assessment_results')
         .update({ resubmission_allowed: next })
         .eq('id', row.id);
+
       if(error){
         alert('Update failed: ' + error.message);
         if(btn) btn.disabled=false;
@@ -440,7 +439,7 @@
     window.openEditAssignmentModal = function(rowIdx){
       const row = currentRows[rowIdx];
       if (!effectiveResubAllowed(row)) {
-        alert('Resubmission is currently disabled by the administrator.');
+        alert('Resubmission is currently disabled.');
         return;
       }
       editingRowIdx = rowIdx;
@@ -471,7 +470,7 @@
         return;
       }
       if(!effectiveResubAllowed(fresh)){
-        alert('Resubmission is currently disabled by the administrator.');
+        alert('Resubmission is currently disabled.');
         debug('Effective permission false after re-validate.');
         return;
       }
@@ -593,6 +592,14 @@
       const search = filterSearch?.value || '';
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
+
+      // Always sort newest-first on the client, using UTC first, fallback to legacy.
+      rows.sort((a,b) => {
+        const ta = new Date(getSubmittedAt(a) || 0).getTime();
+        const tb = new Date(getSubmittedAt(b) || 0).getTime();
+        return tb - ta;
+      });
+
       renderRows(rows);
       if(!isAdmin) renderSummaryForStudent(rows);
       setStatus('Ready.');
@@ -643,18 +650,24 @@
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
 
-        // Resubmission cell (Admin always has a toggle; student sees button only if effective is true)
+        // Resubmission cell (Admin toggle disabled while marks pending; student allowed while pending)
         const effective = effectiveResubAllowed(r);
+        const marksPending = (r.assignment_marks == null);
+
         let resubmitCell = '<div class="resubmission-status-box">';
         if(isAdmin){
+          const btnDisabled = marksPending ? 'disabled' : '';
+          const btnLabel = marksPending
+            ? 'Disable (Marks Pending)'
+            : (effective ? 'Disable Resubmission' : 'Allow Resubmission');
           resubmitCell += `
-            <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})">
-              ${effective ? 'Disable Resubmission' : 'Allow Resubmission'}
+            <button class="btn ghost resubmission-toggle-btn" id="resubmission-toggle-${r.id}" onclick="toggleResubmission(${rowIdx})" ${btnDisabled}>
+              ${btnLabel}
             </button>
             <span class="resubmission-status-message ${effective?'enabled':'disabled'}">
               ${effective ? 'Resubmission Enabled' : 'Resubmission Disabled'}
             </span>
-            ${r.assignment_marks == null ? '<span class="muted" style="font-size:12px;">(Marks pending)</span>' : ''}
+            ${marksPending ? '<span class="muted" style="font-size:12px;">Auto-enabled until marks are allotted</span>' : ''}
           `;
         }
         if(!isAdmin && currentUser && r.user_id === currentUser.id){
@@ -721,9 +734,9 @@
           AssignmentMarks: marksVal,
           TotalMarks: totalMarks,
           Percentage: r.percent ?? r.percentage,
-          SubmittedAt: r.submitted_at,                         // legacy column (raw)
-          SubmittedAtUTC: r.submitted_at_utc || '',            // new UTC column
-          SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),   // human display in IST
+          SubmittedAt: r.submitted_at,
+          SubmittedAtUTC: r.submitted_at_utc || '',
+          SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),
           DurationSec: r.duration_sec,
           ResubmissionAllowedStored: r.resubmission_allowed,
           EffectiveResubmission: effectiveResubAllowed(r)
