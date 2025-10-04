@@ -44,6 +44,13 @@
     .divider { height:1px; background:#d4e4ff; margin:8px 0; }
     .danger { color:#c62828; }
     @media (max-width:640px){ .grid { grid-template-columns:1fr; } }
+
+    /* Users */
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; }
+    th { background:#f0f6ff; color:#1565c0; }
+    .lock-on { color:#2e7d32; font-weight:700; }
+    .lock-off { color:#c62828; font-weight:700; }
   </style>
 </head>
 <body>
@@ -57,6 +64,60 @@
   </header>
 
   <main>
+    <!-- Users (NEW): list, search, add, and lock toggle -->
+    <section class="panel" id="users-panel">
+      <h2 class="section-title">Users</h2>
+      <div class="grid">
+        <div>
+          <label>Search</label>
+          <input id="user-search" class="input" placeholder="name, email, PRN, batch" />
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <button id="user-refresh" class="btn">Refresh</button>
+          <span id="users-status" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <details>
+          <summary><b>Add Student</b></summary>
+          <div class="grid" style="margin-top:8px;">
+            <div><label>Email</label><input id="new-email" class="input" type="email" placeholder="student@domain.com" /></div>
+            <div><label>Name</label><input id="new-name" class="input" placeholder="Full name" /></div>
+            <div><label>PRN</label><input id="new-prn" class="input" placeholder="e.g., 2023-PRN-001" /></div>
+            <div><label>Batch</label><input id="new-batch" class="input" placeholder="e.g., B1, 2024" /></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <button id="user-create" class="btn">Create Student</button>
+            <span class="hint">Requires Edge Function admin_create_user (service role). Shows hint if not configured.</span>
+          </div>
+          <div id="user-create-status" class="muted"></div>
+        </details>
+      </div>
+
+      <div style="overflow:auto; max-height:55vh; margin-top:10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>PRN</th>
+              <th>Batch</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Profile Editing</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="7" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="users-setup-hint" class="hint" style="display:none; margin-top:6px;">
+        If emails are blank or listing fails, run sql/user_admin.sql and use the admin_list_students RPC. Also deploy the admin_create_user Edge Function to add users.
+      </div>
+    </section>
+
     <!-- Release Controls -->
     <section class="panel">
       <h2 class="section-title">Assessment Release & Deadline</h2>
@@ -93,7 +154,7 @@
         <span id="release-status" class="status"></span>
       </div>
       <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Ask to run setup_portal.sql or let me generate the exact SQL.
+        Backend table missing. Run setup_portal.sql (assessment_release).
       </div>
     </section>
 
@@ -129,7 +190,7 @@
       <div class="divider"></div>
       <div class="list" id="notif-list"></div>
       <div id="notif-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Run setup_portal.sql when ready.
+        Backend table missing. Run setup_portal.sql (portal_notifications).
       </div>
     </section>
 
@@ -152,7 +213,7 @@
       </div>
       <div id="chat-status" class="status"></div>
       <div id="chat-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Run setup_portal.sql when ready.
+        Backend table missing. Run setup_portal.sql (portal_chat).
       </div>
     </section>
   </main>
@@ -168,6 +229,20 @@
     const $ = s => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
+
+    // Users
+    const userSearch = $('#user-search');
+    const userRefresh = $('#user-refresh');
+    const usersStatus = $('#users-status');
+    const usersTbody = $('#users-tbody');
+    const usersSetupHint = $('#users-setup-hint');
+
+    const newEmail = $('#new-email');
+    const newName = $('#new-name');
+    const newPRN = $('#new-prn');
+    const newBatch = $('#new-batch');
+    const userCreate = $('#user-create');
+    const userCreateStatus = $('#user-create-status');
 
     // Release controls
     const expSelect = $('#exp-select');
@@ -238,6 +313,7 @@
       el.classList.add(ok ? 'success' : 'error');
       el.classList.add('pill');
     }
+    function htmlesc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
     async function requireAdmin(){
       const { data:{ session } } = await sb.auth.getSession();
@@ -258,6 +334,100 @@
         return false;
       }
       return true;
+    }
+
+    // USERS
+    async function listStudents(){
+      usersStatus.textContent = 'Loading…';
+      usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+      try{
+        // Preferred: RPC joins auth.users (needs sql/user_admin.sql)
+        const search = userSearch.value?.trim() || null;
+        const { data, error } = await sb.rpc('admin_list_students', { search_text: search });
+        if(error){
+          console.warn('admin_list_students error', error);
+          usersSetupHint.style.display='block';
+          // Fallback: profiles only (email may be blank)
+          const q = sb.from('profiles').select('id,name,prn,batch,role,email,profile_edit_locked').eq('role','student').order('name');
+          const { data:pf, error:pfErr } = await q;
+          if(pfErr){ throw pfErr; }
+          renderUsers(pf.map(p => ({ ...p, created_at: null })));
+        } else {
+          usersSetupHint.style.display='none';
+          renderUsers(data || []);
+        }
+        usersStatus.textContent = '';
+      } catch(e){
+        console.warn('listStudents failed', e);
+        usersStatus.textContent = 'Failed to load.';
+        usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Failed.</td></tr>';
+      }
+    }
+
+    function renderUsers(rows){
+      if(!rows.length){
+        usersTbody.innerHTML = '<tr><td colspan="7" class="muted">No students found.</td></tr>';
+        return;
+      }
+      usersTbody.innerHTML = rows.map(r=>{
+        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Editable</span>';
+        const btnLabel = r.profile_edit_locked ? 'Unlock' : 'Lock';
+        return `<tr data-id="${r.id}">
+          <td>${htmlesc(r.name || '')}</td>
+          <td>${htmlesc(r.prn || '')}</td>
+          <td>${htmlesc(r.batch || '')}</td>
+          <td>${htmlesc(r.email || '')}</td>
+          <td>${htmlesc(r.role || '')}</td>
+          <td>${lockTxt}</td>
+          <td><button class="btn small" data-act="toggle">${btnLabel}</button></td>
+        </tr>`;
+      }).join('');
+
+      usersTbody.querySelectorAll('button[data-act="toggle"]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          btn.disabled = true;
+          usersStatus.textContent = 'Updating…';
+          try{
+            // Flip lock
+            const lockedNow = !!tr.querySelector('.lock-on');
+            const { error } = await sb.from('profiles').update({ profile_edit_locked: !lockedNow }).eq('id', id);
+            if(error) throw error;
+            await listStudents();
+          } catch(e){
+            alert('Update failed: ' + (e?.message || e));
+          } finally {
+            btn.disabled = false;
+            usersStatus.textContent = '';
+          }
+        };
+      });
+    }
+
+    async function createStudent(){
+      const email = newEmail.value.trim();
+      const name = newName.value.trim();
+      const prn = newPRN.value.trim();
+      const batch = newBatch.value.trim();
+      if(!email){ return alert('Email is required'); }
+      userCreate.disabled = true;
+      userCreateStatus.textContent = 'Creating user…';
+      try{
+        const { data, error } = await sb.functions.invoke('admin_create_user', { body:{ email, name, prn, batch, role:'student' } });
+        if(error){ throw error; }
+        if(!data?.ok){ throw new Error(data?.error || 'Create failed'); }
+        userCreateStatus.textContent = 'Created.';
+        newEmail.value = ''; newName.value=''; newPRN.value=''; newBatch.value='';
+        await listStudents();
+      } catch(e){
+        console.warn('createStudent failed', e);
+        userCreateStatus.textContent = 'Failed: ' + (e?.message || e);
+        alert('Failed: ' + (e?.message || e));
+      } finally {
+        userCreate.disabled = false;
+        setTimeout(()=> userCreateStatus.textContent='', 3000);
+      }
     }
 
     // Load experiments and hydrate selects
@@ -284,7 +454,7 @@
       startIst.value = ''; endIst.value = ''; releasedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
       try{
-        const { data, error, status } = await sb.from('assessment_release')
+        const { data, error } = await sb.from('assessment_release')
           .select('experiment_id,released,window_start,window_end,updated_at')
           .eq('experiment_id', expId)
           .maybeSingle();
@@ -348,7 +518,7 @@
       try{
         const { error } = await sb.from('assessment_release')
           .update({ released:false, updated_by: currentUser.id, updated_at: nowUtcISO() })
-          .eq('experiment_id', expId);
+          .eq('id', expId).eq('experiment_id', expId);
         if(error){
           if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
           throw error;
@@ -523,6 +693,14 @@
       setStatus('Checking admin…');
       if(!(await requireAdmin())) return;
       setStatus('Loading data…');
+
+      // Users
+      await listStudents();
+      userRefresh.onclick = listStudents;
+      userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
+      userCreate.onclick = createStudent;
+
+      // Releases and chat rooms
       await loadExperiments();
 
       // Wire events
@@ -531,6 +709,13 @@
         if(!expId) return;
         await loadReleaseFor(expId);
       };
+      // Preselect if ?exp= is present
+      const expParam = new URLSearchParams(location.search).get('exp');
+      if(expParam){
+        const opt = Array.from(expSelect.options).find(o => o.value === expParam);
+        if(opt){ expSelect.value = expParam; await loadReleaseFor(expParam); }
+      }
+
       saveReleaseBtn.onclick = saveRelease;
       closeReleaseBtn.onclick = closeRelease;
 
