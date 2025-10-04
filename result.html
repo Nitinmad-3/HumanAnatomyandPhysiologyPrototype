@@ -289,11 +289,8 @@
     // - If marks are pending and admin did not disable: allow.
     // - After marks are given: allow only if resubmission_allowed === true.
     function effectiveResubAllowed(row){
-      // Admin toggle is authoritative
       if (row.resubmission_allowed === false) return false;
-      // While marks are pending, allow unless admin explicitly disabled
       if (row.assignment_marks == null) return true;
-      // After marks are given, allow only if enabled
       return row.resubmission_allowed === true;
     }
 
@@ -418,7 +415,6 @@
 
     window.toggleResubmission = async function(rowIdx){
       const row = currentRows[rowIdx];
-      // Toggle: If currently allowed, set to false; if currently not allowed, set to true
       const next = !effectiveResubAllowed(row);
       const btn = document.getElementById('resubmission-toggle-'+row.id);
       if(btn) btn.disabled = true;
