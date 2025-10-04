@@ -64,7 +64,7 @@
   </header>
 
   <main>
-    <!-- Users (NEW): list, search, add, and lock toggle -->
+    <!-- Users (list, search, add, lock toggle) -->
     <section class="panel" id="users-panel">
       <h2 class="section-title">Users</h2>
       <div class="grid">
@@ -516,9 +516,10 @@
       if(!expId){ alert('Select an assessment.'); return; }
       releaseStatus.textContent = 'Closing…';
       try{
+        // FIX: filter by experiment_id only
         const { error } = await sb.from('assessment_release')
           .update({ released:false, updated_by: currentUser.id, updated_at: nowUtcISO() })
-          .eq('id', expId).eq('experiment_id', expId);
+          .eq('experiment_id', expId);
         if(error){
           if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
           throw error;
@@ -676,8 +677,9 @@
       if(!txt) return;
       const room = chatRoom.value || 'global';
       chatInput.value = '';
-      const { data:prof } = await sb.from('profiles').select('full_name,role').eq('id', currentUser.id).maybeSingle();
-      const senderName = prof?.full_name || currentUser.email || 'Admin';
+      // FIX: use profiles.name (not full_name)
+      const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
+      const senderName = prof?.name || currentUser.email || 'Admin';
       const role = 'admin';
       const { error } = await sb.from('portal_chat').insert([{
         room, sender_id: currentUser.id, sender_name: senderName, role, message: txt
