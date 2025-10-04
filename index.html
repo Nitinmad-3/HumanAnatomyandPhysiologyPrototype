@@ -422,9 +422,6 @@
             .limit(200);
           if(error){
             if(String(error.code)==='42P01'){ chatSetupHint.style.display='block'; chatStatus.textContent='Unavailable'; return; }
-            console.warn('loadChat', error);
-            chatStatus.textContent = 'Error';
-            return;
           }
           chatSetupHint.style.display='none';
           (data||[]).forEach(renderMsg);
@@ -453,8 +450,9 @@
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? dmRoom : 'global';
         chatInput.value = '';
-        const { data:prof } = await sb.from('profiles').select('full_name,role').eq('id', currentUser.id).maybeSingle();
-        const senderName = prof?.full_name || currentUser.email || 'User';
+        // FIX: use 'name' instead of 'full_name'
+        const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
+        const senderName = prof?.name || currentUser.email || 'User';
         const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
         const { error } = await sb.from('portal_chat').insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
         if(error){
@@ -605,11 +603,11 @@
           try {
             for (const k of Object.keys(localStorage)) {
               const key = k.toLowerCase();
-              if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
+              if (key includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
             }
             for (const k of Object.keys(sessionStorage)) {
               const key = k.toLowerCase();
-              if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
+              if (key includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
             }
           } catch (e2) { /* ignore */ }
           try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
