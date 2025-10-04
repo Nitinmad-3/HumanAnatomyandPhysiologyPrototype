@@ -5,13 +5,25 @@
   <title>Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    :root{
+      --blue:#1565c0;
+      --blue-600:#1a237e;
+      --ink:#222;
+      --muted:#5b6f99;
+      --chip-bg:#e3f2fd;
+      --chip-bd:#cfe0ff;
+      --card-bg:#f7fbff;
+      --shadow:0 6px 24px rgba(13,37,62,.12);
+      --shadow-soft:0 2px 10px rgba(13,37,62,.10);
+    }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
-      color: #222;
+      color: var(--ink);
       position: relative;
       min-height: 100vh;
       overflow-x: hidden;
+      background: #fff;
     }
     body::before {
       content: "";
@@ -22,105 +34,162 @@
       background-size: cover;
       opacity: 1.0;
       pointer-events: none;
+      filter: saturate(1.05) contrast(1.02);
     }
     .overlay {
       background: rgba(255,255,255,0.90);
       min-height: 100vh;
-      padding-bottom: 40px;
+      padding-bottom: 48px;
     }
     header {
       text-align: center;
       padding: 2rem 1rem 1rem 1rem;
     }
     h1 {
-      font-size: 2.5rem;
-      margin: 0.5rem 0 1rem 0;
-      color: #1a237e;
-      letter-spacing: 2px;
-      text-shadow: 1px 1px 8px #cfd8dc;
+      font-size: 2.2rem;
+      margin: 0.25rem 0 1rem 0;
+      color: var(--blue-600);
+      letter-spacing: 1.2px;
+      text-shadow: 0 1px 8px #cfd8dc;
     }
     nav {
       display: flex;
       justify-content: center;
-      gap: 2rem;
-      margin-bottom: 2rem;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
       flex-wrap: wrap;
     }
     nav a, nav button {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #1565c0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--blue);
       text-decoration: none;
-      padding: 0.6em 1.2em;
-      border-radius: 4px;
-      background: #e3f2fd;
-      transition: background 0.2s;
-      border: none;
+      padding: 0.55em 1.0em;
+      border-radius: 10px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-bd);
+      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
       cursor: pointer;
+      box-shadow: var(--shadow-soft);
     }
     nav a:hover, nav button:hover {
-      background: #bbdefb;
+      background: #dceefd;
+      transform: translateY(-1px);
     }
-    .intro {
-      max-width: 700px;
-      margin: auto;
-      background: rgba(255,255,255,0.85);
+
+    /* Modern Profile Dashboard Card */
+    .card {
+      max-width: 920px;
+      margin: 18px auto 12px auto;
+      background: linear-gradient(180deg, #ffffff 0%, var(--card-bg) 100%);
+      border: 1px solid var(--chip-bd);
       border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 2px 8px #90caf9;
-      font-size: 1.15rem;
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
-    /* Unified dashboard styling */
-    #admin-features, #student-features {
-      display: none;
-      max-width: 700px;
-      margin: 2rem auto 0 auto;
-      padding: 1.5rem;
-      border-radius: 12px;
-      background: #f5faff;
-      box-shadow: 0 1px 8px #e3f2fd;
-      text-align: left;
-    }
-    .dashboard-title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: #1565c0;
-      margin-bottom: 0.5em;
-      letter-spacing: 1px;
-    }
-    .dashboard-welcome {
-      font-size: 1.15rem;
-      font-weight: 500;
-      color: #1565c0;
-      margin-bottom: 1em;
-      margin-top: 0;
-    }
-    /* Avatar card (private, signed URL preview) */
-    #avatar-card {
-      display: none;
-      max-width: 700px;
-      margin: 1rem auto 0 auto;
-      padding: 1rem;
-      border-radius: 12px;
-      background: #f5faff;
-      box-shadow: 0 1px 8px #e3f2fd;
-      text-align: left;
+    .profile-wrap{
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      align-items: center;
     }
     .avatar {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
+      width: 110px;
+      height: 110px;
+      border-radius: 16px;
       object-fit: cover;
-      background: #f3f3f3;
-      box-shadow: 0 0 0 2px #e3f2fd inset;
+      background: #f3f6fb;
+      border: 1px solid var(--chip-bd);
+      box-shadow: inset 0 0 0 2px #eef5ff;
     }
-    @media (max-width: 600px) {
-      h1 { font-size: 1.5rem; }
-      nav { flex-direction: column; gap: 1rem; }
-      .intro { padding: 1rem; }
-      #admin-features, #student-features { padding: 1rem; }
-      .dashboard-title { font-size: 1.2rem; }
-      .dashboard-welcome { font-size: 1rem; }
+    .title-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .name{
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--blue-600);
+      letter-spacing: .2px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 4px 10px;
+      font-size:.85rem;
+      font-weight:600;
+      border-radius:999px;
+      background: var(--chip-bg);
+      border:1px solid var(--chip-bd);
+      color: var(--blue);
+    }
+    .muted{ color: var(--muted); }
+    .meta-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:8px 0 6px 0;
+    }
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      border:0;
+      border-radius:10px;
+      padding: 10px 14px;
+      font-size:.95rem;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn-primary{
+      background: var(--blue);
+      color:#fff;
+      box-shadow: var(--shadow-soft);
+    }
+    .btn-ghost{
+      background:#ffffff;
+      color: var(--blue);
+      border:1px solid var(--chip-bd);
+      box-shadow: var(--shadow-soft);
+    }
+    .note{
+      font-size:.95rem;
+      color:#0d47a1;
+      background:#eef6ff;
+      border:1px dashed var(--chip-bd);
+      border-radius:10px;
+      padding:8px 10px;
+      margin-top:8px;
+    }
+
+    .intro {
+      max-width: 920px;
+      margin: 14px auto 0 auto;
+      background: rgba(255,255,255,0.85);
+      border-radius: 16px;
+      padding: 1.2rem 1.4rem;
+      box-shadow: var(--shadow-soft);
+      font-size: 1.05rem;
+      border: 1px solid var(--chip-bd);
+    }
+    .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
+    .intro li{ margin: .15rem 0; }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 1.6rem; }
+      .profile-wrap{ grid-template-columns: 1fr; }
+      .avatar{ width:96px; height:96px; border-radius:12px; }
+      nav a, nav button { font-size: .95rem; }
     }
   </style>
 </head>
@@ -135,73 +204,56 @@
         <a id="results-tab" href="result.html" style="display:none;">Results</a>
         <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
         <a href="references.html">References</a>
-
-        <!-- ADDED: Admin Portal link (admin-only; shown by JS) -->
         <a href="admin_portal.html" id="admin-portal-link" style="display:none;">Admin Portal</a>
-
         <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
         <button id="logout-btn" style="display:none;">Logout</button>
       </nav>
     </header>
 
-    <!-- Private avatar preview + upload (signed URL) -->
-    <div id="avatar-card">
-      <div class="dashboard-title" style="margin-bottom: 0.75rem;">Your Avatar</div>
-      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <img id="avatar-preview" class="avatar" alt="Avatar preview" />
+    <!-- Unified Profile + Dashboard card (modern, no avatar upload) -->
+    <section id="profile-dashboard-card" class="card" style="display:none;">
+      <div class="profile-wrap">
+        <img id="pc-avatar" class="avatar" alt="Profile avatar" />
         <div>
-          <label for="avatar-input" style="display:block; font-weight:600; color:#1565c0;">Update your avatar</label>
-          <input id="avatar-input" type="file" accept="image/*" />
-          <div style="font-size:0.9rem; color:#555; margin-top:0.25rem;">
-            Private preview: only you and admins can access this image.
+          <div class="title-row">
+            <span id="pc-name" class="name">Welcome</span>
+            <span id="pc-role" class="chip">Role</span>
           </div>
+          <div id="pc-message" class="muted" style="margin-top:4px;">Loading…</div>
+          <div id="pc-meta" class="meta-row" style="display:none;">
+            <span id="pc-prn" class="chip">PRN: —</span>
+            <span id="pc-batch" class="chip">Batch: —</span>
+          </div>
+          <div class="actions">
+            <a href="profile.html" class="btn btn-ghost" id="pc-update-profile">Update your profile</a>
+            <a href="assessments.html" class="btn btn-primary" id="pc-start-assessments">Go to Assessments</a>
+            <a href="result.html" class="btn btn-ghost" id="pc-view-results">View Results</a>
+            <a href="admin_portal.html" class="btn btn-primary" id="pc-admin-portal" style="display:none;">Open Admin Portal</a>
+          </div>
+          <div id="pc-note" class="note" style="display:none;"></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Dashboard Features FIRST -->
-    <div id="admin-features">
-      <div class="dashboard-title">Admin Dashboard</div>
-      <p class="dashboard-welcome" id="dashboard-welcome-admin"></p>
-      <ul>
-        <li>Manage all profiles and assessments</li>
-        <li>View all experiment data</li>
-        <li>Edit or add new experiments and references</li>
-      </ul>
-    </div>
-    <div id="student-features">
-      <div class="dashboard-title">Student Dashboard</div>
-      <p class="dashboard-welcome" id="dashboard-welcome-student"></p>
-      <ul>
-        <li>View your profile and batch assignments</li>
-        <li>Access experiments and submit assessments</li>
-        <li>See references and learning material</li>
-      </ul>
-    </div>
-
-    <!-- Welcome/Intro Message AFTER dashboard -->
+    <!-- Welcome/Intro -->
     <div class="intro">
       <p>
         Welcome to the Human Anatomy & Physiology Experiments Portal!
-        <br><br>
-        This site provides a comprehensive set of laboratory experiments, assessments, and references for students and instructors. Explore interactive resources, answer experiment-based questions, and discover curated references for deeper study.
-        <br><br>
-        <strong>Navigation:</strong><br>
-        <ul>
-          <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
-          <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
-          <li><b>References</b> – access textbooks and websites for further learning.</li>
-        </ul>
-        <br>
-        <em>Start exploring and build your knowledge of the amazing human body!</em>
+      </p>
+      <ul>
+        <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
+        <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
+        <li><b>References</b> – access textbooks and websites for further learning.</li>
+      </ul>
+      <p class="muted" style="margin:.4rem 0 0 0;">
+        Tip: If an assessment is not visible, your admin may not have released it yet or it may be outside its time window.
       </p>
     </div>
   </div>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-
-  <!-- ADDED: Home notifications banner (flashes on Home when active) -->
+  <!-- Home notifications banner (flashes on Home when active) -->
   <script src="home_notifications.js"></script>
 
   <script>
@@ -210,238 +262,157 @@
         console.error('Supabase SDK failed to load.');
         return;
       }
-
-      // IMPORTANT: Use a different variable name than "supabase" to avoid shadowing the SDK global.
       const sb = window.sb || (window.sb = window.supabase.createClient(
         'https://hunlistfklwvpivfjmbk.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
-      const AVATAR_BUCKET = 'Avatar'; // case-sensitive
+      const AVATAR_BUCKET = 'Avatar';
 
+      // Nav elements
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const profileTab = document.getElementById('profile-tab');
-      const adminFeatures = document.getElementById('admin-features');
-      const studentFeatures = document.getElementById('student-features');
-      const welcomeAdmin = document.getElementById('dashboard-welcome-admin');
-      const welcomeStudent = document.getElementById('dashboard-welcome-student');
       const assessmentTab = document.getElementById('assessment-tab');
-      const resultsTab = document.getElementById('results-tab'); // Results link
-      const adminPortalLink = document.getElementById('admin-portal-link'); // ADDED
+      const resultsTab = document.getElementById('results-tab');
+      const adminPortalLink = document.getElementById('admin-portal-link');
 
-      // Avatar elements
-      const avatarCard = document.getElementById('avatar-card');
-      const avatarImg = document.getElementById('avatar-preview');
-      const avatarInput = document.getElementById('avatar-input');
+      // Profile dashboard card elements
+      const profileCard = document.getElementById('profile-dashboard-card');
+      const pcAvatar = document.getElementById('pc-avatar');
+      const pcName = document.getElementById('pc-name');
+      const pcRole = document.getElementById('pc-role');
+      const pcMessage = document.getElementById('pc-message');
+      const pcMeta = document.getElementById('pc-meta');
+      const pcPRN = document.getElementById('pc-prn');
+      const pcBatch = document.getElementById('pc-batch');
+      const pcAdminBtn = document.getElementById('pc-admin-portal');
+      const pcNote = document.getElementById('pc-note');
 
-      // State to avoid duplicate listeners/refresh timers
-      let avatarListenerBound = false;
+      // Signed avatar helpers
+      async function setSignedAvatar(path) {
+        if (!pcAvatar) return;
+        if (!path) {
+          pcAvatar.removeAttribute('src');
+          pcAvatar.alt = 'No avatar';
+          return;
+        }
+        try {
+          const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
+          if (error) { console.warn('avatar signedUrl error', error); return; }
+          pcAvatar.src = data.signedUrl;
+        } catch (err) {
+          console.warn('avatar error', err);
+        }
+      }
       let avatarRefreshTimerId = null;
-      let currentAvatarPath = null;
+      function startAvatarAutoRefresh(path) {
+        if (avatarRefreshTimerId) clearInterval(avatarRefreshTimerId);
+        if (!path) return;
+        avatarRefreshTimerId = setInterval(() => setSignedAvatar(path), 50 * 1000);
+      }
 
       function setNav(loggedIn) {
         if (loggedIn) {
           if (loginBtn) loginBtn.style.display = 'none';
           if (logoutBtn) logoutBtn.style.display = 'inline';
           if (profileTab) profileTab.style.display = 'inline';
-          if (resultsTab) resultsTab.style.display = 'inline'; // SHOW results when logged in
-          if (avatarCard) avatarCard.style.display = 'block';
+          if (resultsTab) resultsTab.style.display = 'inline';
         } else {
           if (logoutBtn) logoutBtn.style.display = 'none';
           if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
           if (profileTab) profileTab.style.display = 'none';
-          if (resultsTab) resultsTab.style.display = 'none'; // HIDE results when logged out
-          if (adminPortalLink) adminPortalLink.style.display = 'none'; // ADDED
-          if (avatarCard) avatarCard.style.display = 'none';
-          if (avatarImg) avatarImg.removeAttribute('src');
+          if (resultsTab) resultsTab.style.display = 'none';
+          if (adminPortalLink) adminPortalLink.style.display = 'none';
+          if (profileCard) profileCard.style.display = 'none';
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
-          currentAvatarPath = null;
         }
       }
 
       async function getUserRole(userId) {
-        const { data, error } = await sb
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
+        const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
         if (error) console.warn('Role fetch error:', error);
-        // Normalize role to avoid casing/whitespace issues like 'Admin'/'ADMIN'
         return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
-      async function setDashboardWelcome(userId, role) {
-        const { data, error } = await sb
-          .from('profiles')
-          .select('name')
-          .eq('id', userId)
-          .maybeSingle();
-        if (error) console.warn('Name fetch error:', error);
-        const name = data?.name || '';
-        if (role === 'admin') {
-          if (welcomeAdmin) welcomeAdmin.textContent = name ? `Welcome ${name}` : '';
-        } else if (role === 'student') {
-          if (welcomeStudent) welcomeStudent.textContent = name ? `Welcome ${name}` : '';
-        }
-      }
-
-      // Create and set a signed URL for the avatar image
-      async function setSignedAvatar(path) {
-        if (!avatarImg) return;
-        if (!path) {
-          avatarImg.removeAttribute('src');
-          return;
-        }
-        try {
-          const { data, error } = await sb
-            .storage
-            .from(AVATAR_BUCKET)
-            .createSignedUrl(path, 60); // valid for 60 seconds
-
-          if (error) {
-            console.error('createSignedUrl error:', error);
-            return;
-          }
-          avatarImg.src = data.signedUrl;
-        } catch (err) {
-          console.error('setSignedAvatar error:', err);
-        }
-      }
-
-      // Keep the signed URL fresh while the page is open
-      function startAvatarAutoRefresh(path) {
-        if (avatarRefreshTimerId) clearInterval(avatarRefreshTimerId);
-        if (!path) return;
-        avatarRefreshTimerId = setInterval(() => setSignedAvatar(path), 50 * 1000); // refresh a bit before expiry
-      }
-
-      // Bind upload handler once
-      function ensureAvatarUploadHandler(userId) {
-        if (!avatarInput || avatarListenerBound) return;
-        avatarInput.addEventListener('change', async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-
-          // Local preview while upload occurs
-          if (avatarImg) avatarImg.src = URL.createObjectURL(file);
-
-          const filePath = `${userId}/${Date.now()}_${file.name}`;
-
-          // Upload to private bucket (RLS must allow insert for owner/admin)
-          const { error: upErr } = await sb
-            .storage
-            .from(AVATAR_BUCKET)
-            .upload(filePath, file, {
-              upsert: true,
-              contentType: file.type || 'image/*'
-            });
-
-          if (upErr) {
-            console.error('Upload error:', upErr);
-            return;
-          }
-
-          // Save storage path (NOT a public URL) to profile
-          const { error: updErr } = await sb
-            .from('profiles')
-            .update({ avatar_path: filePath })
-            .eq('id', userId);
-
-          if (updErr) {
-            console.error('Update profile error:', updErr);
-            return;
-          }
-
-          currentAvatarPath = filePath;
-          await setSignedAvatar(currentAvatarPath);
-          startAvatarAutoRefresh(currentAvatarPath);
-        });
-        avatarListenerBound = true;
-      }
-
-      // Helper for robust "has value" checks
       const has = (v) => typeof v === 'string' ? v.trim().length > 0 : !!v;
 
       async function refreshUI() {
         try {
           const { data: { session } } = await sb.auth.getSession();
-          if (session?.user) {
-            setNav(true);
-
-            const userId = session.user.id;
-            const role = await getUserRole(userId); // normalized lower-case: 'admin' | 'student' | 'unknown'
-
-            // Toggle dashboards by role (case-insensitive)
-            if (role === 'admin') {
-              if (adminFeatures) adminFeatures.style.display = 'block';
-              if (studentFeatures) studentFeatures.style.display = 'none';
-              if (adminPortalLink) adminPortalLink.style.display = 'inline'; // ADDED: show link for admins
-              await setDashboardWelcome(userId, 'admin');
-            } else if (role === 'student') {
-              if (adminFeatures) adminFeatures.style.display = 'none';
-              if (studentFeatures) studentFeatures.style.display = 'block';
-              if (adminPortalLink) adminPortalLink.style.display = 'none'; // ADDED: hide link for students
-              await setDashboardWelcome(userId, 'student');
-            } else {
-              if (adminFeatures) adminFeatures.style.display = 'none';
-              if (studentFeatures) studentFeatures.style.display = 'none';
-              if (welcomeAdmin) welcomeAdmin.textContent = '';
-              if (welcomeStudent) welcomeStudent.textContent = '';
-              if (adminPortalLink) adminPortalLink.style.display = 'none';
-            }
-
-            // Profile completeness + avatar
-            const { data: profile, error: profErr } = await sb
-              .from('profiles')
-              .select('name, role, prn, batch, avatar_path')
-              .eq('id', userId)
-              .maybeSingle();
-
-            if (profErr) console.warn('Profile fetch error:', profErr);
-
-            // Use role from earlier fetch, fall back to profile.role if needed
-            const roleVal = (role || profile?.role || 'unknown').toString().trim().toLowerCase();
-
-            // Required fields:
-            // - For everyone: name + role
-            // - For students: PRN + batch as well
-            const baseComplete = !!profile && has(profile.name) && has(profile.role);
-            const studentComplete = baseComplete && has(profile.prn) && has(profile.batch);
-            const adminComplete = baseComplete; // admins do NOT need PRN/batch
-
-            const isComplete = (roleVal === 'admin') ? adminComplete : studentComplete;
-
-            if (!isComplete && !window.location.pathname.includes('profile.html')) {
-              // Optional debug to see which fields are missing for affected users
-              console.warn('Profile incomplete; redirecting to profile.html', {
-                role: roleVal,
-                baseComplete,
-                studentComplete,
-                adminComplete,
-                nameOK: has(profile?.name),
-                roleOK: has(profile?.role),
-                prnOK: has(profile?.prn),
-                batchOK: has(profile?.batch)
-              });
-              window.location.href = 'profile.html';
-              return; // stop further logic if redirecting
-            }
-
-            // Signed avatar preview (private)
-            currentAvatarPath = profile?.avatar_path || null;
-            await setSignedAvatar(currentAvatarPath);
-            startAvatarAutoRefresh(currentAvatarPath);
-            ensureAvatarUploadHandler(userId);
-
-          } else {
-            // Logged out
+          if (!session?.user) {
             setNav(false);
-            if (adminFeatures) adminFeatures.style.display = 'none';
-            if (studentFeatures) studentFeatures.style.display = 'none';
-            if (welcomeAdmin) welcomeAdmin.textContent = '';
-            if (welcomeStudent) welcomeStudent.textContent = '';
+            return;
           }
+          setNav(true);
+
+          const userId = session.user.id;
+          // Profile
+          const { data: profile, error: profErr } = await sb
+            .from('profiles')
+            .select('name, role, prn, batch, avatar_path')
+            .eq('id', userId)
+            .maybeSingle();
+          if (profErr) console.warn('Profile fetch error:', profErr);
+
+          const role = (profile?.role || 'unknown').toString().trim().toLowerCase();
+          const name = profile?.name || (session.user.email || 'User');
+
+          // Show Admin Portal links only for admins
+          if (role === 'admin') {
+            if (adminPortalLink) adminPortalLink.style.display = 'inline';
+            if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
+          } else {
+            if (adminPortalLink) adminPortalLink.style.display = 'none';
+            if (pcAdminBtn) pcAdminBtn.style.display = 'none';
+          }
+
+          // Fill the Profile Dashboard Card
+          if (profileCard) profileCard.style.display = 'block';
+          pcName.textContent = `Welcome ${has(profile?.name) ? profile.name : ''}`.trim() || 'Welcome';
+          pcRole.textContent = role === 'admin' ? 'Admin' : (role === 'student' ? 'Student' : 'Role: Unknown');
+
+          // Meta chips (students)
+          if (role === 'student') {
+            const showPRN = has(profile?.prn);
+            const showBatch = has(profile?.batch);
+            pcPRN.textContent = `PRN: ${showPRN ? profile.prn : '—'}`;
+            pcBatch.textContent = `Batch: ${showBatch ? profile.batch : '—'}`;
+            pcMeta.style.display = (showPRN || showBatch) ? 'flex' : 'none';
+          } else {
+            pcMeta.style.display = 'none';
+          }
+
+          // Friendly message
+          if (role === 'admin') {
+            pcMessage.textContent = `You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.`;
+          } else if (role === 'student') {
+            pcMessage.textContent = `Access your assessments and track your progress. Ensure your profile is up to date.`;
+          } else {
+            pcMessage.textContent = `Set up your profile to get the best experience.`;
+          }
+
+          // Completion hint (no hard redirect; we encourage update instead)
+          const baseComplete = has(profile?.name) && has(profile?.role);
+          const studentComplete = baseComplete && has(profile?.prn) && has(profile?.batch);
+          const adminComplete = baseComplete;
+          const isComplete = role === 'admin' ? adminComplete : (role === 'student' ? studentComplete : baseComplete);
+          if (!isComplete) {
+            pcNote.style.display = 'block';
+            if (role === 'student') {
+              pcNote.textContent = 'Your profile looks incomplete. Please add your PRN and Batch.';
+            } else {
+              pcNote.textContent = 'Please complete your profile details for a better experience.';
+            }
+          } else {
+            pcNote.style.display = 'none';
+          }
+
+          // Avatar
+          const avatarPath = profile?.avatar_path || null;
+          await setSignedAvatar(avatarPath);
+          startAvatarAutoRefresh(avatarPath);
+
         } catch (e) {
           console.error('refreshUI error:', e);
         }
@@ -454,51 +425,36 @@
       sb.auth.onAuthStateChange((_event, _session) => { refreshUI(); });
       window.addEventListener('focus', refreshUI);
 
-      // Protect Assessments link: require login
-      if (assessmentTab) {
-        assessmentTab.addEventListener('click', async (e) => {
-          const { data: { session } } = await sb.auth.getSession();
-          if (!session?.user) {
-            e.preventDefault();
-            window.location.href = 'login_Version4.html';
-          }
-        });
-      }
-
-      // Protect Results link: require login
-      if (resultsTab) {
-        resultsTab.addEventListener('click', async (e) => {
-          const { data: { session } } = await sb.auth.getSession();
-          if (!session?.user) {
-            e.preventDefault();
-            window.location.href = 'login_Version4.html';
-          }
-        });
-      }
-
-      // Protect Admin Portal link: require login + admin role
-      if (adminPortalLink) {
-        adminPortalLink.addEventListener('click', async (e) => {
+      // Protect links
+      function protectLink(el, requireAdmin=false){
+        if(!el) return;
+        el.addEventListener('click', async (e) => {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) {
             e.preventDefault();
             window.location.href = 'login_Version4.html';
             return;
           }
-          const role = await getUserRole(session.user.id);
-          if (role !== 'admin') {
-            e.preventDefault();
-            alert('Admin only.');
+          if (requireAdmin) {
+            const role = await getUserRole(session.user.id);
+            if (role !== 'admin') {
+              e.preventDefault();
+              alert('Admin only.');
+            }
           }
         });
       }
+      protectLink(assessmentTab, false);
+      protectLink(resultsTab, false);
+      protectLink(adminPortalLink, true);
+      protectLink(document.getElementById('pc-admin-portal'), true);
 
-      // Hardened Logout handler (fixes "stuck session" on some browsers)
+      // Logout
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
           e.preventDefault();
-          try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { console.warn('global signOut error:', err); }
-          try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { console.warn('local signOut error:', err); }
+          try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { /* ignore */ }
+          try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { /* ignore */ }
           try {
             for (const k of Object.keys(localStorage)) {
               const key = k.toLowerCase();
@@ -508,7 +464,7 @@
               const key = k.toLowerCase();
               if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
             }
-          } catch (e2) { console.warn('storage cleanup error:', e2); }
+          } catch (e2) { /* ignore */ }
           try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
           window.location.replace('index.html');
         });
