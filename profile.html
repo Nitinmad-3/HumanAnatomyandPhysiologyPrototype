@@ -246,6 +246,35 @@
         if (departmentEl) departmentEl.required = false;
       }
 
+      function applyEditLock(locked, role) {
+        // Enforce lock only for students (admins always editable)
+        const isStudent = (role || '').toLowerCase() === 'student';
+        const shouldLock = !!locked && isStudent;
+
+        const disableSelectors = [
+          '#profile-form input',
+          '#profile-form select',
+          '#profile-form button',
+          '#avatar-input',
+          '#pick-avatar-btn',
+          '#clear-avatar-btn',
+          '#delete-avatar-btn'
+        ].join(',');
+
+        document.querySelectorAll(disableSelectors).forEach(el => {
+          // Keep reload button usable
+          if (el.id === 'reload-btn') return;
+          el.disabled = shouldLock;
+        });
+
+        if (shouldLock) {
+          show(statusWarn, 'Profile editing is locked by admin.');
+        } else {
+          // Only hide if there’s no other warning displayed
+          if (statusWarn.textContent === 'Profile editing is locked by admin.') hide(statusWarn);
+        }
+      }
+
       function computeCompleteness(p) {
         const isAdmin = (p?.role || '').toLowerCase() === 'admin';
         const fields = isAdmin ? ['name', 'email', 'role']
@@ -302,6 +331,10 @@
               if (prnEl && !prnEl.value) prnEl.value = p.prn || '';
               if (batchEl && !batchEl.value) batchEl.value = p.batch || '';
               toggleFieldsForRole(p.role);
+
+              // Apply lock from server updates too
+              applyEditLock(p.profile_edit_locked === true, p.role);
+
               if (p.avatar_path !== previousAvatarPath) {
                 previousAvatarPath = p.avatar_path || null;
                 await setSignedAvatar(sb, previousAvatarPath);
@@ -331,7 +364,8 @@
       async function ensureProfile(sb, uid, authEmail) {
         const { data: profile, error } = await sb
           .from('profiles')
-          .select('id, name, email, role, prn, batch, department, avatar_path, school_name')
+          // INCLUDE the lock flag
+          .select('id, name, email, role, prn, batch, department, avatar_path, school_name, profile_edit_locked')
           .eq('id', uid)
           .maybeSingle();
         if (error) throw error;
@@ -398,12 +432,15 @@
         if (!p.role) {
           show(statusWarn, 'Your role is not set yet. Please contact an administrator to get access.');
         } else {
-          hide(statusWarn);
+          // Don’t hide here; lock message might need the warn area
         }
 
         await setSignedAvatar(sb, previousAvatarPath);
         startAvatarAutoRefresh(sb, previousAvatarPath);
         deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
+
+        // Apply edit lock on initial load
+        applyEditLock(p.profile_edit_locked === true, p.role);
 
         updateProgress(p);
         subscribeToProfile(sb, currentUserId);
@@ -467,7 +504,7 @@
 
         if (isAdmin) {
           payload.department = departmentEl ? (departmentEl.value || null) : null;
-          payload.school_name = null; // admins don't use school_name
+          payload.school_name = null;
           if (!payload.name) {
             show(statusWarn, 'Please fill in Name.');
             setLoading(false);
@@ -477,7 +514,7 @@
           payload.school_name = schoolEl.value.trim();
           payload.prn = prnEl.value.trim();
           payload.batch = batchEl.value.trim();
-          payload.department = null; // clear on student save
+          payload.department = null;
           if (!payload.name || !payload.school_name || !payload.prn || !payload.batch) {
             show(statusWarn, 'Please fill in Name, School Name, PRN, and Batch.');
             setLoading(false);
@@ -487,7 +524,7 @@
 
         if (newAvatarPath) {
           payload.avatar_path = newAvatarPath;
-          payload.avatar_url = null; // legacy cleanup if present
+          payload.avatar_url = null;
         }
 
         const { data, error } = await sb
