@@ -226,6 +226,9 @@
     let currentRows = [];
     let editingRowIdx = null;
 
+    // Expose for console debugging
+    window.currentRows = currentRows;
+
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){
       if(n == null) return '—';
@@ -239,14 +242,21 @@
       return row.submitted_at_utc || row.submitted_at;
     }
 
-    // Force display in IST; robust parse for Postgres timestamps
+    // Robust IST formatting: normalize to ISO, assume UTC when ambiguous
     function fmtDate(s){
       if(!s) return '—';
       try {
         let iso = s;
-        if (typeof s === 'string' && s.includes(' ') && !s.includes('T')) {
-          // Safari-safe: convert "YYYY-MM-DD HH:MM:SS+00" to "YYYY-MM-DDTHH:MM:SS+00"
-          iso = s.replace(' ', 'T');
+        if (typeof iso === 'string') {
+          if (iso.includes(' ') && !iso.includes('T')) {
+            // "YYYY-MM-DD HH:MM:SS+00" -> "YYYY-MM-DDTHH:MM:SS+00"
+            iso = iso.replace(' ', 'T');
+          }
+          // If no timezone/offset present, treat as UTC by appending Z
+          // Matches "YYYY-MM-DDTHH:MM:SS" or with millis
+          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(iso)) {
+            iso += 'Z';
+          }
         }
         return new Date(iso).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
@@ -259,7 +269,7 @@
           hour12: false
         });
       } catch(e){
-        // Fallback manual shift +05:30
+        // Fallback manual +05:30
         const d = new Date(s);
         const utcMs = d.getTime() + d.getTimezoneOffset()*60000;
         const ist = new Date(utcMs + 5.5*3600000);
@@ -607,6 +617,7 @@
 
     function renderRows(rows){
       currentRows = rows;
+      window.currentRows = rows; // expose updated rows for console
       countEl.textContent = rows.length;
       if(!rows.length){
         tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
@@ -808,6 +819,10 @@
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
       roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
+
+      // Expose for console debugging
+      window.isAdmin = isAdmin;
+      window.currentUser = currentUser;
 
       if(isAdmin){
         adminSearchWrap.style.display='block';
