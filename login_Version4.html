@@ -89,7 +89,7 @@
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
-      <a id="login-btn" href="login.html">Login</a>
+      <a id="login-btn" href="login_Version4.html">Login</a>
       <a id="logout-btn" href="#" style="display:none;">Logout</a>
     </nav>
   </header>
@@ -186,8 +186,15 @@
         } else {
           logoutBtn.style.display = 'none';
           loginBtn.style.display = 'inline';
-          loginBtn.setAttribute('href', 'login.html');
+          loginBtn.setAttribute('href', 'login_Version4.html');
         }
+      }
+
+      // Helper: allow safe next= param (relative paths only, to avoid open redirects)
+      function getNextUrl() {
+        const next = new URLSearchParams(location.search).get('next');
+        if (next && /^([a-zA-Z0-9_./-])+\.html(\?.*)?$/.test(next)) return next;
+        return null;
       }
 
       // Ensure there is a profile row, then decide where to route
@@ -204,7 +211,7 @@
           profile = data;
         } catch (e) {
           console.warn('profiles SELECT failed (RLS likely). Sending to profile setup...', e);
-          window.location.href = 'profile.html?next=index.html';
+          window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
           return null;
         }
 
@@ -220,7 +227,7 @@
             profile = inserted;
           } catch (e) {
             console.error('profiles INSERT failed (RLS). Sending to profile setup...', e);
-            window.location.href = 'profile.html?next=index.html';
+            window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
             return null;
           }
         }
@@ -237,12 +244,14 @@
         if (!prof) return; // ensureProfile already routed on failure
 
         const role = (prof.role || '').toLowerCase();
-        if (role === 'admin' || role === 'student') {
-          window.location.href = 'index.html';
-        } else {
-          // Role not assigned yet → send to profile to finish setup, not "access denied"
-          window.location.href = 'profile.html?next=index.html';
+        if (role !== 'admin' && role !== 'student') {
+          // Role not assigned yet → send to profile to finish setup
+          window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
+          return;
         }
+
+        const nextUrl = getNextUrl();
+        window.location.href = nextUrl || 'index.html';
       }
 
       async function init() {
