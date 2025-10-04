@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Portal | Human Anatomy & Physiology Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family:'Segoe UI',Arial,sans-serif; margin:0; color:#222; background:#f6f9ff; }
+    header { padding:1rem; background:#e3f2fd; border-bottom:1px solid #cfe0ff; }
+    header .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    header a { color:#1565c0; text-decoration:none; font-weight:600; }
+    h1 { margin:0; font-size:1.4rem; color:#0d47a1; }
+    main { max-width:1100px; margin:18px auto; padding:0 12px 24px; display:flex; flex-direction:column; gap:14px; }
+    .panel { background:#fff; border:1px solid #cfe0ff; border-radius:10px; padding:14px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .muted { color:#375a9e; font-size:.95rem; }
+    .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    label { font-size:13px; color:#0d47a1; font-weight:600; }
+    .input, select, textarea, input[type="datetime-local"] { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
+    .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
+    .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
+    .btn.warn { background:#c62828; }
+    .btn.small { padding:6px 10px; font-size:12px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+    .hint { font-size:12px; color:#6b84c7; }
+    .ok { color:#1b5e20; font-weight:600; }
+    .warn-text { color:#c62828; font-weight:600; }
+    .list { display:flex; flex-direction:column; gap:8px; }
+    .item { border:1px dashed #d4e4ff; border-radius:8px; padding:8px; background:#f9fbff; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; }
+    .pill.success { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
+    .pill.error { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
+    .pill.info { background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb; }
+    textarea { min-height:80px; }
+    .chat-box { display:flex; flex-direction:column; gap:8px; max-height:420px; overflow:auto; background:#f7f9fe; border:1px solid #d4e4ff; border-radius:8px; padding:8px; }
+    .chat-line { display:flex; gap:8px; align-items:flex-start; }
+    .me { background:#e8f5e9; }
+    .them { background:#fff; }
+    .msg { padding:6px 8px; border-radius:8px; border:1px solid #d4e4ff; }
+    .time { font-size:11px; color:#6b84c7; }
+    .section-title { margin:0 0 10px; color:#0d47a1; }
+    .status { font-size:12px; color:#6b84c7; }
+    .divider { height:1px; background:#d4e4ff; margin:8px 0; }
+    .danger { color:#c62828; }
+    @media (max-width:640px){ .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <a href="index.html">← Home</a>
+      <h1>Admin Portal</h1>
+      <span id="role-badge" class="badge">Checking role…</span>
+      <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Release Controls -->
+    <section class="panel">
+      <h2 class="section-title">Assessment Release & Deadline</h2>
+      <div class="grid">
+        <div>
+          <label>Assessment</label>
+          <select id="exp-select" class="input">
+            <option value="">Select an assessment</option>
+          </select>
+          <div class="hint">Source: list_experiments_for_results</div>
+        </div>
+        <div>
+          <label>Released to students</label>
+          <div class="row">
+            <input type="checkbox" id="released-toggle" />
+            <span id="release-effective" class="pill info">—</span>
+          </div>
+          <div class="hint">Effective release depends on window start/end and "Released" toggle</div>
+        </div>
+        <div>
+          <label>Start (IST)</label>
+          <input type="datetime-local" id="start-ist" class="input" />
+          <div class="hint">If empty, opens immediately after release</div>
+        </div>
+        <div>
+          <label>Deadline (IST)</label>
+          <input type="datetime-local" id="end-ist" class="input" />
+          <div class="hint">If empty, no deadline</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="save-release" class="btn">Save</button>
+        <button id="close-release" class="btn ghost">Close (Unrelease)</button>
+        <span id="release-status" class="status"></span>
+      </div>
+      <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
+        Backend table missing. Ask to run setup_portal.sql or let me generate the exact SQL.
+      </div>
+    </section>
+
+    <!-- Notifications -->
+    <section class="panel">
+      <h2 class="section-title">Notifications (Flash on Home)</h2>
+      <div class="grid">
+        <div>
+          <label>Message</label>
+          <textarea id="notif-message" class="input" placeholder="Short notice shown to all users on Home"></textarea>
+        </div>
+        <div>
+          <label>Severity</label>
+          <select id="notif-severity" class="input">
+            <option value="info">Info (blue)</option>
+            <option value="warning">Warning (amber)</option>
+            <option value="danger">Danger (red)</option>
+          </select>
+        </div>
+        <div>
+          <label>Starts (IST)</label>
+          <input type="datetime-local" id="notif-start-ist" class="input" />
+        </div>
+        <div>
+          <label>Ends (IST)</label>
+          <input type="datetime-local" id="notif-end-ist" class="input" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="publish-notif" class="btn">Publish Notification</button>
+        <span id="notif-status" class="status"></span>
+      </div>
+      <div class="divider"></div>
+      <div class="list" id="notif-list"></div>
+      <div id="notif-setup-hint" class="hint" style="margin-top:8px; display:none;">
+        Backend table missing. Run setup_portal.sql when ready.
+      </div>
+    </section>
+
+    <!-- Communication -->
+    <section class="panel">
+      <h2 class="section-title">Communication (Admin ↔ Students)</h2>
+      <div class="grid">
+        <div>
+          <label>Room</label>
+          <select id="chat-room" class="input">
+            <option value="global">Global</option>
+          </select>
+          <div class="hint">Pick an assessment to talk in a dedicated room</div>
+        </div>
+      </div>
+      <div id="chat-box" class="chat-box" aria-live="polite"></div>
+      <div class="row">
+        <input id="chat-input" class="input" placeholder="Type a message…" />
+        <button id="chat-send" class="btn">Send</button>
+      </div>
+      <div id="chat-status" class="status"></div>
+      <div id="chat-setup-hint" class="hint" style="margin-top:8px; display:none;">
+        Backend table missing. Run setup_portal.sql when ready.
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script>
+    // Supabase init (same project as your current app)
+    const sb = window.supabase.createClient(
+      'https://hunlistfklwvpivfjmbk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+    );
+
+    const $ = s => document.querySelector(s);
+    const statusEl = $('#status');
+    const roleBadge = $('#role-badge');
+
+    // Release controls
+    const expSelect = $('#exp-select');
+    const releasedToggle = $('#released-toggle');
+    const releaseEffective = $('#release-effective');
+    const startIst = $('#start-ist');
+    const endIst = $('#end-ist');
+    const saveReleaseBtn = $('#save-release');
+    const closeReleaseBtn = $('#close-release');
+    const releaseStatus = $('#release-status');
+    const releaseSetupHint = $('#release-setup-hint');
+
+    // Notifications
+    const notifMsg = $('#notif-message');
+    const notifSeverity = $('#notif-severity');
+    const notifStartIst = $('#notif-start-ist');
+    const notifEndIst = $('#notif-end-ist');
+    const notifPublishBtn = $('#publish-notif');
+    const notifStatus = $('#notif-status');
+    const notifList = $('#notif-list');
+    const notifSetupHint = $('#notif-setup-hint');
+
+    // Chat
+    const chatRoom = $('#chat-room');
+    const chatBox = $('#chat-box');
+    const chatInput = $('#chat-input');
+    const chatSend = $('#chat-send');
+    const chatStatus = $('#chat-status');
+    const chatSetupHint = $('#chat-setup-hint');
+
+    let currentUser = null;
+    let isAdmin = false;
+    let chatSubscription = null;
+
+    // Helpers: IST ⇄ UTC
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function istLocalToUTC(dtLocal){
+      if(!dtLocal) return null; // "YYYY-MM-DDTHH:MM"
+      const [d,t] = dtLocal.split('T');
+      const [y,m,day] = d.split('-').map(Number);
+      const [hh,mm] = (t||'00:00').split(':').map(Number);
+      // IST is UTC+05:30 => UTC = IST - 05:30
+      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
+      return new Date(utcMs).toISOString();
+    }
+    function utcToIstDatetimeLocal(utcStr){
+      if(!utcStr) return '';
+      const d = new Date(utcStr);
+      const istMs = d.getTime() + 5.5*3600000;
+      const ist = new Date(istMs);
+      return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}T${pad(ist.getHours())}:${pad(ist.getMinutes())}`;
+    }
+    function nowUtcISO(){ return new Date().toISOString(); }
+    function withinWindow(released, startUtc, endUtc){
+      if(!released) return false;
+      const now = new Date();
+      const start = startUtc ? new Date(startUtc) : null;
+      const end = endUtc ? new Date(endUtc) : null;
+      if(start && now < start) return false;
+      if(end && now > end) return false;
+      return true;
+    }
+
+    function setStatus(msg){ statusEl.textContent = msg; }
+    function setPill(el, ok, text){
+      el.textContent = text;
+      el.classList.remove('success','error','info');
+      el.classList.add(ok ? 'success' : 'error');
+      el.classList.add('pill');
+    }
+
+    async function requireAdmin(){
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        window.location.replace('login_Version4.html');
+        return false;
+      }
+      currentUser = session.user;
+      // fetch role
+      const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
+      const role = (data?.role || '').toLowerCase();
+      isAdmin = role === 'admin';
+      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
+      if(!isAdmin){
+        roleBadge.classList.add('danger');
+        alert('Admin only. Redirecting home.');
+        window.location.replace('index.html');
+        return false;
+      }
+      return true;
+    }
+
+    // Load experiments and hydrate selects
+    async function loadExperiments(){
+      const { data, error } = await sb.rpc('list_experiments_for_results');
+      if(error){ console.warn('list_experiments_for_results', error); return; }
+      expSelect.innerHTML = '<option value="">Select an assessment</option>';
+      chatRoom.innerHTML = '<option value="global">Global</option>';
+      (data || []).forEach(row=>{
+        const id = row.experiment_id || row.experiment || row.id;
+        if(!id) return;
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = id;
+        expSelect.appendChild(opt);
+        const opt2 = document.createElement('option');
+        opt2.value = `exp:${id}`;
+        opt2.textContent = `Room: ${id}`;
+        chatRoom.appendChild(opt2);
+      });
+    }
+
+    async function loadReleaseFor(expId){
+      startIst.value = ''; endIst.value = ''; releasedToggle.checked = false;
+      releaseStatus.textContent = 'Loading…';
+      try{
+        const { data, error, status } = await sb.from('assessment_release')
+          .select('experiment_id,released,window_start,window_end,updated_at')
+          .eq('experiment_id', expId)
+          .maybeSingle();
+
+        if(error && String(error?.code) === '42P01'){ // undefined_table
+          releaseSetupHint.style.display = 'block';
+          releaseStatus.textContent = 'Backend table not found.';
+          return;
+        }
+        releaseSetupHint.style.display = 'none';
+
+        if(!data){
+          setPill(releaseEffective, false, 'Not released');
+          releaseStatus.textContent = 'No release record yet.';
+          return;
+        }
+        releasedToggle.checked = !!data.released;
+        startIst.value = utcToIstDatetimeLocal(data.window_start);
+        endIst.value = utcToIstDatetimeLocal(data.window_end);
+        const effective = withinWindow(!!data.released, data.window_start, data.window_end);
+        setPill(releaseEffective, effective, effective ? 'Open to students' : 'Closed');
+        releaseStatus.textContent = `Updated: ${new Date(data.updated_at).toLocaleString()}`;
+      } catch(e){
+        releaseStatus.textContent = 'Failed to load.';
+      }
+    }
+
+    async function saveRelease(){
+      const expId = expSelect.value;
+      if(!expId){ alert('Select an assessment.'); return; }
+      const released = !!releasedToggle.checked;
+      const startUtc = istLocalToUTC(startIst.value);
+      const endUtc = istLocalToUTC(endIst.value);
+      releaseStatus.textContent = 'Saving…';
+      try{
+        const { error } = await sb.from('assessment_release').upsert({
+          experiment_id: expId,
+          released,
+          window_start: startUtc,
+          window_end: endUtc,
+          updated_by: currentUser.id,
+          updated_at: nowUtcISO()
+        }, { onConflict: 'experiment_id' });
+        if(error){
+          if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
+          throw error;
+        }
+        await loadReleaseFor(expId);
+        releaseStatus.textContent = 'Saved.';
+      } catch(e){
+        releaseStatus.textContent = 'Save failed.';
+        console.warn('saveRelease', e);
+        alert('Save failed: ' + (e?.message || e));
+      }
+    }
+
+    async function closeRelease(){
+      const expId = expSelect.value;
+      if(!expId){ alert('Select an assessment.'); return; }
+      releaseStatus.textContent = 'Closing…';
+      try{
+        const { error } = await sb.from('assessment_release')
+          .update({ released:false, updated_by: currentUser.id, updated_at: nowUtcISO() })
+          .eq('experiment_id', expId);
+        if(error){
+          if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
+          throw error;
+        }
+        await loadReleaseFor(expId);
+        releaseStatus.textContent = 'Closed.';
+      } catch(e){
+        releaseStatus.textContent = 'Close failed.';
+        alert('Close failed: ' + (e?.message || e));
+      }
+    }
+
+    // Notifications
+    function severityPillClass(sev){
+      if(sev === 'danger') return 'error';
+      if(sev === 'warning') return 'info';
+      return 'success';
+    }
+
+    async function publishNotification(){
+      const msg = notifMsg.value.trim();
+      if(!msg){ alert('Enter a message.'); return; }
+      const sev = notifSeverity.value || 'info';
+      const sUtc = istLocalToUTC(notifStartIst.value);
+      const eUtc = istLocalToUTC(notifEndIst.value);
+      notifStatus.textContent = 'Publishing…';
+      try{
+        const { error } = await sb.from('portal_notifications').insert([{
+          message: msg, severity: sev, active: true,
+          starts_at: sUtc, ends_at: eUtc, created_by: currentUser.id
+        }]);
+        if(error){
+          if(String(error?.code) === '42P01'){ notifSetupHint.style.display = 'block'; }
+          throw error;
+        }
+        notifMsg.value = ''; notifStartIst.value = ''; notifEndIst.value = '';
+        await loadNotifications();
+        notifStatus.textContent = 'Published.';
+      } catch(e){
+        notifStatus.textContent = 'Publish failed.';
+        alert('Publish failed: ' + (e?.message || e));
+      }
+    }
+
+    async function loadNotifications(){
+      notifList.innerHTML = '<div class="muted">Loading…</div>';
+      try{
+        const { data, error } = await sb.from('portal_notifications')
+          .select('id,message,severity,active,starts_at,ends_at,created_at')
+          .order('created_at', { ascending:false })
+          .limit(25);
+        if(error){
+          if(String(error?.code) === '42P01'){ notifSetupHint.style.display = 'block'; }
+          throw error;
+        }
+        notifSetupHint.style.display = 'none';
+        const now = Date.now();
+        notifList.innerHTML = '';
+        (data||[]).forEach(n=>{
+          const activeWindow = (!n.starts_at || new Date(n.starts_at).getTime() <= now) &&
+                               (!n.ends_at || new Date(n.ends_at).getTime() >= now);
+          const el = document.createElement('div');
+          el.className = 'item';
+          el.innerHTML = `
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <span class="pill ${severityPillClass(n.severity)}">${n.severity}</span>
+                <span class="${n.active ? 'ok':'warn-text'}" style="margin-left:6px;">${n.active?'Active':'Inactive'}</span>
+                <span class="muted" style="margin-left:8px;">${new Date(n.created_at).toLocaleString()}</span>
+              </div>
+              <div class="row">
+                <button class="btn small ghost" data-action="toggle" data-id="${n.id}">${n.active?'Deactivate':'Activate'}</button>
+                <button class="btn small warn" data-action="delete" data-id="${n.id}">Delete</button>
+              </div>
+            </div>
+            <div style="margin-top:6px;">${n.message}</div>
+            <div class="hint">Window: ${n.starts_at?new Date(n.starts_at).toLocaleString():'—'} → ${n.ends_at?new Date(n.ends_at).toLocaleString():'—'} | In window now: ${activeWindow}</div>
+          `;
+          notifList.appendChild(el);
+        });
+
+        notifList.querySelectorAll('button[data-action="toggle"]').forEach(b=>{
+          b.onclick = async () => {
+            const id = b.getAttribute('data-id');
+            const row = (data||[]).find(x=>x.id===id);
+            const { error } = await sb.from('portal_notifications').update({ active: !row.active }).eq('id', id);
+            if(error) return alert(error.message);
+            loadNotifications();
+          };
+        });
+        notifList.querySelectorAll('button[data-action="delete"]').forEach(b=>{
+          b.onclick = async () => {
+            const id = b.getAttribute('data-id');
+            if(!confirm('Delete this notification?')) return;
+            const { error } = await sb.from('portal_notifications').delete().eq('id', id);
+            if(error) return alert(error.message);
+            loadNotifications();
+          };
+        });
+
+      } catch(e){
+        notifList.innerHTML = '<div class="muted">Failed to load notifications.</div>';
+        console.warn('loadNotifications', e);
+      }
+    }
+
+    // Chat
+    function renderMsg(m){
+      const me = m.sender_id === currentUser?.id;
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-line';
+      wrap.innerHTML = `
+        <div class="msg ${me?'me':'them'}">
+          <div style="font-size:12px; color:#0d47a1; font-weight:600;">${m.sender_name || (me?'You':'User')}</div>
+          <div>${(m.message || '').replace(/</g,'&lt;')}</div>
+          <div class="time">${new Date(m.created_at).toLocaleString()}</div>
+        </div>`;
+      chatBox.appendChild(wrap);
+    }
+
+    async function loadChat(room){
+      chatBox.innerHTML = '';
+      try{
+        const { data, error } = await sb.from('portal_chat')
+          .select('id,room,sender_id,sender_name,role,message,created_at')
+          .eq('room', room)
+          .order('created_at', { ascending:true })
+          .limit(200);
+        if(error){
+          if(String(error?.code) === '42P01'){ chatSetupHint.style.display = 'block'; }
+          throw error;
+        }
+        chatSetupHint.style.display = 'none';
+        (data||[]).forEach(renderMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch(e){
+        console.warn('loadChat', e);
+      }
+    }
+
+    function subscribeChat(room){
+      if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
+      chatSubscription = sb.channel('portal_chat_room_'+room)
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
+          renderMsg(payload.new);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .subscribe(status => {
+          chatStatus.textContent = status === 'SUBSCRIBED' ? 'Live' : ('Status: ' + status);
+        });
+    }
+
+    async function sendChat(){
+      const txt = chatInput.value.trim();
+      if(!txt) return;
+      const room = chatRoom.value || 'global';
+      chatInput.value = '';
+      const { data:prof } = await sb.from('profiles').select('full_name,role').eq('id', currentUser.id).maybeSingle();
+      const senderName = prof?.full_name || currentUser.email || 'Admin';
+      const role = 'admin';
+      const { error } = await sb.from('portal_chat').insert([{
+        room, sender_id: currentUser.id, sender_name: senderName, role, message: txt
+      }]);
+      if(error){
+        if(String(error?.code) === '42P01'){ chatSetupHint.style.display = 'block'; }
+        alert('Send failed: '+error.message);
+      }
+    }
+
+    // Init
+    async function init(){
+      setStatus('Checking admin…');
+      if(!(await requireAdmin())) return;
+      setStatus('Loading data…');
+      await loadExperiments();
+
+      // Wire events
+      expSelect.onchange = async () => {
+        const expId = expSelect.value;
+        if(!expId) return;
+        await loadReleaseFor(expId);
+      };
+      saveReleaseBtn.onclick = saveRelease;
+      closeReleaseBtn.onclick = closeRelease;
+
+      notifPublishBtn.onclick = publishNotification;
+      await loadNotifications();
+
+      // Chat
+      const defaultRoom = 'global';
+      await loadChat(defaultRoom);
+      subscribeChat(defaultRoom);
+      chatSend.onclick = sendChat;
+      chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
+      chatRoom.onchange = async () => {
+        const room = chatRoom.value || 'global';
+        await loadChat(room);
+        subscribeChat(room);
+      };
+
+      setStatus('Ready.');
+    }
+    init();
+  </script>
+</body>
+</html>
