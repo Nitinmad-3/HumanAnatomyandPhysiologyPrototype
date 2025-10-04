@@ -44,6 +44,7 @@
       justify-content: center;
       gap: 2rem;
       margin-bottom: 2rem;
+      flex-wrap: wrap;
     }
     nav a, nav button {
       font-size: 1.2rem;
@@ -134,6 +135,10 @@
         <a id="results-tab" href="result.html" style="display:none;">Results</a>
         <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
         <a href="references.html">References</a>
+
+        <!-- ADDED: Admin Portal link (admin-only; shown by JS) -->
+        <a href="admin_portal.html" id="admin-portal-link" style="display:none;">Admin Portal</a>
+
         <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
         <button id="logout-btn" style="display:none;">Logout</button>
       </nav>
@@ -173,6 +178,7 @@
         <li>See references and learning material</li>
       </ul>
     </div>
+
     <!-- Welcome/Intro Message AFTER dashboard -->
     <div class="intro">
       <p>
@@ -194,6 +200,9 @@
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
+  <!-- ADDED: Home notifications banner (flashes on Home when active) -->
+  <script src="home_notifications.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -219,6 +228,7 @@
       const welcomeStudent = document.getElementById('dashboard-welcome-student');
       const assessmentTab = document.getElementById('assessment-tab');
       const resultsTab = document.getElementById('results-tab'); // Results link
+      const adminPortalLink = document.getElementById('admin-portal-link'); // ADDED
 
       // Avatar elements
       const avatarCard = document.getElementById('avatar-card');
@@ -242,6 +252,7 @@
           if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
           if (profileTab) profileTab.style.display = 'none';
           if (resultsTab) resultsTab.style.display = 'none'; // HIDE results when logged out
+          if (adminPortalLink) adminPortalLink.style.display = 'none'; // ADDED
           if (avatarCard) avatarCard.style.display = 'none';
           if (avatarImg) avatarImg.removeAttribute('src');
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
@@ -365,16 +376,19 @@
             if (role === 'admin') {
               if (adminFeatures) adminFeatures.style.display = 'block';
               if (studentFeatures) studentFeatures.style.display = 'none';
+              if (adminPortalLink) adminPortalLink.style.display = 'inline'; // ADDED: show link for admins
               await setDashboardWelcome(userId, 'admin');
             } else if (role === 'student') {
               if (adminFeatures) adminFeatures.style.display = 'none';
               if (studentFeatures) studentFeatures.style.display = 'block';
+              if (adminPortalLink) adminPortalLink.style.display = 'none'; // ADDED: hide link for students
               await setDashboardWelcome(userId, 'student');
             } else {
               if (adminFeatures) adminFeatures.style.display = 'none';
               if (studentFeatures) studentFeatures.style.display = 'none';
               if (welcomeAdmin) welcomeAdmin.textContent = '';
               if (welcomeStudent) welcomeStudent.textContent = '';
+              if (adminPortalLink) adminPortalLink.style.display = 'none';
             }
 
             // Profile completeness + avatar
@@ -458,6 +472,23 @@
           if (!session?.user) {
             e.preventDefault();
             window.location.href = 'login_Version4.html';
+          }
+        });
+      }
+
+      // Protect Admin Portal link: require login + admin role
+      if (adminPortalLink) {
+        adminPortalLink.addEventListener('click', async (e) => {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) {
+            e.preventDefault();
+            window.location.href = 'login_Version4.html';
+            return;
+          }
+          const role = await getUserRole(session.user.id);
+          if (role !== 'admin') {
+            e.preventDefault();
+            alert('Admin only.');
           }
         });
       }
