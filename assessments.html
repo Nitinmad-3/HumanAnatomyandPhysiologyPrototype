@@ -5,31 +5,78 @@
   <title>Assessments | Human Anatomy & Physiology</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #33691e; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
-    nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer;}
-    nav a:hover, nav button:hover { background: #aed581; }
-
-    .assess-list { max-width: 700px; margin: auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #c5e1a5; }
-    .assess-list ul { list-style: none; padding: 0; }
-    .assess-list li { margin-bottom: 1.25em; }
-    .assess-list a { color: #33691e; text-decoration: none; font-size: 1.08em; font-weight: bold;}
-    .assess-list a:hover { text-decoration: underline; }
-
-    #not-logged-in-message, #access-denied-message, #error-message {
-      font-weight: bold; text-align: center; margin: 2rem auto 0 auto; max-width: 700px; padding: 0.9rem 1rem; border-radius: 8px;
+    :root{
+      --green:#33691e;
+      --green-2:#558b2f;
+      --leaf:#c5e1a5;
+      --leaf-2:#aed581;
+      --ink:#1f2b1f;
+      --muted:#5b6f99;
+      --chip-bg:#eef7e6;
+      --chip-bd:#d7e9c2;
+      --warn:#e65100;
+      --danger:#b71c1c;
+      --shadow:0 6px 24px rgba(28,57,20,.12);
+      --shadow-soft:0 2px 10px rgba(28,57,20,.10);
     }
-    #not-logged-in-message { color: #1b5e20; background: #e8f5e9; border: 1px solid #c8e6c9; }
-    #access-denied-message { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
-    #error-message { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0; color: var(--ink);}
+    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
+    h1 { color: var(--green); margin-bottom: .8rem; }
+    nav { display: flex; justify-content: center; gap: .75rem; margin-bottom: 1.25rem; flex-wrap:wrap;}
+    nav a, nav button {
+      color: var(--green-2); font-weight: 700; text-decoration: none;
+      background: var(--leaf); padding: 0.55em 1.1em; border-radius: 10px; border: 1px solid #b7d48f;
+      cursor: pointer; box-shadow: var(--shadow-soft); transition: transform .04s ease, background .2s ease;
+      font-size: 1rem;
+    }
+    nav a:hover, nav button:hover { background: var(--leaf-2); transform: translateY(-1px); }
 
-    #login-direct { display: inline-block; margin: 1.5rem auto 0 auto; background: #33691e; color: #fff; padding: 0.65em 1.3em; border-radius: 4px; text-decoration: none; }
-    #login-direct:hover { background: #558b2f; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 12px 28px; }
 
-    .hidden { display: none; }
-    @media (max-width: 600px) { .assess-list { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
+    .assess-card {
+      background: #fff; border-radius: 16px; padding: 1.2rem; box-shadow: var(--shadow);
+      border: 1px solid #e2f0c2; margin: 0 auto 14px auto;
+    }
+    .assess-header { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .assess-title { font-size: 1.1rem; font-weight: 800; color: var(--green); }
+    .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:.85rem; font-weight:700;
+      border:1px solid var(--chip-bd); background: var(--chip-bg); color: var(--green-2);
+    }
+    .pill.open { background:#e8f5e9; border-color:#c8e6c9; color:#1b5e20; }
+    .pill.upcoming { background:#fff8e1; border-color:#ffe0b2; color:var(--warn); }
+    .pill.closed { background:#ffebee; border-color:#ffcdd2; color:var(--danger); }
+    .meta { color:#335; font-size:.92rem; }
+    .muted { color:#556; font-size:.9rem; }
+    .btn {
+      border:0; border-radius:10px; padding:.55rem .9rem; font-size:.95rem; font-weight:800; cursor:pointer;
+      transition: transform .04s ease, background .2s ease, box-shadow .2s ease; box-shadow: var(--shadow-soft);
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn-primary { background: var(--green-2); color:#fff; }
+    .btn-ghost { background:#fff; color: var(--green-2); border:1px solid #b7d48f; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .list { display:flex; flex-direction:column; gap:12px; margin-top:10px; }
+
+    #messages { max-width: 960px; margin: 0 auto; padding: 0 12px; }
+    .msg {
+      font-weight: 700; text-align: center; margin: 1rem auto 0 auto; max-width: 960px;
+      padding: 0.9rem 1rem; border-radius: 8px; border: 1px solid transparent;
+    }
+    #not-logged-in-message { color: #1b5e20; background: #e8f5e9; border-color: #c8e6c9; }
+    #access-denied-message, #error-message { color: #b71c1c; background: #ffebee; border-color: #ffcdd2; }
+    .hidden { display:none; }
+
+    .tips { margin-top: 10px; color:#435; font-size: .92rem; }
+    .time-line { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .time-piece { padding:2px 8px; border-radius:8px; border:1px dashed #dfeacc; background:#f8fff1; font-size:.86rem; color:#2e521b; }
+    .admin-tools { margin-left:auto; display:flex; gap:8px; align-items:center; }
+
+    @media (max-width: 640px) {
+      .assess-header { align-items:flex-start; }
+      nav { gap: .55rem; }
+    }
   </style>
 </head>
 <body>
@@ -46,144 +93,417 @@
     </nav>
   </header>
 
-  <div id="error-message" class="hidden">Unexpected error loading page. Please refresh.</div>
-
-  <div class="assess-list hidden" id="assess-list">
-    <ul>
-      <!-- IMPORTANT: Confirm your folder name here.
-           If your folder is actually "assessments", change "assesments/" below to "assessments/". -->
-      <li><a href="assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html">1. Study of Compound Microscope</a></li>
-      <li><a href="assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html">2. Identification of Axial Bones</a></li>
-      <li><a href="assesments/assessments_assessment-3-identification-of-appendicular-bones_Version7.html">3. Identification of Appendicular Bones</a></li>
-      <li><a href="assesments/assessments_assessment-4-study-of-permanent-slides-of-muscle-tissues_Version2.html">4. Microscopic Study of Epithelial and Connective Tissue</a></li>
-      <li><a href="assesments/assessments_assessment-5-study-of-permanent-slides-of-nervous-tissue_Version2.html">5. Microscopic Study of Muscular and Nervous Tissue</a></li>
-      <li><a href="assesments/assessments_assessment-6-study-of-permanent-slides-of-epithelial-tissue_Version2.html">6. Determination of Blood Group</a></li>
-      <li><a href="assesments/assessments_assessment-7-study-of-permanent-slides-of-connective-tissue_Version2.html">7. Determination of Bleeding Time</a></li>
-      <li><a href="assesments/assessments_assessment-8-study-of-human-heart-model_Version2.html">8. Determination of Clotting Time</a></li>
-      <li><a href="assesments/assessments_assessment-9-study-of-human-brain-model_Version2.html">9. Estimation of Haemoglobin</a></li>
-      <li><a href="assesments/assessments_assessment-10-study-of-human-eye-model_Version2.html">10. Introduction to Hemocytometry</a></li>
-      <li><a href="assesments/assessments_assessment-11-study-of-human-ear-model_Version2.html">11. Enumeration of Total RBC Count</a></li>
-      <li><a href="assesments/assessments_assessment-12-study-of-human-kidney-model_Version2.html">12. Enumeration of Total WBC Count</a></li>
-      <li><a href="assesments/assessments_assessment-13-study-of-human-liver-model_Version2.html">13. Determination of Heart Rate and Pulse Rate</a></li>
-      <li><a href="assesments/assessments_assessment-14-study-of-human-lungs-model_Version2.html">14. Determination of Blood Pressure</a></li>
-      <li><a href="assesments/assessments_assessment-15-study-of-human-skin-model_Version2.html">15. Determination of Erythrocyte Sedimentation Rate (ESR)</a></li>
-    </ul>
+  <div id="messages">
+    <div id="error-message" class="msg hidden">Unexpected error loading page. Please refresh.</div>
+    <div id="not-logged-in-message" class="msg hidden">
+      You must be logged in to view assessment questions.<br>
+      <a id="login-direct" class="btn btn-primary" href="login_Version4.html" style="margin-top:10px; display:inline-block;">Go to Login Page</a>
+    </div>
+    <div id="access-denied-message" class="msg hidden">
+      Access denied. You are not authorized for this portal.<br>
+      <a id="login-direct-2" class="btn btn-primary" href="login_Version4.html" style="margin-top:10px; display:inline-block;">Go to Login Page</a>
+    </div>
   </div>
 
-  <div id="not-logged-in-message" class="hidden">
-    You must be logged in to view assessment questions.<br>
-    <a id="login-direct" href="login_Version4.html">Go to Login Page</a>
-  </div>
+  <main class="wrap">
+    <section id="assess-container" class="assess-card hidden" aria-live="polite">
+      <div class="assess-header">
+        <div class="row">
+          <div class="assess-title">Available Assessments</div>
+          <span id="assess-count" class="pill">0</span>
+        </div>
+        <div class="row">
+          <span class="muted">Only assessments released by your admin will appear here.</span>
+        </div>
+      </div>
 
-  <div id="access-denied-message" class="hidden">
-    Access denied. You are not authorized for this portal.<br>
-    <a id="login-direct" href="login_Version4.html">Go to Login Page</a>
-  </div>
+      <div id="assess-list" class="list" role="list"></div>
+
+      <div class="tips">
+        Note: If an assessment is “Upcoming” or “Closed”, the Start button will be disabled. Times are shown in IST.
+      </div>
+    </section>
+  </main>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
   <script>
+    // ====== Configuration: Map your assessments to exact experiment_id and URL ======
+    // IMPORTANT: Set expId to EXACTLY match experiments.experiment_id used in your database.
+    // URL points to your static assessment page.
+    const ASSESSMENTS = [
+      { expId:'assessment-1',  title:'1. Study of Compound Microscope',                        url:'assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html' },
+      { expId:'assessment-2',  title:'2. Identification of Axial Bones',                        url:'assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html' },
+      { expId:'assessment-3',  title:'3. Identification of Appendicular Bones',                 url:'assesments/assessments_assessment-3-identification-of-appendicular-bones_Version7.html' },
+      { expId:'assessment-4',  title:'4. Microscopic Study of Epithelial and Connective Tissue',url:'assesments/assessments_assessment-4-study-of-permanent-slides-of-muscle-tissues_Version2.html' },
+      { expId:'assessment-5',  title:'5. Microscopic Study of Muscular and Nervous Tissue',     url:'assesments/assessments_assessment-5-study-of-permanent-slides-of-nervous-tissue_Version2.html' },
+      { expId:'assessment-6',  title:'6. Determination of Blood Group',                         url:'assesments/assessments_assessment-6-study-of-permanent-slides-of-epithelial-tissue_Version2.html' },
+      { expId:'assessment-7',  title:'7. Determination of Bleeding Time',                       url:'assesments/assessments_assessment-7-study-of-permanent-slides-of-connective-tissue_Version2.html' },
+      { expId:'assessment-8',  title:'8. Determination of Clotting Time',                       url:'assesments/assessments_assessment-8-study-of-human-heart-model_Version2.html' },
+      { expId:'assessment-9',  title:'9. Estimation of Haemoglobin',                            url:'assesments/assessments_assessment-9-study-of-human-brain-model_Version2.html' },
+      { expId:'assessment-10', title:'10. Introduction to Hemocytometry',                       url:'assesments/assessments_assessment-10-study-of-human-eye-model_Version2.html' },
+      { expId:'assessment-11', title:'11. Enumeration of Total RBC Count',                      url:'assesments/assessments_assessment-11-study-of-human-ear-model_Version2.html' },
+      { expId:'assessment-12', title:'12. Enumeration of Total WBC Count',                      url:'assesments/assessments_assessment-12-study-of-human-kidney-model_Version2.html' },
+      { expId:'assessment-13', title:'13. Determination of Heart Rate and Pulse Rate',          url:'assesments/assessments_assessment-13-study-of-human-liver-model_Version2.html' },
+      { expId:'assessment-14', title:'14. Determination of Blood Pressure',                     url:'assesments/assessments_assessment-14-study-of-human-lungs-model_Version2.html' },
+      { expId:'assessment-15', title:'15. Determination of Erythrocyte Sedimentation Rate',     url:'assesments/assessments_assessment-15-study-of-human-skin-model_Version2.html' },
+    ];
+    // =================================================================================
+
     document.addEventListener('DOMContentLoaded', () => {
-      const assessList = document.getElementById('assess-list');
-      const notLoggedIn = document.getElementById('not-logged-in-message');
-      const accessDenied = document.getElementById('access-denied-message');
-      const errorMsg = document.getElementById('error-message');
+      if (!window.supabase) { console.error('Supabase SDK missing.'); showState('error'); return; }
+
+      const sb = window.sb || (window.sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      ));
+
+      // UI handles
+      const assessContainer = document.getElementById('assess-container');
+      const assessListEl = document.getElementById('assess-list');
+      const assessCount = document.getElementById('assess-count');
+
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const resultsTab = document.getElementById('results-tab');
 
-      function show(el) { el.classList.remove('hidden'); }
-      function hide(el) { el.classList.add('hidden'); }
-      function setNav(loggedIn) {
-        if (loggedIn) {
-          if (loginBtn) loginBtn.style.display = 'none';
-          if (logoutBtn) logoutBtn.style.display = 'inline';
-          if (resultsTab) resultsTab.style.display = 'inline'; // show Results when logged in
+      const msgError = document.getElementById('error-message');
+      const msgLoggedOut = document.getElementById('not-logged-in-message');
+      const msgDenied = document.getElementById('access-denied-message');
+
+      function hideAllMsgs(){ [msgError,msgLoggedOut,msgDenied].forEach(el=>el.classList.add('hidden')); }
+      function showState(state){
+        hideAllMsgs();
+        if(state==='error') msgError.classList.remove('hidden');
+        if(state==='loggedOut') msgLoggedOut.classList.remove('hidden');
+        if(state==='denied') msgDenied.classList.remove('hidden');
+        if(state==='allowed'){
+          assessContainer.classList.remove('hidden');
         } else {
-          if (logoutBtn) logoutBtn.style.display = 'none';
-          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
-          if (resultsTab) resultsTab.style.display = 'none'; // hide Results when logged out
+          assessContainer.classList.add('hidden');
         }
       }
-      function setState(state) {
-        // states: 'loggedOut' | 'denied' | 'allowed' | 'error'
-        hide(assessList); hide(notLoggedIn); hide(accessDenied); hide(errorMsg);
-        if (state === 'loggedOut') { show(notLoggedIn); setNav(false); }
-        if (state === 'denied')    { show(accessDenied); setNav(true); }
-        if (state === 'allowed')   { show(assessList); setNav(true); }
-        if (state === 'error')     { show(errorMsg); }
+
+      function setNav(loggedIn){
+        if(loggedIn){
+          if(loginBtn) loginBtn.style.display='none';
+          if(logoutBtn) logoutBtn.style.display='inline';
+          if(resultsTab) resultsTab.style.display='inline';
+        }else{
+          if(logoutBtn) logoutBtn.style.display='none';
+          if(loginBtn){ loginBtn.style.display='inline'; loginBtn.href='login_Version4.html'; }
+          if(resultsTab) resultsTab.style.display='none';
+        }
       }
 
-      async function getRole(sb, uid) {
-        if (!uid) return null;
+      async function getRole(uid){
         const { data, error } = await sb.from('profiles').select('role').eq('id', uid).maybeSingle();
-        if (error) { console.warn('Profile fetch error:', error); }
-        return data?.role || null;
+        if(error) console.warn('role fetch error', error);
+        return (data?.role || '').toString().trim().toLowerCase();
       }
 
-      async function checkAuthAndRender() {
+      // IST helpers
+      function toIST(iso){
+        if(!iso) return '';
+        let s = iso;
+        if (typeof s==='string' && s.includes(' ') && !s.includes('T')) s = s.replace(' ','T');
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) s += 'Z';
         try {
-          if (!window.supabase) {
-            console.error('Supabase SDK missing.');
-            setState('error');
-            return;
+          return new Date(s).toLocaleString('en-IN',{ timeZone:'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+        } catch { return iso; }
+      }
+      function msLeft(toIso){
+        if(!toIso) return null;
+        const t = new Date(toIso).getTime() - Date.now();
+        return t;
+      }
+      function fmtCountdown(ms){
+        if(ms==null) return '';
+        if(ms<=0) return 'now';
+        const s = Math.floor(ms/1000);
+        const d = Math.floor(s/86400);
+        const h = Math.floor((s%86400)/3600);
+        const m = Math.floor((s%3600)/60);
+        const sec = s%60;
+        if(d>0) return `${d}d ${h}h ${m}m`;
+        if(h>0) return `${h}h ${m}m`;
+        if(m>0) return `${m}m ${sec}s`;
+        return `${sec}s`;
+      }
+
+      // Release fetch
+      async function fetchReleaseMap(expIds){
+        if(!expIds.length) return {};
+        // Try to get all in a single query
+        const { data, error } = await sb.from('assessment_release')
+          .select('experiment_id,released,window_start,window_end,updated_at')
+          .in('experiment_id', expIds);
+        if(error){
+          if(String(error.code)==='42P01'){ // table missing
+            console.warn('assessment_release table not found yet.');
+            return { __missingTable:true };
           }
+          console.warn('release fetch error', error);
+          return {};
+        }
+        const map = {};
+        (data||[]).forEach(r=>{ if(r?.experiment_id) map[r.experiment_id] = r; });
+        return map;
+      }
 
-          // IMPORTANT: use a different variable name than "supabase" to avoid shadowing the SDK global
-          const sb = window.sb || window.supabase.createClient(
-            'https://hunlistfklwvpivfjmbk.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-          );
-          // Cache client globally for reuse on other pages if needed
-          window.sb = sb;
+      function computeState(rec){
+        // Returns {state:'open'|'upcoming'|'closed'|'not_released', start, end}
+        if(!rec || rec.released!==true) return { state:'not_released', start:rec?.window_start, end:rec?.window_end };
+        const now = Date.now();
+        const startT = rec.window_start ? new Date(rec.window_start).getTime() : null;
+        const endT   = rec.window_end   ? new Date(rec.window_end).getTime()   : null;
 
-          // Update nav based on current session
-          const { data: { session } } = await sb.auth.getSession();
-          if (!session || !session.user) {
-            setState('loggedOut');
+        if(startT && now < startT) return { state:'upcoming', start:rec.window_start, end:rec.window_end };
+        if(endT && now > endT)     return { state:'closed',   start:rec.window_start, end:rec.window_end };
+        return { state:'open',      start:rec.window_start, end:rec.window_end };
+      }
+
+      async function canStart(expId){
+        // Authoritative UI preflight (backend enforcement should also exist)
+        const { data, error } = await sb.from('assessment_release')
+          .select('released,window_start,window_end')
+          .eq('experiment_id', expId)
+          .maybeSingle();
+        if(error){
+          if(String(error.code)==='42P01'){
+            return { ok:false, reason:'Not configured by admin yet.' };
+          }
+          return { ok:false, reason:'Error checking release.' };
+        }
+        if(!data || data.released!==true) return { ok:false, reason:'Not released' };
+        const now=Date.now();
+        const s=data.window_start? new Date(data.window_start).getTime():null;
+        const e=data.window_end? new Date(data.window_end).getTime():null;
+        if(s && now<s) return { ok:false, reason:`Opens at ${toIST(data.window_start)}` };
+        if(e && now>e) return { ok:false, reason:`Closed at ${toIST(data.window_end)}` };
+        return { ok:true };
+      }
+
+      function renderList(releaseMap, role){
+        assessListEl.innerHTML = '';
+        const missingTable = releaseMap?.__missingTable === true;
+
+        let visibleCount = 0;
+        ASSESSMENTS.forEach(item=>{
+          const rec = missingTable ? null : releaseMap[item.expId];
+          const st = computeState(rec);
+
+          // Show all rows, but only enable Start if open
+          // You can choose to hide not released by toggling the following line:
+          const showRow = true; // st.state !== 'not_released' || role === 'admin';
+          if(!showRow) return;
+
+          const li = document.createElement('div');
+          li.className = 'row';
+          li.role = 'listitem';
+          li.style.justifyContent='space-between';
+          li.style.alignItems='flex-start';
+          li.style.padding='8px 6px';
+          li.style.borderBottom='1px dashed #e1edc8';
+
+          const left = document.createElement('div');
+          left.style.display='flex';
+          left.style.flexDirection='column';
+          left.style.gap='6px';
+          const title = document.createElement('div');
+          title.className = 'assess-title';
+          title.textContent = item.title;
+
+          const meta = document.createElement('div');
+          meta.className = 'row';
+          const pill = document.createElement('span');
+          pill.className = 'pill ' + (st.state==='open'?'open': st.state==='upcoming'?'upcoming': st.state==='closed'?'closed':'');
+          pill.id = `pill-${item.expId}`;
+          pill.textContent = missingTable ? 'Unconfigured' :
+                             st.state==='open' ? 'Open' :
+                             st.state==='upcoming' ? 'Upcoming' :
+                             st.state==='closed' ? 'Closed' :
+                             'Not released';
+
+          const timeLine = document.createElement('div');
+          timeLine.className = 'time-line';
+          timeLine.id = `tl-${item.expId}`;
+
+          if(missingTable){
+            const n = document.createElement('div');
+            n.className='time-piece';
+            n.textContent = 'Admin has not set up releases yet';
+            timeLine.appendChild(n);
           } else {
-            const role = await getRole(sb, session.user.id);
-            if (!role) {
-              setState('denied');
-              // Optional: auto sign out unauthorized users
-              // await sb.auth.signOut();
-            } else {
-              setState('allowed');
+            if(st.start){
+              const d1 = document.createElement('div');
+              d1.className='time-piece';
+              d1.id = `start-${item.expId}`;
+              d1.textContent = `Starts: ${toIST(st.start)}`;
+              timeLine.appendChild(d1);
             }
+            if(st.end){
+              const d2 = document.createElement('div');
+              d2.className='time-piece';
+              d2.id = `end-${item.expId}`;
+              d2.textContent = `Ends: ${toIST(st.end)}`;
+              timeLine.appendChild(d2);
+            }
+            const cd = document.createElement('div');
+            cd.className='time-piece';
+            cd.id = `cd-${item.expId}`;
+            cd.textContent = st.state==='open'
+              ? (st.end ? `Closes in: ${fmtCountdown(msLeft(st.end))}` : 'No deadline')
+              : (st.state==='upcoming' && st.start ? `Opens in: ${fmtCountdown(msLeft(st.start))}` : '');
+            timeLine.appendChild(cd);
           }
 
-          // Keep UI in sync if auth changes while on this page
-          sb.auth.onAuthStateChange(async (_event, newSession) => {
-            if (!newSession || !newSession.user) {
-              setState('loggedOut');
-            } else {
-              const role = await getRole(sb, newSession.user.id);
-              if (!role) {
-                setState('denied');
-              } else {
-                setState('allowed');
-              }
+          meta.appendChild(pill);
+          if(timeLine.textContent) meta.appendChild(timeLine);
+
+          left.appendChild(title);
+          left.appendChild(meta);
+
+          const right = document.createElement('div');
+          right.className='row';
+          const startBtn = document.createElement('a');
+          startBtn.href = item.url;
+          startBtn.className = 'btn btn-primary';
+          startBtn.textContent = 'Start';
+          startBtn.setAttribute('data-exp', item.expId);
+
+          // Intercept to enforce UI preflight
+          startBtn.addEventListener('click', async (e)=>{
+            // Allow admins to bypass UI checks (backend should still enforce)
+            if(role === 'admin') return;
+            e.preventDefault();
+            const expId = e.currentTarget.getAttribute('data-exp');
+            const r = await canStart(expId);
+            if(!r.ok){
+              alert(`Cannot start: ${r.reason}`);
+              return;
             }
+            window.location.href = item.url;
           });
 
-          // Protect Results link: require login
-          if (resultsTab) {
-            resultsTab.addEventListener('click', async (e) => {
-              const { data: { session } } = await sb.auth.getSession();
-              if (!session?.user) {
-                e.preventDefault();
-                window.location.href = 'login_Version4.html';
-              }
+          if(missingTable || st.state!=='open'){
+            if(role !== 'admin'){
+              startBtn.classList.add('btn-ghost');
+              startBtn.classList.remove('btn-primary');
+              startBtn.textContent = 'Start (Unavailable)';
+              startBtn.addEventListener('click', (e)=>{ if(role!=='admin') e.preventDefault(); });
+            }
+          }
+
+          right.appendChild(startBtn);
+
+          if(role==='admin'){
+            const adminTools = document.createElement('div');
+            adminTools.className='admin-tools';
+            const manage = document.createElement('a');
+            manage.href = `admin_portal.html?exp=${encodeURIComponent(item.expId)}`;
+            manage.className='btn btn-ghost';
+            manage.textContent='Manage Release';
+            adminTools.appendChild(manage);
+            right.appendChild(adminTools);
+          }
+
+          li.appendChild(left);
+          li.appendChild(right);
+          assessListEl.appendChild(li);
+          visibleCount++;
+        });
+
+        assessCount.textContent = visibleCount;
+      }
+
+      // Countdown refresher
+      let tickTimer = null;
+      function startTicker(releaseMap){
+        if(tickTimer) clearInterval(tickTimer);
+        tickTimer = setInterval(()=>{
+          ASSESSMENTS.forEach(item=>{
+            const rec = releaseMap?.[item.expId];
+            if(!rec) return;
+            const st = computeState(rec);
+            const cdEl = document.getElementById(`cd-${item.expId}`);
+            const pill = document.getElementById(`pill-${item.expId}`);
+            if(!cdEl || !pill) return;
+
+            if(st.state==='open'){
+              const ms = msLeft(st.end);
+              cdEl.textContent = st.end ? `Closes in: ${fmtCountdown(ms)}` : 'No deadline';
+              pill.textContent = 'Open';
+              pill.className = 'pill open';
+            } else if(st.state==='upcoming'){
+              const ms = msLeft(st.start);
+              cdEl.textContent = st.start ? `Opens in: ${fmtCountdown(ms)}` : '';
+              pill.textContent = 'Upcoming';
+              pill.className = 'pill upcoming';
+            } else if(st.state==='closed'){
+              cdEl.textContent = st.end ? `Closed at: ${toIST(st.end)}` : 'Closed';
+              pill.textContent = 'Closed';
+              pill.className = 'pill closed';
+            } else {
+              cdEl.textContent = '';
+              pill.textContent = 'Not released';
+              pill.className = 'pill';
+            }
+          });
+        }, 1000);
+      }
+
+      async function init(){
+        try{
+          const { data:{ session } } = await sb.auth.getSession();
+          if(!session?.user){
+            setNav(false);
+            showState('loggedOut');
+            return;
+          }
+          setNav(true);
+
+          const role = await getRole(session.user.id);
+          if(!role){
+            showState('denied');
+            return;
+          }
+          showState('allowed');
+
+          // Load release map for defined expIds
+          const expIds = ASSESSMENTS.map(a=>a.expId);
+          const releaseMap = await fetchReleaseMap(expIds);
+
+          renderList(releaseMap, role);
+          if(!releaseMap.__missingTable) startTicker(releaseMap);
+
+          // Auth changes
+          sb.auth.onAuthStateChange(async (_evt, newSession)=>{
+            if(!newSession?.user){
+              setNav(false);
+              showState('loggedOut');
+              return;
+            }
+            setNav(true);
+            const r = await getRole(newSession.user.id);
+            if(!r) showState('denied'); else showState('allowed');
+          });
+
+          // Protect Results link
+          if(resultsTab){
+            resultsTab.addEventListener('click', async (e)=>{
+              const { data:{ session } } = await sb.auth.getSession();
+              if(!session?.user){ e.preventDefault(); window.location.href='login_Version4.html'; }
             });
           }
 
-          // Hardened Logout handler (Edge "stuck session" safe)
-          if (logoutBtn) {
-            logoutBtn.onclick = async (e) => {
+          // Logout hardened
+          if(logoutBtn){
+            logoutBtn.onclick = async (e)=>{
               e.preventDefault();
-              try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { console.warn('global signOut error:', err); }
-              try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { console.warn('local signOut error:', err); }
+              try { await sb.auth.signOut({ scope:'global' }); } catch {}
+              try { await sb.auth.signOut({ scope:'local' }); } catch {}
               try {
                 for (const k of Object.keys(localStorage)) {
                   const key = k.toLowerCase();
@@ -193,19 +513,19 @@
                   const key = k.toLowerCase();
                   if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
                 }
-              } catch (e2) { console.warn('storage cleanup error:', e2); }
-              try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
-              setState('loggedOut');
+              } catch {}
+              try { indexedDB.deleteDatabase('supabase-auth'); } catch {}
               window.location.href = 'index.html';
             };
           }
-        } catch (e) {
+
+        } catch(e){
           console.error('Assessments init error:', e);
-          setState('error');
+          showState('error');
         }
       }
 
-      checkAuthAndRender();
+      init();
     });
   </script>
 </body>
