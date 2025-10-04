@@ -450,7 +450,6 @@
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? dmRoom : 'global';
         chatInput.value = '';
-        // FIX: use 'name' instead of 'full_name'
         const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
         const senderName = prof?.name || currentUser.email || 'User';
         const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
@@ -500,7 +499,6 @@
           if (profErr) console.warn('Profile fetch error:', profErr);
 
           currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
-          const name = profile?.name || (session.user.email || 'User');
 
           // Show Admin Portal links only for admins
           if (currentRole === 'admin') {
@@ -513,13 +511,13 @@
 
           // Fill the Profile Dashboard Card
           if (profileCard) profileCard.style.display = 'block';
-          pcName.textContent = `Welcome ${has(profile?.name) ? profile.name : ''}`.trim() || 'Welcome';
+          pcName.textContent = `Welcome ${profile?.name ? profile.name : ''}`.trim() || 'Welcome';
           pcRole.textContent = currentRole === 'admin' ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
 
           // Meta chips (students)
           if (currentRole === 'student') {
-            const showPRN = has(profile?.prn);
-            const showBatch = has(profile?.batch);
+            const showPRN = !!(profile?.prn && profile.prn.trim());
+            const showBatch = !!(profile?.batch && profile.batch.trim());
             pcPRN.textContent = `PRN: ${showPRN ? profile.prn : '—'}`;
             pcBatch.textContent = `Batch: ${showBatch ? profile.batch : '—'}`;
             pcMeta.style.display = (showPRN || showBatch) ? 'flex' : 'none';
@@ -537,8 +535,8 @@
           }
 
           // Completion hint
-          const baseComplete = has(profile?.name) && has(profile?.role);
-          const studentComplete = baseComplete && has(profile?.prn) && has(profile?.batch);
+          const baseComplete = !!(profile?.name && profile?.role);
+          const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
           const adminComplete = baseComplete;
           const isComplete = currentRole === 'admin' ? adminComplete : (currentRole === 'student' ? studentComplete : baseComplete);
           if (!isComplete) {
@@ -603,11 +601,13 @@
           try {
             for (const k of Object.keys(localStorage)) {
               const key = k.toLowerCase();
-              if (key includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
+              // FIXED: includes with a dot
+              if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
             }
             for (const k of Object.keys(sessionStorage)) {
               const key = k.toLowerCase();
-              if (key includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
+              // FIXED: includes with a dot
+              if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
             }
           } catch (e2) { /* ignore */ }
           try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
