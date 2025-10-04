@@ -44,9 +44,11 @@
     .resubmission-status-message.disabled { color:#888; }
     .resubmission-toggle-btn { margin-bottom:4px; }
     .debug-log { font-size:11px; color:#666; line-height:1.3; }
+    /* Modal */
     #edit-assignment-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); z-index:1000; align-items:center; justify-content:center; }
     #edit-assignment-modal > div { background:#fff; border-radius:10px; max-width:420px; width:92%; margin:auto; padding:20px; box-shadow:0 4px 18px rgba(0,0,0,0.25); }
     #modal-debug { max-height:80px; overflow:auto; width:100%; background:#f7f9fe; border:1px solid #d4e4ff; padding:4px 6px; border-radius:4px; font-size:11px; }
+    /* Details row */
     tr.details-row td { background:#f5f9ff; border-bottom:1px solid #cfe0ff; }
     .details-wrapper { width:100%; }
     .details-header { font-weight:600; color:#0d47a1; margin:4px 0 10px; display:flex; flex-wrap:wrap; gap:14px; font-size:13px; }
@@ -184,11 +186,11 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
-    console.log('Result script loaded (IST formatter, submitted_at_utc support)');
+    console.log('Result script loaded (uses submitted_at_utc, displays IST)');
 
     /***************** Utilities & Globals *****************/
     function debug(msg){
-      console.log("[DEBUG]", msg);
+      console.log('[DEBUG]', msg);
       const box = document.getElementById('modal-debug');
       if(box) box.textContent = msg;
     }
@@ -215,7 +217,7 @@
     const tbody = $('#tbody');
     const countEl = $('#count');
     const btnApply = $('#apply');
-    const btnReset = $('#reset';
+    const btnReset = $('#reset');
     const btnExportSummary = $('#export-summary');
     const btnExportDetails = $('#export-details');
 
@@ -232,11 +234,12 @@
       return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
 
-    // Helper: Prefer UTC column if present
+    // Prefer the new UTC column; fallback to legacy submitted_at
     function getSubmittedAt(row){
       return row.submitted_at_utc || row.submitted_at;
     }
 
+    // Force display in IST
     function fmtDate(s){
       if(!s) return '—';
       try {
@@ -251,10 +254,10 @@
           hour12: false
         });
       } catch(e){
-        // fallback for old browsers
+        // Fallback manual shift +05:30
         const d = new Date(s);
-        const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-        const ist = new Date(utc + (5.5 * 3600000));
+        const utcMs = d.getTime() + d.getTimezoneOffset()*60000;
+        const ist = new Date(utcMs + 5.5*3600000);
         const pad = n => String(n).padStart(2,'0');
         return `${pad(ist.getDate())}/${pad(ist.getMonth()+1)}/${ist.getFullYear()}, ${pad(ist.getHours())}:${pad(ist.getMinutes())}:${pad(ist.getSeconds())}`;
       }
@@ -262,11 +265,11 @@
 
     function fmtDur(sec){
       if(sec==null) return '—';
-      const s=Number(sec)||0;
-      const m=Math.floor(s/60);
+      const s = Number(sec) || 0;
+      const m = Math.floor(s/60);
       return m+'m '+(s%60)+'s';
     }
-    function has(v){ return typeof v==='string'? v.trim().length>0 : !!v; }
+    function has(v){ return typeof v==='string' ? v.trim().length>0 : !!v; }
     function escapeHTML(str){
       return String(str)
         .replace(/&/g,'&amp;')
@@ -299,7 +302,8 @@
     async function loadExperiments(){
       try{
         const { data, error } = await sb.rpc('list_experiments_for_results');
-        if(!error && Array.isArray(data)){
+        if(error) { console.warn('list_experiments_for_results', error); return; }
+        if(Array.isArray(data)){
           for(const row of data){
             const opt = document.createElement('option');
             opt.value = row.experiment_id || '';
@@ -312,14 +316,14 @@
 
     async function fetchResults({ exp_id='', search='', batch='' } = {}){
       const args = {
-        exp_id: has(exp_id)? exp_id : null,
-        search_text: has(search)? search : null,
-        batch_text: has(batch)? batch : null
+        exp_id: has(exp_id) ? exp_id : null,
+        search_text: has(search) ? search : null,
+        batch_text: has(batch) ? batch : null
       };
       const fn = isAdmin ? 'get_assessment_results_admin_v2' : 'get_results_student_test';
       const { data, error } = await sb.rpc(fn, args);
       if(error) throw error;
-      return Array.isArray(data)? data : [];
+      return Array.isArray(data) ? data : [];
     }
 
     /***************** Summary *****************/
@@ -328,7 +332,11 @@
       const percents = rows.map(r => Number(r.percent ?? r.percentage)).filter(n => !Number.isNaN(n));
       const avg = percents.length ? percents.reduce((a,b)=>a+b,0) / percents.length : 0;
       const best = percents.length ? Math.max(...percents) : 0;
-      const last = rows.slice().sort((a,b)=> new Date(getSubmittedAt(b)||0) - new Date(getSubmittedAt(a)||0))[0]?.submitted_at_utc || rows[0]?.submitted_at;
+      const lastRow = rows.slice().sort(
+        (a,b)=> new Date(getSubmittedAt(b)||0) - new Date(getSubmittedAt(a)||0)
+      )[0];
+      const last = lastRow ? getSubmittedAt(lastRow) : null;
+
       sumAttempts.textContent = attempts;
       sumAvg.textContent = fmtPct(avg);
       sumBest.textContent = fmtPct(best);
@@ -339,13 +347,13 @@
     /***************** Assignment Viewing *****************/
     async function getAssignmentSignedUrl(row){
       if(!row.assignment_path) return null;
-      const bucket = row.assignment_bucket || "assignments";
+      const bucket = row.assignment_bucket || 'assignments';
       try{
         const { data, error } = await sb.storage.from(bucket).createSignedUrl(row.assignment_path, 60);
         if(error) return null;
         return data?.signedUrl || null;
       } catch(e){
-        console.error("Signed URL error", e);
+        console.error('Signed URL error', e);
         return null;
       }
     }
@@ -353,13 +361,13 @@
     window.viewAssignment = async function(rowIdx){
       const row = currentRows[rowIdx];
       const canView = isAdmin || (currentUser && row.user_id === currentUser.id);
-      if(!canView){ alert("You do not have access to this assignment."); return; }
+      if(!canView){ alert('You do not have access to this assignment.'); return; }
       let url = await getAssignmentSignedUrl(row);
       if(url){
         url += (url.includes('?')? '&':'?') + 'cb=' + Date.now();
-        window.open(url,'_blank');
+        window.open(url, '_blank');
       } else {
-        alert("Unable to generate assignment link (file missing or access denied).");
+        alert('Unable to generate assignment link (file missing or access denied).');
       }
     };
 
@@ -383,7 +391,7 @@
         .eq('id', row.id);
 
       if(error){
-        alert("Save failed: " + error.message);
+        alert('Save failed: ' + error.message);
         input.disabled = false;
         if(btn) btn.disabled = false;
         setStatus('Save failed.');
@@ -403,7 +411,7 @@
         .update({ resubmission_allowed: next })
         .eq('id', row.id);
       if(error){
-        alert("Update failed: " + error.message);
+        alert('Update failed: ' + error.message);
         if(btn) btn.disabled=false;
         setStatus('Update failed.');
         return;
@@ -415,16 +423,16 @@
     /***************** Student Resubmission *****************/
     window.openEditAssignmentModal = function(rowIdx){
       editingRowIdx = rowIdx;
-      $('#edit-assignment-modal').style.display='flex';
-      $('#assignmentFile').value='';
+      document.getElementById('edit-assignment-modal').style.display='flex';
+      document.getElementById('assignmentFile').value='';
       debug('Modal opened for row '+currentRows[rowIdx].id);
     };
-    $('#close-edit-modal').onclick = function(){
-      $('#edit-assignment-modal').style.display='none';
+    document.getElementById('close-edit-modal').onclick = function(){
+      document.getElementById('edit-assignment-modal').style.display='none';
       editingRowIdx = null;
     };
 
-    $('#edit-assignment-form').onsubmit = async function(e){
+    document.getElementById('edit-assignment-form').onsubmit = async function(e){
       e.preventDefault();
       if(editingRowIdx == null) return;
       const row = currentRows[editingRowIdx];
@@ -446,7 +454,7 @@
         return;
       }
 
-      const fileInput = $('#assignmentFile');
+      const fileInput = document.getElementById('assignmentFile');
       if(!fileInput.files.length){ alert('Please select a file.'); return; }
       const file = fileInput.files[0];
       if(file.type !== 'application/pdf' && !file.type.startsWith('image/')){
@@ -484,7 +492,7 @@
 
       debug('DB update success: '+JSON.stringify(updateRows));
       setStatus('Assignment updated!');
-      $('#edit-assignment-modal').style.display='none';
+      document.getElementById('edit-assignment-modal').style.display='none';
       editingRowIdx = null;
       await reloadRows();
     };
@@ -514,7 +522,8 @@
 
     function buildDetailsHTML(row){
       const breakdown = Array.isArray(row.breakdown) ? row.breakdown
-                       : (row.breakdown && typeof row.breakdown === 'object' ? (row.breakdown.questions || row.breakdown) : []);
+                       : (row.breakdown && typeof row.breakdown === 'object'
+                          ? (row.breakdown.questions || row.breakdown) : []);
       if(!breakdown || !breakdown.length){
         return `<div class="details-wrapper">
           <div class="details-header">Question Details</div>
@@ -587,6 +596,8 @@
         const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
         const totalMarks = (scoreNum||0) + (marksVal||0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum)?'?': totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
+
+        // Marks cell
         let marksCell = '';
         if(isAdmin){
           marksCell = `<div class="marks-cell">
@@ -597,16 +608,20 @@
         } else {
           marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
         }
+
+        // Assignment button
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canView = isAdmin || (currentUser && r.user_id===currentUser.id);
         if(r.assignment_path && canView){
-          let label = "View File";
+          let label = 'View File';
           if(r.assignment_type === 'application/pdf') label='View PDF';
           else if(r.assignment_type && r.assignment_type.startsWith('image/')) label='View Image';
           assignmentBtn = `<button class="assignment-btn" onclick="viewAssignment(${rowIdx})">${label}</button>`;
         } else if(r.assignment_path){
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
+
+        // Resubmission cell
         const effective = effectiveResubAllowed(r);
         let resubmitCell = '<div class="resubmission-status-box">';
         if(isAdmin){
@@ -686,9 +701,9 @@
           AssignmentMarks: marksVal,
           TotalMarks: totalMarks,
           Percentage: r.percent ?? r.percentage,
-          SubmittedAt: r.submitted_at,
-          SubmittedAtUTC: r.submitted_at_utc || '',
-          SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),
+          SubmittedAt: r.submitted_at,                         // legacy column (raw)
+          SubmittedAtUTC: r.submitted_at_utc || '',            // new UTC column
+          SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),   // human display in IST
           DurationSec: r.duration_sec,
           ResubmissionAllowedStored: r.resubmission_allowed,
           EffectiveResubmission: effectiveResubAllowed(r)
