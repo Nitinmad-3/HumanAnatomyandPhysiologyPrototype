@@ -114,7 +114,7 @@
         </table>
       </div>
       <div id="users-setup-hint" class="hint" style="display:none; margin-top:6px;">
-        If emails are blank or listing fails, ensure SELECT policy on profiles allows admin, or run your user_admin.sql.
+        If listing fails, ensure RLS allows admin to SELECT profiles.
       </div>
     </section>
 
@@ -228,7 +228,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Supabase init (same project as your current app)
+    // Supabase init
     const sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
@@ -248,15 +248,16 @@
     const newEmail = $('#new-email');
     const newName = $('#new-name');
     const newPRN = $('#new-prn');
-    const newBatch = $('#new-batch');
-    const userCreate = $('#user-create');
-    const userCreateStatus = $('#user-create-status');
+    theNewBatch = $('#new-batch'); // <-- fixed typo variable declared below
+  </script>
+  <script>
+    // Resume variables (split to avoid copy/paste bracket issues)
+    const userCreate = document.getElementById('user-create');
+    const userCreateStatus = document.getElementById('user-create-status');
 
     // Release controls
-    const expSelect = $('#exp-select');
-    const lockedToggle = document.createElement('input'); // will set later in DOM
-    // Actually reference from DOM:
-    const lockedToggleEl = document.getElementById('locked-toggle');
+    const expSelect = document.getElementById('exp-select');
+    const lockedToggle = document.getElementById('locked-toggle');
     const lockedEffective = document.getElementById('locked-effective');
     const releasedToggle = document.getElementById('released-toggle');
     const releaseEffective = document.getElementById('release-effective');
@@ -286,17 +287,14 @@
     const chatSetupHint = document.getElementById('chat-setup-hint');
 
     let currentUser = null;
-    let isAdmin = false;
-    let chatSubscription = null;
 
     // Helpers: IST ⇄ UTC
     function pad(n){ return String(n).padStart(2,'0'); }
     function istLocalToUTC(dtLocal){
-      if(!dtLocal) return null; // "YYYY-MM-DDTHH:MM"
+      if(!dtLocal) return null;
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      // IST is UTC+05:30 => UTC = IST - 05:30
       const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
       return new Date(utcMs).toISOString();
     }
@@ -317,7 +315,6 @@
       if(end && now > end) return false;
       return true;
     }
-
     function setStatus(msg){ statusEl.textContent = msg; }
     function setPill(el, ok, text){
       el.textContent = text;
@@ -332,10 +329,9 @@
         return false;
       }
       currentUser = session.user;
-      // fetch role
       const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
       const role = (data?.role || '').toLowerCase();
-      isAdmin = role === 'admin';
+      const isAdmin = role === 'admin';
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
       if(!isAdmin){
         roleBadge.classList.add('danger');
@@ -346,7 +342,7 @@
       return true;
     }
 
-    // USERS — always use direct SELECT (no RPC), only role='student'
+    // USERS — direct SELECT (no RPC), only role='student'
     async function listStudents(){
       usersStatus.textContent = 'Loading…';
       usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
@@ -421,7 +417,7 @@
       const email = newEmail.value.trim();
       const name = newName.value.trim();
       const prn = newPRN.value.trim();
-      const batch = newBatch.value.trim();
+      const batch = theNewBatch.value.trim();
       if(!email){ return alert('Email is required'); }
       userCreate.disabled = true;
       userCreateStatus.textContent = 'Creating user…';
@@ -430,7 +426,7 @@
         if(error){ throw error; }
         if(!data?.ok){ throw new Error(data?.error || 'Create failed'); }
         userCreateStatus.textContent = 'Created.';
-        newEmail.value = ''; newName.value=''; newPRN.value=''; newBatch.value='';
+        newEmail.value = ''; newName.value=''; newPRN.value=''; theNewBatch.value='';
         await listStudents();
       } catch(e){
         console.warn('createStudent failed', e);
@@ -442,7 +438,7 @@
       }
     }
 
-    // Load experiments and hydrate select
+    // Load experiments
     async function loadExperiments(){
       const { data, error } = await sb.rpc('list_experiments_for_results');
       if(error){ console.warn('list_experiments_for_results', error); return; }
@@ -460,7 +456,7 @@
     async function loadReleaseFor(expId){
       startIst.value = ''; endIst.value = '';
       releasedToggle.checked = false;
-      lockedToggleEl.checked = false;
+      lockedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
       try{
         const { data, error } = await sb.from('assessments')
@@ -468,7 +464,7 @@
           .eq('experiment_id', expId)
           .maybeSingle();
 
-        if(error && String(error?.code) === '42P01'){ // undefined_table
+        if(error && String(error?.code) === '42P01'){
           releaseSetupHint.style.display = 'block';
           releaseStatus.textContent = 'Backend table not found.';
           return;
@@ -482,7 +478,7 @@
           return;
         }
         releasedToggle.checked = !!data.released;
-        lockedToggleEl.checked = !!data.locked;
+        lockedToggle.checked = !!data.locked;
         startIst.value = utcToIstDatetimeLocal(data.window_start);
         endIst.value = utcToIstDatetimeLocal(data.window_end);
 
@@ -496,12 +492,11 @@
       }
     }
 
-    // Save lock/release/window — UPDATE existing row (assumes rows already exist)
     async function saveRelease(){
       const expId = expSelect.value;
       if(!expId){ alert('Select an assessment.'); return; }
       const payload = {
-        locked: !!lockedToggleEl.checked,
+        locked: !!lockedToggle.checked,
         released: !!releasedToggle.checked,
         window_start: istLocalToUTC(startIst.value),
         window_end: istLocalToUTC(endIst.value),
@@ -509,7 +504,6 @@
       };
       releaseStatus.textContent = 'Saving…';
       try{
-        // Ensure a row exists
         const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
         if(!exists){
           alert('Row missing in public.assessments for experiment_id='+expId+'. Please create it once in DB.');
@@ -679,8 +673,9 @@
     }
 
     function subscribeChat(room){
-      if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
-      chatSubscription = sb.channel('portal_chat_room_'+room)
+      const existing = sb.getChannels?.().find?.(c => c.topic === 'realtime:portal_chat_room_'+room);
+      if(existing) sb.removeChannel(existing);
+      const channel = sb.channel('portal_chat_room_'+room)
         .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
           renderMsg(payload.new);
           chatBox.scrollTop = chatBox.scrollHeight;
@@ -713,13 +708,11 @@
       if(!(await requireAdmin())) return;
       setStatus('Loading data…');
 
-      // Users
       await listStudents();
       userRefresh.onclick = listStudents;
       userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
       userCreate.onclick = createStudent;
 
-      // Releases
       await loadExperiments();
 
       expSelect.onchange = async () => {
@@ -727,18 +720,20 @@
         if(!expId) return;
         await loadReleaseFor(expId);
       };
-      // Preselect if ?exp= is present
       const expParam = new URLSearchParams(location.search).get('exp');
       if(expParam){
-        const opt = Array.from(expSelect.options).find(o => o.value === expParam);
-        if(opt){ expSelect.value = expParam; await loadReleaseFor(expParam); }
+        const setLater = () => {
+          const opt = Array.from(expSelect.options).find(o => o.value === expParam);
+          if(opt){ expSelect.value = expParam; loadReleaseFor(expParam); }
+        };
+        setTimeout(setLater, 100);
       }
 
       saveReleaseBtn.onclick = saveRelease;
       closeReleaseBtn.onclick = closeRelease;
 
       // Notifications
-      notifPublishBtn.onclick = publishNotification;
+      document.getElementById('publish-notif').onclick = publishNotification;
       await loadNotifications();
 
       // Chat
