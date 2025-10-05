@@ -154,7 +154,7 @@
         <span id="release-status" class="status"></span>
       </div>
       <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Run setup_portal.sql (assessment_release).
+        Backend table missing. Run setup_portal.sql (assessments).
       </div>
     </section>
 
@@ -454,7 +454,7 @@
       startIst.value = ''; endIst.value = ''; releasedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
       try{
-        const { data, error } = await sb.from('assessment_release')
+        const { data, error } = await sb.from('assessments')
           .select('experiment_id,released,window_start,window_end,updated_at')
           .eq('experiment_id', expId)
           .maybeSingle();
@@ -490,7 +490,7 @@
       const endUtc = istLocalToUTC(endIst.value);
       releaseStatus.textContent = 'Saving…';
       try{
-        const { error } = await sb.from('assessment_release').upsert({
+        const { error } = await sb.from('assessments').upsert({
           experiment_id: expId,
           released,
           window_start: startUtc,
@@ -517,7 +517,7 @@
       releaseStatus.textContent = 'Closing…';
       try{
         // FIX: filter by experiment_id only
-        const { error } = await sb.from('assessment_release')
+        const { error } = await sb.from('assessments')
           .update({ released:false, updated_by: currentUser.id, updated_at: nowUtcISO() })
           .eq('experiment_id', expId);
         if(error){
