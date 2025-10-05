@@ -236,12 +236,12 @@
       async function fetchReleaseMap(expIds){
         if(!expIds.length) return {};
         // Try to get all in a single query
-        const { data, error } = await sb.from('assessment_release')
+        const { data, error } = await sb.from('assessments')
           .select('experiment_id,released,window_start,window_end,updated_at')
           .in('experiment_id', expIds);
         if(error){
           if(String(error.code)==='42P01'){ // table missing
-            console.warn('assessment_release table not found yet.');
+            console.warn('assessments table not found yet.');
             return { __missingTable:true };
           }
           console.warn('release fetch error', error);
@@ -266,7 +266,7 @@
 
       async function canStart(expId){
         // Authoritative UI preflight (backend enforcement should also exist)
-        const { data, error } = await sb.from('assessment_release')
+        const { data, error } = await sb.from('assessments')
           .select('released,window_start,window_end')
           .eq('experiment_id', expId)
           .maybeSingle();
