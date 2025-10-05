@@ -118,24 +118,16 @@
       </div>
     </section>
 
-    <!-- Release + Lock Controls -->
-    <section class="panel" id="release-panel">
-      <h2 class="section-title">Assessment Lock, Release & Deadline</h2>
+    <!-- Release Controls -->
+    <section class="panel">
+      <h2 class="section-title">Assessment Release & Deadline</h2>
       <div class="grid">
         <div>
           <label>Assessment</label>
           <select id="exp-select" class="input">
             <option value="">Select an assessment</option>
           </select>
-          <div class="hint">Source: list_experiments_for_results or assessments fallback</div>
-        </div>
-        <div>
-          <label>Locked (Block assessment)</label>
-          <div class="row">
-            <input type="checkbox" id="locked-toggle" />
-            <span id="locked-effective" class="pill info">—</span>
-          </div>
-          <div class="hint">If locked, students cannot see/start this assessment.</div>
+          <div class="hint">Source: list_experiments_for_results</div>
         </div>
         <div>
           <label>Released to students</label>
@@ -143,17 +135,17 @@
             <input type="checkbox" id="released-toggle" />
             <span id="release-effective" class="pill info">—</span>
           </div>
-          <div class="hint">Effective release depends on window start/end and "Released".</div>
+          <div class="hint">Effective release depends on window start/end and "Released" toggle</div>
         </div>
         <div>
           <label>Start (IST)</label>
           <input type="datetime-local" id="start-ist" class="input" />
-          <div class="hint">If empty, opens immediately after release.</div>
+          <div class="hint">If empty, opens immediately after release</div>
         </div>
         <div>
           <label>Deadline (IST)</label>
           <input type="datetime-local" id="end-ist" class="input" />
-          <div class="hint">If empty, no deadline.</div>
+          <div class="hint">If empty, no deadline</div>
         </div>
       </div>
       <div class="row" style="margin-top:10px;">
@@ -162,12 +154,12 @@
         <span id="release-status" class="status"></span>
       </div>
       <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Ensure public.assessments exists.
+        Backend table missing. Run setup_portal.sql (assessments).
       </div>
     </section>
 
     <!-- Notifications -->
-    <section class="panel" id="notif-panel">
+    <section class="panel">
       <h2 class="section-title">Notifications (Flash on Home)</h2>
       <div class="grid">
         <div>
@@ -198,12 +190,12 @@
       <div class="divider"></div>
       <div class="list" id="notif-list"></div>
       <div id="notif-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Run setup for portal_notifications.
+        Backend table missing. Run setup_portal.sql (portal_notifications).
       </div>
     </section>
 
     <!-- Communication -->
-    <section class="panel" id="chat-panel">
+    <section class="panel">
       <h2 class="section-title">Communication (Admin ↔ Students)</h2>
       <div class="grid">
         <div>
@@ -221,18 +213,13 @@
       </div>
       <div id="chat-status" class="status"></div>
       <div id="chat-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Run setup for portal_chat.
+        Backend table missing. Run setup_portal.sql (portal_chat).
       </div>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Feature flags to avoid 404 noise while you focus on lock/unlock
-    const ENABLE_USERS = true;          // set false to hide Users section
-    const ENABLE_NOTIFICATIONS = false; // set true if portal_notifications table exists
-    const ENABLE_CHAT = false;          // set true if portal_chat table exists
-
     // Supabase init (same project as your current app)
     const sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
@@ -242,11 +229,6 @@
     const $ = s => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
-
-    // Panels for optional features
-    const usersPanel = $('#users-panel');
-    const notifPanel = $('#notif-panel');
-    const chatPanel = $('#chat-panel');
 
     // Users
     const userSearch = $('#user-search');
@@ -264,8 +246,6 @@
 
     // Release controls
     const expSelect = $('#exp-select');
-    const lockedToggle = $('#locked-toggle');
-    const lockedEffective = $('#locked-effective');
     const releasedToggle = $('#released-toggle');
     const releaseEffective = $('#release-effective');
     const startIst = $('#start-ist');
@@ -304,7 +284,8 @@
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0); // IST -> UTC
+      // IST is UTC+05:30 => UTC = IST - 05:30
+      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
       return new Date(utcMs).toISOString();
     }
     function utcToIstDatetimeLocal(utcStr){
@@ -328,7 +309,9 @@
     function setStatus(msg){ statusEl.textContent = msg; }
     function setPill(el, ok, text){
       el.textContent = text;
-      el.className = 'pill ' + (ok ? 'success' : 'error');
+      el.classList.remove('success','error','info');
+      el.classList.add(ok ? 'success' : 'error');
+      el.classList.add('pill');
     }
     function htmlesc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
@@ -339,6 +322,7 @@
         return false;
       }
       currentUser = session.user;
+      // fetch role
       const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
       const role = (data?.role || '').toLowerCase();
       isAdmin = role === 'admin';
@@ -357,19 +341,17 @@
       usersStatus.textContent = 'Loading…';
       usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
       try{
-        // Preferred: RPC joins auth.users (may not exist)
-        const search = userSearch?.value?.trim() || null;
+        // Preferred: RPC joins auth.users (needs sql/user_admin.sql)
+        const search = userSearch.value?.trim() || null;
         const { data, error } = await sb.rpc('admin_list_students', { search_text: search });
         if(error){
           console.warn('admin_list_students error', error);
           usersSetupHint.style.display='block';
           // Fallback: profiles only (email may be blank)
-          const { data:pf, error:pfErr } = await sb.from('profiles')
-            .select('id,name,prn,batch,role,email,profile_edit_locked')
-            .eq('role','student')
-            .order('name');
+          const q = sb.from('profiles').select('id,name,prn,batch,role,email,profile_edit_locked').eq('role','student').order('name');
+          const { data:pf, error:pfErr } = await q;
           if(pfErr){ throw pfErr; }
-          renderUsers((pf||[]).map(p => ({ ...p, created_at: null })));
+          renderUsers(pf.map(p => ({ ...p, created_at: null })));
         } else {
           usersSetupHint.style.display='none';
           renderUsers(data || []);
@@ -383,7 +365,7 @@
     }
 
     function renderUsers(rows){
-      if(!rows?.length){
+      if(!rows.length){
         usersTbody.innerHTML = '<tr><td colspan="7" class="muted">No students found.</td></tr>';
         return;
       }
@@ -408,6 +390,7 @@
           btn.disabled = true;
           usersStatus.textContent = 'Updating…';
           try{
+            // Flip lock
             const lockedNow = !!tr.querySelector('.lock-on');
             const { error } = await sb.from('profiles').update({ profile_edit_locked: !lockedNow }).eq('id', id);
             if(error) throw error;
@@ -439,7 +422,7 @@
         await listStudents();
       } catch(e){
         console.warn('createStudent failed', e);
-        userCreateStatus.textContent = 'Failed: ' + (e?.message || e));
+        userCreateStatus.textContent = 'Failed: ' + (e?.message || e);
         alert('Failed: ' + (e?.message || e));
       } finally {
         userCreate.disabled = false;
@@ -449,48 +432,30 @@
 
     // Load experiments and hydrate selects
     async function loadExperiments(){
-      // Try RPC first
-      const fromRpc = await sb.rpc('list_experiments_for_results');
-      if(!fromRpc.error && Array.isArray(fromRpc.data)){
-        buildExperimentOptions(fromRpc.data.map(row => ({
-          experiment_id: row.experiment_id || row.experiment || row.id,
-          title: row.title || row.experiment_id || row.id
-        })));
-        return;
-      }
-      // Fallback: read from assessments
-      const { data, error } = await sb.from('assessments')
-        .select('experiment_id,title')
-        .order('id', { ascending: true });
-      if(error){
-        console.warn('loadExperiments fallback error', error);
-        return;
-      }
-      buildExperimentOptions((data||[]).map(r => ({
-        experiment_id: r.experiment_id,
-        title: r.title || r.experiment_id
-      })));
-    }
-
-    function buildExperimentOptions(rows){
+      const { data, error } = await sb.rpc('list_experiments_for_results');
+      if(error){ console.warn('list_experiments_for_results', error); return; }
       expSelect.innerHTML = '<option value="">Select an assessment</option>';
-      (rows||[]).forEach(row=>{
-        if(!row.experiment_id) return;
+      chatRoom.innerHTML = '<option value="global">Global</option>';
+      (data || []).forEach(row=>{
+        const id = row.experiment_id || row.experiment || row.id;
+        if(!id) return;
         const opt = document.createElement('option');
-        opt.value = row.experiment_id;
-        opt.textContent = row.experiment_id;
+        opt.value = id;
+        opt.textContent = id;
         expSelect.appendChild(opt);
+        const opt2 = document.createElement('option');
+        opt2.value = `exp:${id}`;
+        opt2.textContent = `Room: ${id}`;
+        chatRoom.appendChild(opt2);
       });
     }
 
     async function loadReleaseFor(expId){
-      startIst.value = ''; endIst.value = '';
-      releasedToggle.checked = false;
-      lockedToggle.checked = false;
+      startIst.value = ''; endIst.value = ''; releasedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
       try{
         const { data, error } = await sb.from('assessments')
-          .select('experiment_id,released,locked,window_start,window_end,updated_at')
+          .select('experiment_id,released,window_start,window_end,updated_at')
           .eq('experiment_id', expId)
           .maybeSingle();
 
@@ -503,45 +468,36 @@
 
         if(!data){
           setPill(releaseEffective, false, 'Not released');
-          setPill(lockedEffective, false, 'Unlocked');
-          releaseStatus.textContent = 'No record yet.';
+          releaseStatus.textContent = 'No release record yet.';
           return;
         }
         releasedToggle.checked = !!data.released;
-        lockedToggle.checked = !!data.locked;
         startIst.value = utcToIstDatetimeLocal(data.window_start);
         endIst.value = utcToIstDatetimeLocal(data.window_end);
-
-        const effective = withinWindow(!!data.released, data.window_start, data.window_end) && !data.locked;
+        const effective = withinWindow(!!data.released, data.window_start, data.window_end);
         setPill(releaseEffective, effective, effective ? 'Open to students' : 'Closed');
-        setPill(lockedEffective, !!data.locked, !!data.locked ? 'Locked' : 'Unlocked');
-        releaseStatus.textContent = `Updated: ${data.updated_at ? new Date(data.updated_at).toLocaleString() : '—'}`;
+        releaseStatus.textContent = `Updated: ${new Date(data.updated_at).toLocaleString()}`;
       } catch(e){
-        console.warn('loadReleaseFor', e);
         releaseStatus.textContent = 'Failed to load.';
       }
     }
 
-    // Save release/lock — use UPDATE (no upsert) to avoid on_conflict errors
     async function saveRelease(){
       const expId = expSelect.value;
       if(!expId){ alert('Select an assessment.'); return; }
-      const payload = {
-        released: !!releasedToggle.checked,
-        locked: !!lockedToggle.checked,
-        window_start: istLocalToUTC(startIst.value),
-        window_end: istLocalToUTC(endIst.value),
-        updated_at: nowUtcISO()
-      };
+      const released = !!releasedToggle.checked;
+      const startUtc = istLocalToUTC(startIst.value);
+      const endUtc = istLocalToUTC(endIst.value);
       releaseStatus.textContent = 'Saving…';
       try{
-        const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
-        if(!exists){
-          alert('No row found in assessments for experiment_id=' + expId + '. Please create it first.');
-          releaseStatus.textContent = 'Save blocked (row missing).';
-          return;
-        }
-        const { error } = await sb.from('assessments').update(payload).eq('experiment_id', expId);
+        const { error } = await sb.from('assessments').upsert({
+          experiment_id: expId,
+          released,
+          window_start: startUtc,
+          window_end: endUtc,
+          updated_by: currentUser.id,
+          updated_at: nowUtcISO()
+        }, { onConflict: 'experiment_id' });
         if(error){
           if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
           throw error;
@@ -549,8 +505,8 @@
         await loadReleaseFor(expId);
         releaseStatus.textContent = 'Saved.';
       } catch(e){
-        console.warn('saveRelease', e);
         releaseStatus.textContent = 'Save failed.';
+        console.warn('saveRelease', e);
         alert('Save failed: ' + (e?.message || e));
       }
     }
@@ -560,8 +516,9 @@
       if(!expId){ alert('Select an assessment.'); return; }
       releaseStatus.textContent = 'Closing…';
       try{
+        // FIX: filter by experiment_id only
         const { error } = await sb.from('assessments')
-          .update({ released:false, updated_at: nowUtcISO() })
+          .update({ released:false, updated_by: currentUser.id, updated_at: nowUtcISO() })
           .eq('experiment_id', expId);
         if(error){
           if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
@@ -575,7 +532,7 @@
       }
     }
 
-    // Notifications (optional)
+    // Notifications
     function severityPillClass(sev){
       if(sev === 'danger') return 'error';
       if(sev === 'warning') return 'info';
@@ -603,7 +560,6 @@
         notifStatus.textContent = 'Published.';
       } catch(e){
         notifStatus.textContent = 'Publish failed.';
-        console.warn('publishNotification', e);
         alert('Publish failed: ' + (e?.message || e));
       }
     }
@@ -648,7 +604,7 @@
         notifList.querySelectorAll('button[data-action="toggle"]').forEach(b=>{
           b.onclick = async () => {
             const id = b.getAttribute('data-id');
-            const row = (data||[]).find(x=>String(x.id)===String(id));
+            const row = (data||[]).find(x=>x.id===id);
             const { error } = await sb.from('portal_notifications').update({ active: !row.active }).eq('id', id);
             if(error) return alert(error.message);
             loadNotifications();
@@ -670,7 +626,7 @@
       }
     }
 
-    // Chat (optional)
+    // Chat
     function renderMsg(m){
       const me = m.sender_id === currentUser?.id;
       const wrap = document.createElement('div');
@@ -721,6 +677,7 @@
       if(!txt) return;
       const room = chatRoom.value || 'global';
       chatInput.value = '';
+      // FIX: use profiles.name (not full_name)
       const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
       const senderName = prof?.name || currentUser.email || 'Admin';
       const role = 'admin';
@@ -735,63 +692,49 @@
 
     // Init
     async function init(){
-      // Hide optional panels based on flags
-      if(!ENABLE_USERS) usersPanel.style.display = 'none';
-      if(!ENABLE_NOTIFICATIONS) notifPanel.style.display = 'none';
-      if(!ENABLE_CHAT) chatPanel.style.display = 'none';
-
       setStatus('Checking admin…');
       if(!(await requireAdmin())) return;
       setStatus('Loading data…');
 
       // Users
-      if(ENABLE_USERS){
-        await listStudents();
-        userRefresh.onclick = listStudents;
-        userSearch?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
-        userCreate.onclick = createStudent;
-      }
+      await listStudents();
+      userRefresh.onclick = listStudents;
+      userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
+      userCreate.onclick = createStudent;
 
-      // Releases
+      // Releases and chat rooms
       await loadExperiments();
 
+      // Wire events
       expSelect.onchange = async () => {
         const expId = expSelect.value;
         if(!expId) return;
         await loadReleaseFor(expId);
       };
+      // Preselect if ?exp= is present
       const expParam = new URLSearchParams(location.search).get('exp');
       if(expParam){
-        const setLater = () => {
-          const opt = Array.from(expSelect.options).find(o => o.value === expParam);
-          if(opt){ expSelect.value = expParam; loadReleaseFor(expParam); }
-        };
-        // options may not be ready immediately if network slow
-        setTimeout(setLater, 100);
+        const opt = Array.from(expSelect.options).find(o => o.value === expParam);
+        if(opt){ expSelect.value = expParam; await loadReleaseFor(expParam); }
       }
 
       saveReleaseBtn.onclick = saveRelease;
       closeReleaseBtn.onclick = closeRelease;
 
-      // Notifications
-      if(ENABLE_NOTIFICATIONS){
-        notifPublishBtn.onclick = publishNotification;
-        await loadNotifications();
-      }
+      notifPublishBtn.onclick = publishNotification;
+      await loadNotifications();
 
       // Chat
-      if(ENABLE_CHAT){
-        const defaultRoom = 'global';
-        await loadChat(defaultRoom);
-        subscribeChat(defaultRoom);
-        chatSend.onclick = sendChat;
-        chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
-        chatRoom.onchange = async () => {
-          const room = chatRoom.value || 'global';
-          await loadChat(room);
-          subscribeChat(room);
-        };
-      }
+      const defaultRoom = 'global';
+      await loadChat(defaultRoom);
+      subscribeChat(defaultRoom);
+      chatSend.onclick = sendChat;
+      chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
+      chatRoom.onchange = async () => {
+        const room = chatRoom.value || 'global';
+        await loadChat(room);
+        subscribeChat(room);
+      };
 
       setStatus('Ready.');
     }
