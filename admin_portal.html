@@ -16,7 +16,7 @@
     .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .muted { color:#375a9e; font-size:.95rem; }
     .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
-    label { font-size:13px; color:#0d47a1; font-weight:600; }
+    label { font-size:13px; color:#0d47a1; font-weight:600; display:inline-block; margin-bottom:4px; }
     .input, select, textarea, input[type="datetime-local"] { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
     .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
     .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
@@ -43,7 +43,7 @@
     .status { font-size:12px; color:#6b84c7; }
     .divider { height:1px; background:#d4e4ff; margin:8px 0; }
     .danger { color:#c62828; }
-    @media (max-width:640px){ .grid { grid-template-columns:1fr; } }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
     /* Users */
     table { width:100%; border-collapse:collapse; }
@@ -59,7 +59,7 @@
       <a href="index.html">← Home</a>
       <h1>Admin Portal</h1>
       <span id="role-badge" class="badge">Checking role…</span>
-      <span id="status" class="muted" style="margin-left:auto">Initializing…</span>
+      <span id="status" class="muted" role="status" aria-live="polite" style="margin-left:auto">Initializing…</span>
     </div>
   </header>
 
@@ -69,12 +69,12 @@
       <h2 class="section-title">Users</h2>
       <div class="grid">
         <div>
-          <label>Search</label>
+          <label for="user-search">Search</label>
           <input id="user-search" class="input" placeholder="name, email, PRN, batch" />
         </div>
         <div class="row" style="align-items:flex-end;">
           <button id="user-refresh" class="btn">Refresh</button>
-          <span id="users-status" class="muted"></span>
+          <span id="users-status" class="muted" role="status" aria-live="polite"></span>
         </div>
       </div>
 
@@ -82,16 +82,16 @@
         <details>
           <summary><b>Add Student</b></summary>
           <div class="grid" style="margin-top:8px;">
-            <div><label>Email</label><input id="new-email" class="input" type="email" placeholder="student@domain.com" /></div>
-            <div><label>Name</label><input id="new-name" class="input" placeholder="Full name" /></div>
-            <div><label>PRN</label><input id="new-prn" class="input" placeholder="e.g., 2023-PRN-001" /></div>
-            <div><label>Batch</label><input id="new-batch" class="input" placeholder="e.g., B1, 2024" /></div>
+            <div><label for="new-email">Email</label><input id="new-email" class="input" type="email" placeholder="student@domain.com" /></div>
+            <div><label for="new-name">Name</label><input id="new-name" class="input" placeholder="Full name" /></div>
+            <div><label for="new-prn">PRN</label><input id="new-prn" class="input" placeholder="e.g., 2023-PRN-001" /></div>
+            <div><label for="new-batch">Batch</label><input id="new-batch" class="input" placeholder="e.g., B1, 2024" /></div>
           </div>
           <div class="row" style="margin-top:8px;">
             <button id="user-create" class="btn">Create Student</button>
-            <span class="hint">Requires Edge Function admin_create_user (service role). Shows hint if not configured.</span>
+            <span id="user-create-hint" class="hint">Requires Edge Function admin_create_user (service role). Shows hint if not configured.</span>
           </div>
-          <div id="user-create-status" class="muted"></div>
+          <div id="user-create-status" class="muted" role="status" aria-live="polite"></div>
         </details>
       </div>
 
@@ -99,13 +99,13 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>PRN</th>
-              <th>Batch</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Profile Editing</th>
-              <th>Actions</th>
+              <th scope="col">Name</th>
+              <th scope="col">PRN</th>
+              <th scope="col">Batch</th>
+              <th scope="col">Email</th>
+              <th scope="col">Role</th>
+              <th scope="col">Profile Editing</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="users-tbody">
@@ -119,47 +119,47 @@
     </section>
 
     <!-- Assessment Lock, Release & Deadline -->
-    <section class="panel">
-      <h2 class="section-title">Assessment Lock, Release & Deadline</h2>
+    <section class="panel" aria-labelledby="assess-controls-title">
+      <h2 id="assess-controls-title" class="section-title">Assessment Lock, Release & Deadline</h2>
       <div class="grid">
         <div>
-          <label>Assessment</label>
-          <select id="exp-select" class="input">
+          <label for="exp-select">Assessment</label>
+          <select id="exp-select" class="input" aria-describedby="exp-select-hint">
             <option value="">Select an assessment</option>
           </select>
-          <div class="hint">Source: list_experiments_for_results</div>
+          <div id="exp-select-hint" class="hint">Source: list_experiments_for_results</div>
         </div>
         <div>
-          <label>Locked (Block assessment)</label>
+          <label id="locked-toggle-label" for="locked-toggle">Locked (Block assessment)</label>
           <div class="row">
-            <input type="checkbox" id="locked-toggle" />
-            <span id="locked-effective" class="pill info">—</span>
+            <input type="checkbox" id="locked-toggle" aria-labelledby="locked-toggle-label" aria-describedby="locked-hint locked-effective" />
+            <span id="locked-effective" class="pill info" aria-live="polite">—</span>
           </div>
-          <div class="hint">If locked, students cannot see or start this assessment.</div>
+          <div id="locked-hint" class="hint">If locked, students cannot see or start this assessment.</div>
         </div>
         <div>
-          <label>Released to students</label>
+          <label id="released-toggle-label" for="released-toggle">Released to students</label>
           <div class="row">
-            <input type="checkbox" id="released-toggle" />
-            <span id="release-effective" class="pill info">—</span>
+            <input type="checkbox" id="released-toggle" aria-labelledby="released-toggle-label" aria-describedby="released-hint release-effective" />
+            <span id="release-effective" class="pill info" aria-live="polite">—</span>
           </div>
-          <div class="hint">Effective release depends on window start/end and "Released".</div>
+          <div id="released-hint" class="hint">Effective release depends on window start/end and "Released".</div>
         </div>
         <div>
-          <label>Start (IST)</label>
-          <input type="datetime-local" id="start-ist" class="input" />
-          <div class="hint">If empty, opens immediately after release</div>
+          <label for="start-ist">Start (IST)</label>
+          <input type="datetime-local" id="start-ist" class="input" aria-describedby="start-hint" />
+          <div id="start-hint" class="hint">If empty, opens immediately after release</div>
         </div>
         <div>
-          <label>Deadline (IST)</label>
-          <input type="datetime-local" id="end-ist" class="input" />
-          <div class="hint">If empty, no deadline</div>
+          <label for="end-ist">Deadline (IST)</label>
+          <input type="datetime-local" id="end-ist" class="input" aria-describedby="end-hint" />
+          <div id="end-hint" class="hint">If empty, no deadline</div>
         </div>
       </div>
       <div class="row" style="margin-top:10px;">
         <button id="save-release" class="btn">Save</button>
         <button id="close-release" class="btn ghost">Close (Unrelease)</button>
-        <span id="release-status" class="status"></span>
+        <span id="release-status" class="status" role="status" aria-live="polite"></span>
       </div>
       <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
         Backend table missing. Ensure public.assessments exists.
@@ -167,15 +167,15 @@
     </section>
 
     <!-- Notifications -->
-    <section class="panel">
-      <h2 class="section-title">Notifications (Flash on Home)</h2>
+    <section class="panel" aria-labelledby="notif-title">
+      <h2 id="notif-title" class="section-title">Notifications (Flash on Home)</h2>
       <div class="grid">
         <div>
-          <label>Message</label>
+          <label for="notif-message">Message</label>
           <textarea id="notif-message" class="input" placeholder="Short notice shown to all users on Home"></textarea>
         </div>
         <div>
-          <label>Severity</label>
+          <label for="notif-severity">Severity</label>
           <select id="notif-severity" class="input">
             <option value="info">Info (blue)</option>
             <option value="warning">Warning (amber)</option>
@@ -183,31 +183,31 @@
           </select>
         </div>
         <div>
-          <label>Starts (IST)</label>
+          <label for="notif-start-ist">Starts (IST)</label>
           <input type="datetime-local" id="notif-start-ist" class="input" />
         </div>
         <div>
-          <label>Ends (IST)</label>
+          <label for="notif-end-ist">Ends (IST)</label>
           <input type="datetime-local" id="notif-end-ist" class="input" />
         </div>
       </div>
       <div class="row" style="margin-top:10px;">
         <button id="publish-notif" class="btn">Publish Notification</button>
-        <span id="notif-status" class="status"></span>
+        <span id="notif-status" class="status" role="status" aria-live="polite"></span>
       </div>
       <div class="divider"></div>
-      <div class="list" id="notif-list"></div>
+      <div class="list" id="notif-list" aria-live="polite"></div>
       <div id="notif-setup-hint" class="hint" style="margin-top:8px; display:none;">
         Backend table missing. Run setup for portal_notifications.
       </div>
     </section>
 
     <!-- Communication -->
-    <section class="panel">
-      <h2 class="section-title">Communication (Admin ↔ Students)</h2>
+    <section class="panel" aria-labelledby="chat-title">
+      <h2 id="chat-title" class="section-title">Communication (Admin ↔ Students)</h2>
       <div class="grid">
         <div>
-          <label>Room</label>
+          <label for="chat-room">Room</label>
           <select id="chat-room" class="input">
             <option value="global">Global</option>
           </select>
@@ -216,10 +216,11 @@
       </div>
       <div id="chat-box" class="chat-box" aria-live="polite"></div>
       <div class="row">
+        <label for="chat-input" class="sr-only">Message</label>
         <input id="chat-input" class="input" placeholder="Type a message…" />
         <button id="chat-send" class="btn">Send</button>
       </div>
-      <div id="chat-status" class="status"></div>
+      <div id="chat-status" class="status" role="status" aria-live="polite"></div>
       <div id="chat-setup-hint" class="hint" style="margin-top:8px; display:none;">
         Backend table missing. Run setup for portal_chat.
       </div>
@@ -248,54 +249,51 @@
     const newEmail = $('#new-email');
     const newName = $('#new-name');
     const newPRN = $('#new-prn');
-    theNewBatch = $('#new-batch'); // <-- fixed typo variable declared below
-  </script>
-  <script>
-    // Resume variables (split to avoid copy/paste bracket issues)
-    const userCreate = document.getElementById('user-create');
-    const userCreateStatus = document.getElementById('user-create-status');
+    const newBatch = $('#new-batch');
+    const userCreate = $('#user-create');
+    const userCreateStatus = $('#user-create-status');
 
-    // Release controls
-    const expSelect = document.getElementById('exp-select');
-    const lockedToggle = document.getElementById('locked-toggle');
-    const lockedEffective = document.getElementById('locked-effective');
-    const releasedToggle = document.getElementById('released-toggle');
-    const releaseEffective = document.getElementById('release-effective');
-    const startIst = document.getElementById('start-ist');
-    const endIst = document.getElementById('end-ist');
-    const saveReleaseBtn = document.getElementById('save-release');
-    const closeReleaseBtn = document.getElementById('close-release');
-    const releaseStatus = document.getElementById('release-status');
-    const releaseSetupHint = document.getElementById('release-setup-hint');
+    // Assessment controls
+    const expSelect = $('#exp-select');
+    const lockedToggle = $('#locked-toggle');
+    const lockedEffective = $('#locked-effective');
+    const releasedToggle = $('#released-toggle');
+    const releaseEffective = $('#release-effective');
+    const startIst = $('#start-ist');
+    const endIst = $('#end-ist');
+    const saveReleaseBtn = $('#save-release');
+    const closeReleaseBtn = $('#close-release');
+    const releaseStatus = $('#release-status');
+    const releaseSetupHint = $('#release-setup-hint');
 
     // Notifications
-    const notifMsg = document.getElementById('notif-message');
-    const notifSeverity = document.getElementById('notif-severity');
-    const notifStartIst = document.getElementById('notif-start-ist');
-    const notifEndIst = document.getElementById('notif-end-ist');
-    const notifPublishBtn = document.getElementById('publish-notif');
-    const notifStatus = document.getElementById('notif-status');
-    const notifList = document.getElementById('notif-list');
-    const notifSetupHint = document.getElementById('notif-setup-hint');
+    const notifMsg = $('#notif-message');
+    const notifSeverity = $('#notif-severity');
+    const notifStartIst = $('#notif-start-ist');
+    const notifEndIst = $('#notif-end-ist');
+    const notifPublishBtn = $('#publish-notif');
+    const notifStatus = $('#notif-status');
+    const notifList = $('#notif-list');
+    const notifSetupHint = $('#notif-setup-hint');
 
     // Chat
-    const chatRoom = document.getElementById('chat-room');
-    const chatBox = document.getElementById('chat-box');
-    const chatInput = document.getElementById('chat-input');
-    const chatSend = document.getElementById('chat-send');
-    const chatStatus = document.getElementById('chat-status');
-    const chatSetupHint = document.getElementById('chat-setup-hint');
+    const chatRoom = $('#chat-room');
+    const chatBox = $('#chat-box');
+    const chatInput = $('#chat-input');
+    const chatSend = $('#chat-send');
+    const chatStatus = $('#chat-status');
+    const chatSetupHint = $('#chat-setup-hint');
 
     let currentUser = null;
 
     // Helpers: IST ⇄ UTC
     function pad(n){ return String(n).padStart(2,'0'); }
     function istLocalToUTC(dtLocal){
-      if(!dtLocal) return null;
+      if(!dtLocal) return null; // "YYYY-MM-DDTHH:MM"
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
+      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0); // IST -> UTC
       return new Date(utcMs).toISOString();
     }
     function utcToIstDatetimeLocal(utcStr){
@@ -329,7 +327,7 @@
         return false;
       }
       currentUser = session.user;
-      const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
+      const { data } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
       const role = (data?.role || '').toLowerCase();
       const isAdmin = role === 'admin';
       roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
@@ -417,7 +415,7 @@
       const email = newEmail.value.trim();
       const name = newName.value.trim();
       const prn = newPRN.value.trim();
-      const batch = theNewBatch.value.trim();
+      const batch = newBatch.value.trim();
       if(!email){ return alert('Email is required'); }
       userCreate.disabled = true;
       userCreateStatus.textContent = 'Creating user…';
@@ -426,7 +424,7 @@
         if(error){ throw error; }
         if(!data?.ok){ throw new Error(data?.error || 'Create failed'); }
         userCreateStatus.textContent = 'Created.';
-        newEmail.value = ''; newName.value=''; newPRN.value=''; theNewBatch.value='';
+        newEmail.value = ''; newName.value=''; newPRN.value=''; newBatch.value='';
         await listStudents();
       } catch(e){
         console.warn('createStudent failed', e);
@@ -438,7 +436,7 @@
       }
     }
 
-    // Load experiments
+    // Load experiments and hydrate select
     async function loadExperiments(){
       const { data, error } = await sb.rpc('list_experiments_for_results');
       if(error){ console.warn('list_experiments_for_results', error); return; }
@@ -492,6 +490,7 @@
       }
     }
 
+    // Save lock/release/window — UPDATE an existing row
     async function saveRelease(){
       const expId = expSelect.value;
       if(!expId){ alert('Select an assessment.'); return; }
@@ -504,6 +503,7 @@
       };
       releaseStatus.textContent = 'Saving…';
       try{
+        // Ensure a row exists
         const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
         if(!exists){
           alert('Row missing in public.assessments for experiment_id='+expId+'. Please create it once in DB.');
@@ -673,8 +673,6 @@
     }
 
     function subscribeChat(room){
-      const existing = sb.getChannels?.().find?.(c => c.topic === 'realtime:portal_chat_room_'+room);
-      if(existing) sb.removeChannel(existing);
       const channel = sb.channel('portal_chat_room_'+room)
         .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
           renderMsg(payload.new);
@@ -720,6 +718,7 @@
         if(!expId) return;
         await loadReleaseFor(expId);
       };
+      // Preselect if ?exp= is present
       const expParam = new URLSearchParams(location.search).get('exp');
       if(expParam){
         const setLater = () => {
@@ -733,7 +732,7 @@
       closeReleaseBtn.onclick = closeRelease;
 
       // Notifications
-      document.getElementById('publish-notif').onclick = publishNotification;
+      notifPublishBtn.onclick = publishNotification;
       await loadNotifications();
 
       // Chat
