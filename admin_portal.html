@@ -289,11 +289,11 @@
     // Helpers: IST ⇄ UTC
     function pad(n){ return String(n).padStart(2,'0'); }
     function istLocalToUTC(dtLocal){
-      if(!dtLocal) return null; // "YYYY-MM-DDTHH:MM"
+      if(!dtLocal) return null;
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0); // IST -> UTC
+      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
       return new Date(utcMs).toISOString();
     }
     function utcToIstDatetimeLocal(utcStr){
@@ -439,7 +439,10 @@
     // Load experiments and hydrate select
     async function loadExperiments(){
       const { data, error } = await sb.rpc('list_experiments_for_results');
-      if(error){ console.warn('list_experiments_for_results', error); return; }
+      if(error){
+        console.warn('list_experiments_for_results', error);
+        return;
+      }
       expSelect.innerHTML = '<option value="">Select an assessment</option>';
       (data || []).forEach(row=>{
         const id = row.experiment_id || row.experiment || row.id;
@@ -452,7 +455,8 @@
     }
 
     async function loadReleaseFor(expId){
-      startIst.value = ''; endIst.value = '';
+      startIst.value = '';
+      endIst.value = '';
       releasedToggle.checked = false;
       lockedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
@@ -503,7 +507,6 @@
       };
       releaseStatus.textContent = 'Saving…';
       try{
-        // Ensure a row exists
         const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
         if(!exists){
           alert('Row missing in public.assessments for experiment_id='+expId+'. Please create it once in DB.');
@@ -673,7 +676,8 @@
     }
 
     function subscribeChat(room){
-      const channel = sb.channel('portal_chat_room_'+room)
+      // Re-subscribe fresh each time
+      const ch = sb.channel('portal_chat_room_'+room)
         .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
           renderMsg(payload.new);
           chatBox.scrollTop = chatBox.scrollHeight;
@@ -681,6 +685,7 @@
         .subscribe(status => {
           chatStatus.textContent = status === 'SUBSCRIBED' ? 'Live' : ('Status: ' + status);
         });
+      return ch;
     }
 
     async function sendChat(){
@@ -718,24 +723,21 @@
         if(!expId) return;
         await loadReleaseFor(expId);
       };
-      // Preselect if ?exp= is present
       const expParam = new URLSearchParams(location.search).get('exp');
       if(expParam){
-        const setLater = () => {
+        const trySelect = () => {
           const opt = Array.from(expSelect.options).find(o => o.value === expParam);
           if(opt){ expSelect.value = expParam; loadReleaseFor(expParam); }
         };
-        setTimeout(setLater, 100);
+        setTimeout(trySelect, 100);
       }
 
       saveReleaseBtn.onclick = saveRelease;
       closeReleaseBtn.onclick = closeRelease;
 
-      // Notifications
       notifPublishBtn.onclick = publishNotification;
       await loadNotifications();
 
-      // Chat
       const defaultRoom = 'global';
       await loadChat(defaultRoom);
       subscribeChat(defaultRoom);
