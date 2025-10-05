@@ -114,12 +114,12 @@
         </table>
       </div>
       <div id="users-setup-hint" class="hint" style="display:none; margin-top:6px;">
-        If emails are blank or listing fails, run sql/user_admin.sql and use the admin_list_students RPC. Also deploy the admin_create_user Edge Function to add users.
+        If emails are blank or listing fails, ensure SELECT policy on profiles allows admin, or run your user_admin.sql.
       </div>
     </section>
 
-    <!-- Release + Lock Controls -->
-    <section class="panel" id="release-panel">
+    <!-- Assessment Lock, Release & Deadline -->
+    <section class="panel">
       <h2 class="section-title">Assessment Lock, Release & Deadline</h2>
       <div class="grid">
         <div>
@@ -127,7 +127,7 @@
           <select id="exp-select" class="input">
             <option value="">Select an assessment</option>
           </select>
-          <div class="hint">Source: list_experiments_for_results or assessments fallback</div>
+          <div class="hint">Source: list_experiments_for_results</div>
         </div>
         <div>
           <label>Locked (Block assessment)</label>
@@ -135,7 +135,7 @@
             <input type="checkbox" id="locked-toggle" />
             <span id="locked-effective" class="pill info">—</span>
           </div>
-          <div class="hint">If locked, students cannot see/start this assessment.</div>
+          <div class="hint">If locked, students cannot see or start this assessment.</div>
         </div>
         <div>
           <label>Released to students</label>
@@ -148,12 +148,12 @@
         <div>
           <label>Start (IST)</label>
           <input type="datetime-local" id="start-ist" class="input" />
-          <div class="hint">If empty, opens immediately after release.</div>
+          <div class="hint">If empty, opens immediately after release</div>
         </div>
         <div>
           <label>Deadline (IST)</label>
           <input type="datetime-local" id="end-ist" class="input" />
-          <div class="hint">If empty, no deadline.</div>
+          <div class="hint">If empty, no deadline</div>
         </div>
       </div>
       <div class="row" style="margin-top:10px;">
@@ -167,7 +167,7 @@
     </section>
 
     <!-- Notifications -->
-    <section class="panel" id="notif-panel">
+    <section class="panel">
       <h2 class="section-title">Notifications (Flash on Home)</h2>
       <div class="grid">
         <div>
@@ -203,7 +203,7 @@
     </section>
 
     <!-- Communication -->
-    <section class="panel" id="chat-panel">
+    <section class="panel">
       <h2 class="section-title">Communication (Admin ↔ Students)</h2>
       <div class="grid">
         <div>
@@ -228,11 +228,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Feature flags to avoid 404 noise while you focus on lock/unlock
-    const ENABLE_USERS = true;          // set false to hide Users section
-    const ENABLE_NOTIFICATIONS = false; // set true if portal_notifications table exists
-    const ENABLE_CHAT = false;          // set true if portal_chat table exists
-
     // Supabase init (same project as your current app)
     const sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
@@ -242,11 +237,6 @@
     const $ = s => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
-
-    // Panels for optional features
-    const usersPanel = $('#users-panel');
-    const notifPanel = $('#notif-panel');
-    const chatPanel = $('#chat-panel');
 
     // Users
     const userSearch = $('#user-search');
@@ -264,34 +254,36 @@
 
     // Release controls
     const expSelect = $('#exp-select');
-    const lockedToggle = $('#locked-toggle');
-    const lockedEffective = $('#locked-effective');
-    const releasedToggle = $('#released-toggle');
-    const releaseEffective = $('#release-effective');
-    const startIst = $('#start-ist');
-    const endIst = $('#end-ist');
-    const saveReleaseBtn = $('#save-release');
-    const closeReleaseBtn = $('#close-release');
-    const releaseStatus = $('#release-status');
-    const releaseSetupHint = $('#release-setup-hint');
+    const lockedToggle = document.createElement('input'); // will set later in DOM
+    // Actually reference from DOM:
+    const lockedToggleEl = document.getElementById('locked-toggle');
+    const lockedEffective = document.getElementById('locked-effective');
+    const releasedToggle = document.getElementById('released-toggle');
+    const releaseEffective = document.getElementById('release-effective');
+    const startIst = document.getElementById('start-ist');
+    const endIst = document.getElementById('end-ist');
+    const saveReleaseBtn = document.getElementById('save-release');
+    const closeReleaseBtn = document.getElementById('close-release');
+    const releaseStatus = document.getElementById('release-status');
+    const releaseSetupHint = document.getElementById('release-setup-hint');
 
     // Notifications
-    const notifMsg = $('#notif-message');
-    const notifSeverity = $('#notif-severity');
-    const notifStartIst = $('#notif-start-ist');
-    const notifEndIst = $('#notif-end-ist');
-    const notifPublishBtn = $('#publish-notif');
-    const notifStatus = $('#notif-status');
-    const notifList = $('#notif-list');
-    const notifSetupHint = $('#notif-setup-hint');
+    const notifMsg = document.getElementById('notif-message');
+    const notifSeverity = document.getElementById('notif-severity');
+    const notifStartIst = document.getElementById('notif-start-ist');
+    const notifEndIst = document.getElementById('notif-end-ist');
+    const notifPublishBtn = document.getElementById('publish-notif');
+    const notifStatus = document.getElementById('notif-status');
+    const notifList = document.getElementById('notif-list');
+    const notifSetupHint = document.getElementById('notif-setup-hint');
 
     // Chat
-    const chatRoom = $('#chat-room');
-    const chatBox = $('#chat-box');
-    const chatInput = $('#chat-input');
-    const chatSend = $('#chat-send');
-    const chatStatus = $('#chat-status');
-    const chatSetupHint = $('#chat-setup-hint');
+    const chatRoom = document.getElementById('chat-room');
+    const chatBox = document.getElementById('chat-box');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    const chatStatus = document.getElementById('chat-status');
+    const chatSetupHint = document.getElementById('chat-setup-hint');
 
     let currentUser = null;
     let isAdmin = false;
@@ -304,7 +296,8 @@
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0); // IST -> UTC
+      // IST is UTC+05:30 => UTC = IST - 05:30
+      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
       return new Date(utcMs).toISOString();
     }
     function utcToIstDatetimeLocal(utcStr){
@@ -339,6 +332,7 @@
         return false;
       }
       currentUser = session.user;
+      // fetch role
       const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
       const role = (data?.role || '').toLowerCase();
       isAdmin = role === 'admin';
@@ -352,38 +346,39 @@
       return true;
     }
 
-    // USERS
+    // USERS — always use direct SELECT (no RPC), only role='student'
     async function listStudents(){
       usersStatus.textContent = 'Loading…';
       usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
       try{
-        // Preferred: RPC joins auth.users (may not exist)
-        const search = userSearch?.value?.trim() || null;
-        const { data, error } = await sb.rpc('admin_list_students', { search_text: search });
-        if(error){
-          console.warn('admin_list_students error', error);
-          usersSetupHint.style.display='block';
-          // Fallback: profiles only (email may be blank)
-          const { data:pf, error:pfErr } = await sb.from('profiles')
-            .select('id,name,prn,batch,role,email,profile_edit_locked')
-            .eq('role','student')
-            .order('name');
-          if(pfErr){ throw pfErr; }
-          renderUsers((pf||[]).map(p => ({ ...p, created_at: null })));
-        } else {
-          usersSetupHint.style.display='none';
-          renderUsers(data || []);
-        }
+        const search = (userSearch?.value || '').trim();
+        const orFilter = search
+          ? `name.ilike.%${search}%,email.ilike.%${search}%,prn.ilike.%${search}%,batch.ilike.%${search}%`
+          : null;
+
+        let q = sb.from('profiles')
+          .select('id,name,prn,batch,role,email,profile_edit_locked')
+          .eq('role','student')
+          .order('name', { ascending:true });
+
+        if(orFilter) q = q.or(orFilter);
+
+        const { data, error } = await q;
+        if(error) throw error;
+
+        usersSetupHint.style.display='none';
+        renderUsers(data || []);
         usersStatus.textContent = '';
       } catch(e){
         console.warn('listStudents failed', e);
         usersStatus.textContent = 'Failed to load.';
         usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Failed.</td></tr>';
+        usersSetupHint.style.display='block';
       }
     }
 
     function renderUsers(rows){
-      if(!rows?.length){
+      if(!rows.length){
         usersTbody.innerHTML = '<tr><td colspan="7" class="muted">No students found.</td></tr>';
         return;
       }
@@ -447,38 +442,17 @@
       }
     }
 
-    // Load experiments and hydrate selects
+    // Load experiments and hydrate select
     async function loadExperiments(){
-      // Try RPC first
-      const fromRpc = await sb.rpc('list_experiments_for_results');
-      if(!fromRpc.error && Array.isArray(fromRpc.data)){
-        buildExperimentOptions(fromRpc.data.map(row => ({
-          experiment_id: row.experiment_id || row.experiment || row.id,
-          title: row.title || row.experiment_id || row.id
-        })));
-        return;
-      }
-      // Fallback: read from assessments
-      const { data, error } = await sb.from('assessments')
-        .select('experiment_id,title')
-        .order('id', { ascending: true });
-      if(error){
-        console.warn('loadExperiments fallback error', error);
-        return;
-      }
-      buildExperimentOptions((data||[]).map(r => ({
-        experiment_id: r.experiment_id,
-        title: r.title || r.experiment_id
-      })));
-    }
-
-    function buildExperimentOptions(rows){
+      const { data, error } = await sb.rpc('list_experiments_for_results');
+      if(error){ console.warn('list_experiments_for_results', error); return; }
       expSelect.innerHTML = '<option value="">Select an assessment</option>';
-      (rows||[]).forEach(row=>{
-        if(!row.experiment_id) return;
+      (data || []).forEach(row=>{
+        const id = row.experiment_id || row.experiment || row.id;
+        if(!id) return;
         const opt = document.createElement('option');
-        opt.value = row.experiment_id;
-        opt.textContent = row.experiment_id;
+        opt.value = id;
+        opt.textContent = id;
         expSelect.appendChild(opt);
       });
     }
@@ -486,11 +460,11 @@
     async function loadReleaseFor(expId){
       startIst.value = ''; endIst.value = '';
       releasedToggle.checked = false;
-      lockedToggle.checked = false;
+      lockedToggleEl.checked = false;
       releaseStatus.textContent = 'Loading…';
       try{
         const { data, error } = await sb.from('assessments')
-          .select('experiment_id,released,locked,window_start,window_end,updated_at')
+          .select('experiment_id,locked,released,window_start,window_end,updated_at')
           .eq('experiment_id', expId)
           .maybeSingle();
 
@@ -508,11 +482,11 @@
           return;
         }
         releasedToggle.checked = !!data.released;
-        lockedToggle.checked = !!data.locked;
+        lockedToggleEl.checked = !!data.locked;
         startIst.value = utcToIstDatetimeLocal(data.window_start);
         endIst.value = utcToIstDatetimeLocal(data.window_end);
 
-        const effective = withinWindow(!!data.released, data.window_start, data.window_end) && !data.locked;
+        const effective = !data.locked && withinWindow(!!data.released, data.window_start, data.window_end);
         setPill(releaseEffective, effective, effective ? 'Open to students' : 'Closed');
         setPill(lockedEffective, !!data.locked, !!data.locked ? 'Locked' : 'Unlocked');
         releaseStatus.textContent = `Updated: ${data.updated_at ? new Date(data.updated_at).toLocaleString() : '—'}`;
@@ -522,22 +496,23 @@
       }
     }
 
-    // Save release/lock — use UPDATE (no upsert) to avoid on_conflict errors
+    // Save lock/release/window — UPDATE existing row (assumes rows already exist)
     async function saveRelease(){
       const expId = expSelect.value;
       if(!expId){ alert('Select an assessment.'); return; }
       const payload = {
+        locked: !!lockedToggleEl.checked,
         released: !!releasedToggle.checked,
-        locked: !!lockedToggle.checked,
         window_start: istLocalToUTC(startIst.value),
         window_end: istLocalToUTC(endIst.value),
         updated_at: nowUtcISO()
       };
       releaseStatus.textContent = 'Saving…';
       try{
+        // Ensure a row exists
         const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
         if(!exists){
-          alert('No row found in assessments for experiment_id=' + expId + '. Please create it first.');
+          alert('Row missing in public.assessments for experiment_id='+expId+'. Please create it once in DB.');
           releaseStatus.textContent = 'Save blocked (row missing).';
           return;
         }
@@ -575,7 +550,7 @@
       }
     }
 
-    // Notifications (optional)
+    // Notifications
     function severityPillClass(sev){
       if(sev === 'danger') return 'error';
       if(sev === 'warning') return 'info';
@@ -603,7 +578,6 @@
         notifStatus.textContent = 'Published.';
       } catch(e){
         notifStatus.textContent = 'Publish failed.';
-        console.warn('publishNotification', e);
         alert('Publish failed: ' + (e?.message || e));
       }
     }
@@ -670,7 +644,7 @@
       }
     }
 
-    // Chat (optional)
+    // Chat
     function renderMsg(m){
       const me = m.sender_id === currentUser?.id;
       const wrap = document.createElement('div');
@@ -735,22 +709,15 @@
 
     // Init
     async function init(){
-      // Hide optional panels based on flags
-      if(!ENABLE_USERS) usersPanel.style.display = 'none';
-      if(!ENABLE_NOTIFICATIONS) notifPanel.style.display = 'none';
-      if(!ENABLE_CHAT) chatPanel.style.display = 'none';
-
       setStatus('Checking admin…');
       if(!(await requireAdmin())) return;
       setStatus('Loading data…');
 
       // Users
-      if(ENABLE_USERS){
-        await listStudents();
-        userRefresh.onclick = listStudents;
-        userSearch?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
-        userCreate.onclick = createStudent;
-      }
+      await listStudents();
+      userRefresh.onclick = listStudents;
+      userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
+      userCreate.onclick = createStudent;
 
       // Releases
       await loadExperiments();
@@ -760,38 +727,31 @@
         if(!expId) return;
         await loadReleaseFor(expId);
       };
+      // Preselect if ?exp= is present
       const expParam = new URLSearchParams(location.search).get('exp');
       if(expParam){
-        const setLater = () => {
-          const opt = Array.from(expSelect.options).find(o => o.value === expParam);
-          if(opt){ expSelect.value = expParam; loadReleaseFor(expParam); }
-        };
-        // options may not be ready immediately if network slow
-        setTimeout(setLater, 100);
+        const opt = Array.from(expSelect.options).find(o => o.value === expParam);
+        if(opt){ expSelect.value = expParam; await loadReleaseFor(expParam); }
       }
 
       saveReleaseBtn.onclick = saveRelease;
       closeReleaseBtn.onclick = closeRelease;
 
       // Notifications
-      if(ENABLE_NOTIFICATIONS){
-        notifPublishBtn.onclick = publishNotification;
-        await loadNotifications();
-      }
+      notifPublishBtn.onclick = publishNotification;
+      await loadNotifications();
 
       // Chat
-      if(ENABLE_CHAT){
-        const defaultRoom = 'global';
-        await loadChat(defaultRoom);
-        subscribeChat(defaultRoom);
-        chatSend.onclick = sendChat;
-        chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
-        chatRoom.onchange = async () => {
-          const room = chatRoom.value || 'global';
-          await loadChat(room);
-          subscribeChat(room);
-        };
-      }
+      const defaultRoom = 'global';
+      await loadChat(defaultRoom);
+      subscribeChat(defaultRoom);
+      chatSend.onclick = sendChat;
+      chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
+      chatRoom.onchange = async () => {
+        const room = chatRoom.value || 'global';
+        await loadChat(room);
+        subscribeChat(room);
+      };
 
       setStatus('Ready.');
     }
