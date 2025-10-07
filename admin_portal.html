@@ -428,7 +428,7 @@
         await listStudents();
       } catch(e){
         console.warn('createStudent failed', e);
-        userCreateStatus.textContent = 'Failed: ' + (e?.message || e));
+        userCreateStatus.textContent = 'Failed: ' + (e?.message || e);
         alert('Failed: ' + (e?.message || e));
       } finally {
         userCreate.disabled = false;
