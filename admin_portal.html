@@ -118,9 +118,9 @@
       </div>
     </section>
 
-    <!-- Assessment Lock, Release & Deadline -->
+    <!-- Assessment Lock & Schedule -->
     <section class="panel" aria-labelledby="assess-controls-title">
-      <h2 id="assess-controls-title" class="section-title">Assessment Lock, Release & Deadline</h2>
+      <h2 id="assess-controls-title" class="section-title">Assessment Lock & Schedule</h2>
       <div class="grid">
         <div>
           <label for="exp-select">Assessment</label>
@@ -129,40 +129,43 @@
           </select>
           <div id="exp-select-hint" class="hint">Source: list_experiments_for_results</div>
         </div>
+
         <div>
-          <label id="locked-toggle-label" for="locked-toggle">Locked (Block assessment)</label>
+          <label for="lock-toggle-btn">Lock control</label>
           <div class="row">
-            <input type="checkbox" id="locked-toggle" aria-labelledby="locked-toggle-label" aria-describedby="locked-hint locked-effective" />
+            <button id="lock-toggle-btn" class="btn">—</button>
             <span id="locked-effective" class="pill info" aria-live="polite">—</span>
           </div>
-          <div id="locked-hint" class="hint">If locked, students cannot see or start this assessment.</div>
+          <div class="hint">Toggle to lock/unlock assessment for students.</div>
         </div>
-        <div>
-          <label id="released-toggle-label" for="released-toggle">Released to students</label>
-          <div class="row">
-            <input type="checkbox" id="released-toggle" aria-labelledby="released-toggle-label" aria-describedby="released-hint release-effective" />
-            <span id="release-effective" class="pill info" aria-live="polite">—</span>
-          </div>
-          <div id="released-hint" class="hint">Effective release depends on window start/end and "Released".</div>
-        </div>
+
         <div>
           <label for="start-ist">Start (IST)</label>
           <input type="datetime-local" id="start-ist" class="input" aria-describedby="start-hint" />
-          <div id="start-hint" class="hint">If empty, opens immediately after release</div>
+          <div id="start-hint" class="hint">Optional. If empty, opens immediately when unlocked.</div>
         </div>
+
         <div>
           <label for="end-ist">Deadline (IST)</label>
           <input type="datetime-local" id="end-ist" class="input" aria-describedby="end-hint" />
-          <div id="end-hint" class="hint">If empty, no deadline</div>
+          <div id="end-hint" class="hint">Optional. If empty, no deadline.</div>
+        </div>
+
+        <div>
+          <label>Status</label>
+          <div class="row">
+            <span id="avail-effective" class="pill info" aria-live="polite">—</span>
+          </div>
+          <div class="hint">Computed from lock and optional dates.</div>
         </div>
       </div>
+
       <div class="row" style="margin-top:10px;">
-        <button id="save-release" class="btn">Save</button>
-        <button id="close-release" class="btn ghost">Close (Unrelease)</button>
+        <button id="save-release" class="btn">Save Dates</button>
         <span id="release-status" class="status" role="status" aria-live="polite"></span>
       </div>
       <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        Backend table missing. Ensure public.assessments exists.
+        No row found for this assessment. Create it once in public.assessments.
       </div>
     </section>
 
@@ -255,14 +258,12 @@
 
     // Assessment controls
     const expSelect = $('#exp-select');
-    const lockedToggle = $('#locked-toggle');
+    const lockToggleBtn = $('#lock-toggle-btn');
     const lockedEffective = $('#locked-effective');
-    const releasedToggle = $('#released-toggle');
-    const releaseEffective = $('#release-effective');
+    const availEffective = $('#avail-effective');
     const startIst = $('#start-ist');
     const endIst = $('#end-ist');
     const saveReleaseBtn = $('#save-release');
-    const closeReleaseBtn = $('#close-release');
     const releaseStatus = $('#release-status');
     const releaseSetupHint = $('#release-setup-hint');
 
@@ -304,8 +305,9 @@
       return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}T${pad(ist.getHours())}:${pad(ist.getMinutes())}`;
     }
     function nowUtcISO(){ return new Date().toISOString(); }
-    function withinWindow(released, startUtc, endUtc){
-      if(!released) return false;
+
+    // Availability helpers (no "released" anymore)
+    function withinWindow(startUtc, endUtc){
       const now = new Date();
       const start = startUtc ? new Date(startUtc) : null;
       const end = endUtc ? new Date(endUtc) : null;
@@ -313,10 +315,24 @@
       if(end && now > end) return false;
       return true;
     }
+    function availabilityState(locked, startUtc, endUtc){
+      if(locked) return 'locked';
+      const now = new Date();
+      const start = startUtc ? new Date(startUtc) : null;
+      const end = endUtc ? new Date(endUtc) : null;
+      if(start && now < start) return 'upcoming';
+      if(end && now > end) return 'closed';
+      return 'open';
+    }
+
     function setStatus(msg){ statusEl.textContent = msg; }
     function setPill(el, ok, text){
       el.textContent = text;
       el.className = 'pill ' + (ok ? 'success' : 'error');
+    }
+    function setInfoPill(el, text){
+      el.textContent = text;
+      el.className = 'pill info';
     }
     function htmlesc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
@@ -454,53 +470,111 @@
       });
     }
 
+    function updateLockBtnUI(isLocked){
+      lockToggleBtn.textContent = isLocked ? 'Unlock assessment' : 'Lock assessment';
+    }
+
+    function setLockedPill(isLocked){
+      if(isLocked){ setPill(lockedEffective, false, 'Locked'); }
+      else { setPill(lockedEffective, true, 'Unlocked'); }
+    }
+
+    function setAvailabilityPill(locked, startUtc, endUtc){
+      const state = availabilityState(locked, startUtc, endUtc);
+      if(state === 'open') setPill(availEffective, true, 'Open to students');
+      else if(state === 'upcoming') setPill(availEffective, false, 'Upcoming');
+      else if(state === 'closed') setPill(availEffective, false, 'Closed');
+      else setPill(availEffective, false, 'Locked');
+    }
+
     async function loadReleaseFor(expId){
+      // Reset UI
       startIst.value = '';
       endIst.value = '';
-      releasedToggle.checked = false;
-      lockedToggle.checked = false;
       releaseStatus.textContent = 'Loading…';
+      lockToggleBtn.disabled = true;
       try{
         const { data, error } = await sb.from('assessments')
-          .select('experiment_id,locked,released,window_start,window_end,updated_at')
+          .select('experiment_id,locked,window_start,window_end,updated_at')
           .eq('experiment_id', expId)
           .maybeSingle();
 
         if(error && String(error?.code) === '42P01'){
           releaseSetupHint.style.display = 'block';
           releaseStatus.textContent = 'Backend table not found.';
+          updateLockBtnUI(true);
+          setInfoPill(lockedEffective, '—');
+          setInfoPill(availEffective, '—');
           return;
         }
-        releaseSetupHint.style.display = 'none';
-
         if(!data){
-          setPill(releaseEffective, false, 'Not released');
-          setPill(lockedEffective, false, 'Unlocked');
+          releaseSetupHint.style.display = 'block';
           releaseStatus.textContent = 'No record yet.';
+          lockToggleBtn.disabled = true;
+          updateLockBtnUI(true);
+          setInfoPill(lockedEffective, '—');
+          setInfoPill(availEffective, '—');
           return;
         }
-        releasedToggle.checked = !!data.released;
-        lockedToggle.checked = !!data.locked;
+
+        releaseSetupHint.style.display = 'none';
+        lockToggleBtn.disabled = false;
+
+        // Hydrate UI
+        updateLockBtnUI(!!data.locked);
+        setLockedPill(!!data.locked);
         startIst.value = utcToIstDatetimeLocal(data.window_start);
         endIst.value = utcToIstDatetimeLocal(data.window_end);
+        setAvailabilityPill(!!data.locked, data.window_start, data.window_end);
 
-        const effective = !data.locked && withinWindow(!!data.released, data.window_start, data.window_end);
-        setPill(releaseEffective, effective, effective ? 'Open to students' : 'Closed');
-        setPill(lockedEffective, !!data.locked, !!data.locked ? 'Locked' : 'Unlocked');
         releaseStatus.textContent = `Updated: ${data.updated_at ? new Date(data.updated_at).toLocaleString() : '—'}`;
       } catch(e){
         console.warn('loadReleaseFor', e);
         releaseStatus.textContent = 'Failed to load.';
+        lockToggleBtn.disabled = true;
       }
     }
 
-    // Save lock/release/window — UPDATE an existing row
+    // Toggle lock only
+    async function toggleLock(){
+      const expId = expSelect.value;
+      if(!expId){ alert('Select an assessment.'); return; }
+      lockToggleBtn.disabled = true;
+      releaseStatus.textContent = 'Toggling…';
+      try{
+        const { data:row, error:readErr } = await sb.from('assessments')
+          .select('locked')
+          .eq('experiment_id', expId)
+          .maybeSingle();
+        if(readErr) throw readErr;
+        if(!row){
+          releaseSetupHint.style.display = 'block';
+          releaseStatus.textContent = 'No record to toggle.';
+          lockToggleBtn.disabled = false;
+          return;
+        }
+        const newLocked = !row.locked;
+        const { error:updErr } = await sb.from('assessments')
+          .update({ locked: newLocked, updated_at: nowUtcISO() })
+          .eq('experiment_id', expId);
+        if(updErr) throw updErr;
+
+        await loadReleaseFor(expId);
+        releaseStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
+      } catch(e){
+        console.warn('toggleLock', e);
+        releaseStatus.textContent = 'Toggle failed.';
+        alert('Toggle failed: ' + (e?.message || e));
+      } finally {
+        lockToggleBtn.disabled = false;
+      }
+    }
+
+    // Save dates only
     async function saveRelease(){
       const expId = expSelect.value;
       if(!expId){ alert('Select an assessment.'); return; }
       const payload = {
-        locked: !!lockedToggle.checked,
-        released: !!releasedToggle.checked,
         window_start: istLocalToUTC(startIst.value),
         window_end: istLocalToUTC(endIst.value),
         updated_at: nowUtcISO()
@@ -509,8 +583,9 @@
       try{
         const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
         if(!exists){
-          alert('Row missing in public.assessments for experiment_id='+expId+'. Please create it once in DB.');
+          releaseSetupHint.style.display = 'block';
           releaseStatus.textContent = 'Save blocked (row missing).';
+          alert('Row missing in public.assessments for experiment_id=' + expId + '. Please create it once in DB.');
           return;
         }
         const { error } = await sb.from('assessments').update(payload).eq('experiment_id', expId);
@@ -524,26 +599,6 @@
         console.warn('saveRelease', e);
         releaseStatus.textContent = 'Save failed.';
         alert('Save failed: ' + (e?.message || e));
-      }
-    }
-
-    async function closeRelease(){
-      const expId = expSelect.value;
-      if(!expId){ alert('Select an assessment.'); return; }
-      releaseStatus.textContent = 'Closing…';
-      try{
-        const { error } = await sb.from('assessments')
-          .update({ released:false, updated_at: nowUtcISO() })
-          .eq('experiment_id', expId);
-        if(error){
-          if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
-          throw error;
-        }
-        await loadReleaseFor(expId);
-        releaseStatus.textContent = 'Closed.';
-      } catch(e){
-        releaseStatus.textContent = 'Close failed.';
-        alert('Close failed: ' + (e?.message || e));
       }
     }
 
@@ -732,12 +787,15 @@
         setTimeout(trySelect, 100);
       }
 
+      // Lock button and Save Dates
+      lockToggleBtn.onclick = toggleLock;
       saveReleaseBtn.onclick = saveRelease;
-      closeReleaseBtn.onclick = closeRelease;
 
+      // Notifications
       notifPublishBtn.onclick = publishNotification;
       await loadNotifications();
 
+      // Chat
       const defaultRoom = 'global';
       await loadChat(defaultRoom);
       subscribeChat(defaultRoom);
