@@ -270,25 +270,24 @@
 
     let currentUser = null;
 
-    // Helpers: IST ⇄ UTC
+    // Helpers: datetime-local (treat as local), convert to/from UTC for DB
     function pad(n){ return String(n).padStart(2,'0'); }
+    // Convert a datetime-local string (local clock) to UTC ISO string
     function istLocalToUTC(dtLocal){
       if(!dtLocal) return null;
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const utcMs = Date.UTC(y, m-1, day, (hh??0)-5, (mm??0)-30, 0, 0);
-      return new Date(utcMs).toISOString();
+      const local = new Date(y, (m||1)-1, day||1, hh||0, mm||0, 0, 0); // local time
+      return local.toISOString(); // UTC ISO
     }
+    // Convert a UTC ISO string from DB to a datetime-local value in the admin's local timezone
     function utcToIstDatetimeLocal(utcStr){
       if(!utcStr) return '';
-      const d = new Date(utcStr);
-      const istMs = d.getTime() + 5.5*3600000;
-      const ist = new Date(istMs);
-      return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}T${pad(ist.getHours())}:${pad(ist.getMinutes())}`;
+      const d = new Date(utcStr); // this represents the same instant; getters use local tz
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
-    // Availability helpers (no "released" usage)
     function stateForRow(row){
       if(row.locked) return 'locked';
       const now = Date.now();
@@ -416,7 +415,7 @@
         await listStudents();
       } catch(e){
         console.warn('createStudent failed', e);
-        userCreateStatus.textContent = 'Failed: ' + (e?.message || e);
+        userCreateStatus.textContent = 'Failed: ' + (e?.message || e));
         alert('Failed: ' + (e?.message || e));
       } finally {
         userCreate.disabled = false;
@@ -426,7 +425,6 @@
 
     // Assessments
     async function loadAssessments(){
-      // Use * to be resilient if window_end column doesn't exist yet
       const { data, error } = await sb
         .from('assessments')
         .select('*')
@@ -483,7 +481,7 @@
             tableStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
           }catch(e){
             console.warn('toggle row', e);
-            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -519,7 +517,7 @@
             tableStatus.textContent = 'Dates saved.';
           }catch(e){
             console.warn('save dates', e);
-            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -609,12 +607,9 @@
           if(String(error?.code) === '42P01'){ notifSetupHint.style.display = 'block'; }
           throw error;
         }
-        notifSetupHint.style.display = 'none';
-        const now = Date.now();
+        // render
         notifList.innerHTML = '';
         (data||[]).forEach(n=>{
-          const activeWindow = (!n.starts_at || new Date(n.starts_at).getTime() <= now) &&
-                               (!n.ends_at || new Date(n.ends_at).getTime() >= now);
           const el = document.createElement('div');
           el.className = 'item';
           el.innerHTML = `
@@ -630,7 +625,6 @@
               </div>
             </div>
             <div style="margin-top:6px;">${n.message}</div>
-            <div class="hint">Window: ${n.starts_at?new Date(n.starts_at).toLocaleString():'—'} → ${n.ends_at?new Date(n.ends_at).toLocaleString():'—'} | In window now: ${activeWindow}</div>
           `;
           notifList.appendChild(el);
         });
