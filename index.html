@@ -77,7 +77,6 @@
       transform: translateY(-1px);
     }
 
-    /* Modern Profile Dashboard Card */
     .card {
       max-width: 920px;
       margin: 18px auto 12px auto;
@@ -102,100 +101,31 @@
       border: 1px solid var(--chip-bd);
       box-shadow: inset 0 0 0 2px #eef5ff;
     }
-    .title-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .name{
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--blue-600);
-      letter-spacing: .2px;
-    }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 4px 10px;
-      font-size:.85rem;
-      font-weight:600;
-      border-radius:999px;
-      background: var(--chip-bg);
-      border:1px solid var(--chip-bd);
-      color: var(--blue);
-    }
+    .title-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .name{ font-size: 1.35rem; font-weight: 700; color: var(--blue-600); letter-spacing: .2px; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; font-size:.85rem; font-weight:600; border-radius:999px; background: var(--chip-bg); border:1px solid var(--chip-bd); color: var(--blue); }
     .muted{ color: var(--muted); }
-    .meta-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      margin:8px 0 6px 0;
-    }
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .btn{
-      border:0;
-      border-radius:10px;
-      padding: 10px 14px;
-      font-size:.95rem;
-      font-weight:700;
-      cursor:pointer;
-      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
-    }
+    .meta-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 6px 0; }
+    .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .btn{ border:0; border-radius:10px; padding: 10px 14px; font-size:.95rem; font-weight:700; cursor:pointer; transition: transform .04s ease, background .2s ease, box-shadow .2s ease; }
     .btn:hover{ transform: translateY(-1px); }
-    .btn-primary{
-      background: var(--blue);
-      color:#fff;
-      box-shadow: var(--shadow-soft);
-    }
-    .btn-ghost{
-      background:#ffffff;
-      color: var(--blue);
-      border:1px solid var(--chip-bd);
-      box-shadow: var(--shadow-soft);
-    }
-    .note{
-      font-size:.95rem;
-      color:#0d47a1;
-      background:#eef6ff;
-      border:1px dashed var(--chip-bd);
-      border-radius:10px;
-      padding:8px 10px;
-      margin-top:8px;
-    }
+    .btn-primary{ background: var(--blue); color:#fff; box-shadow: var(--shadow-soft); }
+    .btn-ghost{ background:#ffffff; color: var(--blue); border:1px solid var(--chip-bd); box-shadow: var(--shadow-soft); }
+    .note{ font-size:.95rem; color:#0d47a1; background:#eef6ff; border:1px dashed var(--chip-bd); border-radius:10px; padding:8px 10px; margin-top:8px; }
 
-    /* Chat styles */
-    .chat-card{
-      margin-top:14px;
-      border:1px solid var(--chip-bd);
-      background:#fff;
-      border-radius:14px;
-      box-shadow: var(--shadow-soft);
-      padding:12px;
-    }
+    .chat-card{ margin-top:14px; border:1px solid var(--chip-bd); background:#fff; border-radius:14px; box-shadow: var(--shadow-soft); padding:12px; }
     .chat-head{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
     .chat-head .left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .chat-title{ font-weight:800; color:var(--blue-600); }
     .room-select{ padding:6px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#f9fbff; }
-    .chat-box{
-      margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe;
-      border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px;
-    }
+    .chat-box{ margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe; border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px; }
     .chat-line{ display:flex; gap:8px; }
     .msg{ padding:8px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#fff; max-width:75%; }
     .me .msg{ background:#e8f5e9; border-color:#c8e6c9; }
     .meta{ font-size:11px; color:#6b84c7; margin-top:4px; }
     .chat-input-row{ display:flex; gap:8px; margin-top:10px; }
     .chat-input{ flex:1; padding:10px; border-radius:10px; border:1px solid var(--chip-bd); }
-    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background:var(--blue); color:#fff; font-weight:800; }
+    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background: var(--blue); color:#fff; font-weight:800; }
 
     .intro {
       max-width: 920px;
@@ -238,7 +168,7 @@
     <!-- Notifications Banner -->
     <div id="home-notifications"></div>
 
-    <!-- Unified Profile + Dashboard card (modern, no avatar upload) -->
+    <!-- Unified Profile + Dashboard card -->
     <section id="profile-dashboard-card" class="card" style="display:none;">
       <div class="profile-wrap">
         <img id="pc-avatar" class="avatar" alt="Profile avatar" />
@@ -260,7 +190,7 @@
           </div>
           <div id="pc-note" class="note" style="display:none;"></div>
 
-          <!-- Student Chat -->
+          <!-- Chat (disabled via feature flag) -->
           <div id="chat-section" class="chat-card" style="display:none;">
             <div class="chat-head">
               <div class="left">
@@ -287,9 +217,7 @@
 
     <!-- Welcome/Intro -->
     <div class="intro">
-      <p>
-        Welcome to the Human Anatomy & Physiology Experiments Portal!
-      </p>
+      <p>Welcome to the Human Anatomy & Physiology Experiments Portal!</p>
       <ul>
         <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
         <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
@@ -317,6 +245,9 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
+      // FEATURE FLAG: disable chat end-to-end
+      const ENABLE_CHAT = false;
+
       const AVATAR_BUCKET = 'Avatar';
 
       // Nav elements
@@ -339,7 +270,7 @@
       const pcAdminBtn = document.getElementById('pc-admin-portal');
       const pcNote = document.getElementById('pc-note');
 
-      // Chat elements
+      // Chat elements (will remain hidden if ENABLE_CHAT=false)
       const chatSection = document.getElementById('chat-section');
       const chatRoomSel = document.getElementById('chat-room');
       const chatBox = document.getElementById('chat-box');
@@ -400,9 +331,8 @@
         return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
-      const has = (v) => typeof v === 'string' ? v.trim().length > 0 : !!v;
-
       function renderMsg(m){
+        // Not used when chat disabled
         const me = m.sender_id === currentUser?.id;
         const line = document.createElement('div');
         line.className = 'chat-line ' + (me ? 'me' : 'them');
@@ -415,6 +345,7 @@
       }
 
       async function loadChat(room){
+        if (!ENABLE_CHAT) return; // hard exit
         chatBox.innerHTML = '';
         chatStatus.textContent = 'Loading…';
         try{
@@ -424,18 +355,22 @@
             .order('created_at', { ascending:true })
             .limit(200);
           if(error){
-            if(String(error.code)==='42P01'){ chatSetupHint.style.display='block'; chatStatus.textContent='Unavailable'; return; }
+            chatSetupHint.style.display='block';
+            chatStatus.textContent='Unavailable';
+            return;
           }
           chatSetupHint.style.display='none';
           (data||[]).forEach(renderMsg);
           chatBox.scrollTop = chatBox.scrollHeight;
           chatStatus.textContent = 'Live';
         }catch(e){
-          chatStatus.textContent = 'Error';
+          chatSetupHint.style.display='block';
+          chatStatus.textContent = 'Unavailable';
         }
       }
 
       function subscribeChat(room){
+        if (!ENABLE_CHAT) return null; // hard exit
         if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
         chatSubscription = sb.channel('portal_chat_room_'+room)
           .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
@@ -448,24 +383,26 @@
       }
 
       async function sendChat(){
+        if (!ENABLE_CHAT) return; // hard exit
         const txt = chatInput.value.trim();
         if(!txt) return;
         const roomSel = chatRoomSel.value;
-        const room = roomSel === 'dm' ? dmRoom : 'global';
+        const room = roomSel === 'dm' ? ('dm:' + currentUser.id) : 'global';
         chatInput.value = '';
         const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
         const senderName = prof?.name || currentUser.email || 'User';
         const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
         const { error } = await sb.from('portal_chat').insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
         if(error){
-          if(String(error.code)==='42P01'){ chatSetupHint.style.display='block'; }
+          chatSetupHint.style.display='block';
           alert('Send failed: ' + error.message);
         }
       }
 
       async function initChat(){
+        if (!ENABLE_CHAT) { if (chatSection) chatSection.style.display='none'; return; }
         if(!currentUser){ chatSection.style.display='none'; return; }
-        dmRoom = 'dm:' + currentUser.id;
+        const dmRoom = 'dm:' + currentUser.id;
         chatSection.style.display='block';
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? dmRoom : 'global';
@@ -485,8 +422,6 @@
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) {
-            currentUser = null;
-            currentRole = 'unknown';
             setNav(false);
             return;
           }
@@ -556,8 +491,12 @@
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
 
-          // Init chat for logged-in users (students or admins)
-          await initChat();
+          // Init chat (skipped when disabled)
+          if (ENABLE_CHAT) {
+            await initChat();
+          } else if (chatSection) {
+            chatSection.style.display = 'none';
+          }
 
         } catch (e) {
           console.error('refreshUI error:', e);
@@ -604,12 +543,10 @@
           try {
             for (const k of Object.keys(localStorage)) {
               const key = k.toLowerCase();
-              // FIXED: includes with a dot
               if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
             }
             for (const k of Object.keys(sessionStorage)) {
               const key = k.toLowerCase();
-              // FIXED: includes with a dot
               if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
             }
           } catch (e2) { /* ignore */ }
