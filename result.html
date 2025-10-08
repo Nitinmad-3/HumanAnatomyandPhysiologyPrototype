@@ -242,34 +242,22 @@
       return row.submitted_at_utc || row.submitted_at;
     }
 
-    // Robust IST formatting: normalize to ISO, assume UTC when ambiguous
+    // Robust IST formatting
     function fmtDate(s){
       if(!s) return '—';
       try {
         let iso = s;
         if (typeof iso === 'string') {
-          if (iso.includes(' ') && !iso.includes('T')) {
-            // "YYYY-MM-DD HH:MM:SS+00" -> "YYYY-MM-DDTHH:MM:SS+00"
-            iso = iso.replace(' ', 'T');
-          }
-          // If no timezone/offset present, treat as UTC by appending Z
-          // Matches "YYYY-MM-DDTHH:MM:SS" or with millis
-          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(iso)) {
-            iso += 'Z';
-          }
+          if (iso.includes(' ') && !iso.includes('T')) iso = iso.replace(' ', 'T');
+          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(iso)) iso += 'Z';
         }
         return new Date(iso).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
           hour12: false
         });
       } catch(e){
-        // Fallback manual +05:30
         const d = new Date(s);
         const utcMs = d.getTime() + d.getTimezoneOffset()*60000;
         const ist = new Date(utcMs + 5.5*3600000);
@@ -294,12 +282,10 @@
         .replace(/'/g,'&#39;');
     }
 
-    // EFFECTIVE RESUBMISSION RULE (frontend-only):
-    // - While marks are pending (assignment_marks == null): ALWAYS allow resubmission.
-    // - After marks are given: allow only if resubmission_allowed === true.
+    // EFFECTIVE RESUBMISSION RULE
     function effectiveResubAllowed(row){
-      if (row.assignment_marks == null) return true;        // auto-enabled before marks
-      return row.resubmission_allowed === true;             // after marks, rely on toggle
+      if (row.assignment_marks == null) return true;
+      return row.resubmission_allowed === true;
     }
 
     /***************** Auth & Role *****************/
@@ -334,16 +320,46 @@
       } catch(e){ console.warn('loadExperiments', e); }
     }
 
+    // Try multiple arg-name variants for the admin RPC to avoid backend changes
     async function fetchResults({ exp_id='', search='', batch='' } = {}){
-      const args = {
-        exp_id: has(exp_id) ? exp_id : null,
-        search_text: has(search) ? search : null,
-        batch_text: has(batch) ? batch : null
-      };
-      const fn = isAdmin ? 'get_assessment_results_admin_v2' : 'get_results_student_test';
-      const { data, error } = await sb.rpc(fn, args);
-      if(error) throw error;
-      return Array.isArray(data) ? data : [];
+      const exp = has(exp_id) ? exp_id : null;
+      const q = has(search) ? search : null;
+      const b = has(batch) ? batch : null;
+
+      if (isAdmin) {
+        const variants = [
+          { exp_id: exp, search_text: q, batch_text: b },
+          { exp_id: exp, search: q, batch: b },
+          { exp_id: exp, q: q, batch: b },
+          { exp_id: exp, search_query: q, batch_filter: b }
+        ];
+        for (const args of variants) {
+          try {
+            const { data, error } = await sb.rpc('get_assessment_results_admin_v2', args);
+            if (!error && Array.isArray(data)) {
+              console.log('Admin RPC args variant used:', Object.keys(args));
+              return data;
+            }
+            // If signature mismatch, PostgREST returns 404/42883 — try next
+            if (error && (String(error.code) === '42883' || String(error.code) === '404')) {
+              continue;
+            }
+            // Any other error: log and try next
+            if (error) {
+              console.warn('Admin RPC variant error', args, error);
+              continue;
+            }
+          } catch (e) {
+            console.warn('Admin RPC variant threw', e);
+          }
+        }
+        throw new Error('Admin RPC failed for all parameter variants. Please align frontend param names with the DB function.');
+      } else {
+        // Students: pass only exp_id to avoid signature mismatch
+        const { data, error } = await sb.rpc('get_results_student_test', { exp_id: exp });
+        if(error) throw error;
+        return Array.isArray(data) ? data : [];
+      }
     }
 
     /***************** Summary *****************/
@@ -423,18 +439,13 @@
 
     window.toggleResubmission = async function(rowIdx){
       const row = currentRows[rowIdx];
-
-      // Flip the stored flag (independent of pending marks).
       const next = !(row.resubmission_allowed === true);
-
       const btn = document.getElementById('resubmission-toggle-'+row.id);
       if(btn) btn.disabled = true;
       setStatus('Updating…');
-
       const { error } = await sb.from('assessment_results')
         .update({ resubmission_allowed: next })
         .eq('id', row.id);
-
       if(error){
         alert('Update failed: ' + error.message);
         if(btn) btn.disabled=false;
@@ -468,7 +479,6 @@
       const row = currentRows[editingRowIdx];
       debug('Re-validating row for resubmission…');
 
-      // Re-fetch minimal fields to avoid stale state before upload
       const { data:fresh, error:freshErr } = await sb.from('assessment_results')
         .select('id,user_id,experiment_id,assignment_marks,resubmission_allowed,assignment_bucket,assignment_path')
         .eq('id', row.id)
@@ -603,7 +613,7 @@
       const batch = filterBatch?.value || '';
       const rows = await fetchResults({ exp_id, search, batch });
 
-      // Always sort newest-first on the client, using UTC first, fallback to legacy.
+      // Always sort newest-first on the client
       rows.sort((a,b) => {
         const ta = new Date(getSubmittedAt(a) || 0).getTime();
         const tb = new Date(getSubmittedAt(b) || 0).getTime();
@@ -617,7 +627,7 @@
 
     function renderRows(rows){
       currentRows = rows;
-      window.currentRows = rows; // expose updated rows for console
+      window.currentRows = rows;
       countEl.textContent = rows.length;
       if(!rows.length){
         tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
@@ -637,7 +647,6 @@
         const totalMarks = (scoreNum||0) + (marksVal||0);
         const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum)?'?': totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
 
-        // Marks cell
         let marksCell = '';
         if(isAdmin){
           marksCell = `<div class="marks-cell">
@@ -649,7 +658,6 @@
           marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
         }
 
-        // Assignment button
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canView = isAdmin || (currentUser && r.user_id===currentUser.id);
         if(r.assignment_path && canView){
@@ -661,10 +669,8 @@
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
 
-        // Resubmission cell (Admin toggle disabled while marks pending; student allowed while pending)
         const effective = effectiveResubAllowed(r);
         const marksPending = (r.assignment_marks == null);
-
         let resubmitCell = '<div class="resubmission-status-box">';
         if(isAdmin){
           const btnDisabled = marksPending ? 'disabled' : '';
@@ -838,6 +844,10 @@
       if(urlExp) filterExperiment.value = urlExp;
 
       btnApply.addEventListener('click', applyFilters);
+      // Allow Enter to apply
+      if(filterSearch){ filterSearch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
+      if(filterBatch){ filterBatch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
+
       btnReset.addEventListener('click', ()=>{
         filterExperiment.value='';
         if(filterSearch) filterSearch.value='';
