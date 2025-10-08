@@ -113,7 +113,7 @@
           <span id="assess-count" class="pill">0</span>
         </div>
         <div class="row">
-          <span class="muted">Only assessments released by your admin will appear here.</span>
+          <span class="muted">Assessments are open when Unlocked and within the optional Start/Deadline window.</span>
         </div>
       </div>
 
@@ -129,27 +129,24 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
   <script>
-    // ====== Configuration: Map your assessments to exact experiment_id and URL ======
-    // IMPORTANT: Set expId to EXACTLY match experiments.experiment_id used in your database.
-    // URL points to your static assessment page.
-    const ASSESSMENTS = [
-      { expId:'assessment-1',  title:'1. Study of Compound Microscope',                        url:'assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html' },
-      { expId:'assessment-2',  title:'2. Identification of Axial Bones',                        url:'assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html' },
-      { expId:'assessment-3',  title:'3. Identification of Appendicular Bones',                 url:'assesments/assessments_assessment-3-identification-of-appendicular-bones_Version7.html' },
-      { expId:'assessment-4',  title:'4. Microscopic Study of Epithelial and Connective Tissue',url:'assesments/assessments_assessment-4-study-of-permanent-slides-of-muscle-tissues_Version2.html' },
-      { expId:'assessment-5',  title:'5. Microscopic Study of Muscular and Nervous Tissue',     url:'assesments/assessments_assessment-5-study-of-permanent-slides-of-nervous-tissue_Version2.html' },
-      { expId:'assessment-6',  title:'6. Determination of Blood Group',                         url:'assesments/assessments_assessment-6-study-of-permanent-slides-of-epithelial-tissue_Version2.html' },
-      { expId:'assessment-7',  title:'7. Determination of Bleeding Time',                       url:'assesments/assessments_assessment-7-study-of-permanent-slides-of-connective-tissue_Version2.html' },
-      { expId:'assessment-8',  title:'8. Determination of Clotting Time',                       url:'assesments/assessments_assessment-8-study-of-human-heart-model_Version2.html' },
-      { expId:'assessment-9',  title:'9. Estimation of Haemoglobin',                            url:'assesments/assessments_assessment-9-study-of-human-brain-model_Version2.html' },
-      { expId:'assessment-10', title:'10. Introduction to Hemocytometry',                       url:'assesments/assessments_assessment-10-study-of-human-eye-model_Version2.html' },
-      { expId:'assessment-11', title:'11. Enumeration of Total RBC Count',                      url:'assesments/assessments_assessment-11-study-of-human-ear-model_Version2.html' },
-      { expId:'assessment-12', title:'12. Enumeration of Total WBC Count',                      url:'assesments/assessments_assessment-12-study-of-human-kidney-model_Version2.html' },
-      { expId:'assessment-13', title:'13. Determination of Heart Rate and Pulse Rate',          url:'assesments/assessments_assessment-13-study-of-human-liver-model_Version2.html' },
-      { expId:'assessment-14', title:'14. Determination of Blood Pressure',                     url:'assesments/assessments_assessment-14-study-of-human-lungs-model_Version2.html' },
-      { expId:'assessment-15', title:'15. Determination of Erythrocyte Sedimentation Rate',     url:'assesments/assessments_assessment-15-study-of-human-skin-model_Version2.html' },
-    ];
-    // =================================================================================
+    // Map assessment id -> URL (use integer keys matching public.assessments.id)
+    const URLS_BY_ID = {
+      1:  'assesments/assessments_assessment-1-study-of-compound-microscope_Version12.html',
+      2:  'assesments/assessments_assessment-2-identification-of-axial-bones_Version7.html',
+      3:  'assesments/assessments_assessment-3-identification-of-appendicular-bones_Version7.html',
+      4:  'assesments/assessments_assessment-4-study-of-permanent-slides-of-muscle-tissues_Version2.html',
+      5:  'assesments/assessments_assessment-5-study-of-permanent-slides-of-nervous-tissue_Version2.html',
+      6:  'assesments/assessments_assessment-6-study-of-permanent-slides-of-epithelial-tissue_Version2.html',
+      7:  'assesments/assessments_assessment-7-study-of-permanent-slides-of-connective-tissue_Version2.html',
+      8:  'assesments/assessments_assessment-8-study-of-human-heart-model_Version2.html',
+      9:  'assesments/assessments_assessment-9-study-of-human-brain-model_Version2.html',
+      10: 'assesments/assessments_assessment-10-study-of-human-eye-model_Version2.html',
+      11: 'assesments/assessments_assessment-11-study-of-human-ear-model_Version2.html',
+      12: 'assesments/assessments_assessment-12-study-of-human-kidney-model_Version2.html',
+      13: 'assesments/assessments_assessment-13-study-of-human-liver-model_Version2.html',
+      14: 'assesments/assessments_assessment-14-study-of-human-lungs-model_Version2.html',
+      15: 'assesments/assessments_assessment-15-study-of-human-skin-model_Version2.html',
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!window.supabase) { console.error('Supabase SDK missing.'); showState('error'); return; }
@@ -232,72 +229,49 @@
         return `${sec}s`;
       }
 
-      // Release fetch
-      async function fetchReleaseMap(expIds){
-        if(!expIds.length) return {};
-        // Try to get all in a single query
-        const { data, error } = await sb.from('assessments')
-          .select('experiment_id,released,window_start,window_end,updated_at')
-          .in('experiment_id', expIds);
-        if(error){
-          if(String(error.code)==='42P01'){ // table missing
-            console.warn('assessments table not found yet.');
-            return { __missingTable:true };
-          }
-          console.warn('release fetch error', error);
-          return {};
-        }
-        const map = {};
-        (data||[]).forEach(r=>{ if(r?.experiment_id) map[r.experiment_id] = r; });
-        return map;
-      }
-
-      function computeState(rec){
-        // Returns {state:'open'|'upcoming'|'closed'|'not_released', start, end}
-        if(!rec || rec.released!==true) return { state:'not_released', start:rec?.window_start, end:rec?.window_end };
+      // Simple availability: open = !locked && within optional window
+      function stateForRow(row){
+        if(row.locked) return { state:'locked', start:row.window_start, end:row.window_end };
         const now = Date.now();
-        const startT = rec.window_start ? new Date(rec.window_start).getTime() : null;
-        const endT   = rec.window_end   ? new Date(rec.window_end).getTime()   : null;
-
-        if(startT && now < startT) return { state:'upcoming', start:rec.window_start, end:rec.window_end };
-        if(endT && now > endT)     return { state:'closed',   start:rec.window_start, end:rec.window_end };
-        return { state:'open',      start:rec.window_start, end:rec.window_end };
+        const s = row.window_start ? new Date(row.window_start).getTime() : null;
+        const e = row.window_end ? new Date(row.window_end).getTime() : null;
+        if(s && now < s) return { state:'upcoming', start:row.window_start, end:row.window_end };
+        if(e && now > e) return { state:'closed',   start:row.window_start, end:row.window_end };
+        return { state:'open', start:row.window_start, end:row.window_end };
       }
 
-      async function canStart(expId){
-        // Authoritative UI preflight (backend enforcement should also exist)
+      async function canStartById(id){
         const { data, error } = await sb.from('assessments')
-          .select('released,window_start,window_end')
-          .eq('experiment_id', expId)
+          .select('locked,window_start,window_end')
+          .eq('id', id)
           .maybeSingle();
-        if(error){
-          if(String(error.code)==='42P01'){
-            return { ok:false, reason:'Not configured by admin yet.' };
-          }
-          return { ok:false, reason:'Error checking release.' };
-        }
-        if(!data || data.released!==true) return { ok:false, reason:'Not released' };
-        const now=Date.now();
-        const s=data.window_start? new Date(data.window_start).getTime():null;
-        const e=data.window_end? new Date(data.window_end).getTime():null;
-        if(s && now<s) return { ok:false, reason:`Opens at ${toIST(data.window_start)}` };
-        if(e && now>e) return { ok:false, reason:`Closed at ${toIST(data.window_end)}` };
+        if(error){ return { ok:false, reason:'Error checking availability.' }; }
+        if(!data){ return { ok:false, reason:'Assessment not configured.' }; }
+        if(data.locked) return { ok:false, reason:'Locked by admin.' };
+        const now = Date.now();
+        const s = data.window_start ? new Date(data.window_start).getTime() : null;
+        const e = data.window_end ? new Date(data.window_end).getTime() : null;
+        if(s && now < s) return { ok:false, reason:`Opens at ${toIST(data.window_start)}` };
+        if(e && now > e) return { ok:false, reason:`Closed at ${toIST(data.window_end)}` };
         return { ok:true };
       }
 
-      function renderList(releaseMap, role){
+      function pillClass(state){
+        if(state==='open') return 'pill open';
+        if(state==='upcoming') return 'pill upcoming';
+        if(state==='closed') return 'pill closed';
+        return 'pill';
+      }
+
+      function renderList(rows, role){
         assessListEl.innerHTML = '';
-        const missingTable = releaseMap?.__missingTable === true;
-
         let visibleCount = 0;
-        ASSESSMENTS.forEach(item=>{
-          const rec = missingTable ? null : releaseMap[item.expId];
-          const st = computeState(rec);
 
-          // Show all rows, but only enable Start if open
-          // You can choose to hide not released by toggling the following line:
-          const showRow = true; // st.state !== 'not_released' || role === 'admin';
-          if(!showRow) return;
+        rows.forEach(row=>{
+          const url = URLS_BY_ID[row.id];
+          if(!url) return; // only show items with a page mapped
+
+          const st = stateForRow(row);
 
           const li = document.createElement('div');
           li.className = 'row';
@@ -311,53 +285,47 @@
           left.style.display='flex';
           left.style.flexDirection='column';
           left.style.gap='6px';
+
           const title = document.createElement('div');
           title.className = 'assess-title';
-          title.textContent = item.title;
+          title.textContent = row.title || `Assessment ${row.id}`;
 
           const meta = document.createElement('div');
           meta.className = 'row';
+
           const pill = document.createElement('span');
-          pill.className = 'pill ' + (st.state==='open'?'open': st.state==='upcoming'?'upcoming': st.state==='closed'?'closed':'');
-          pill.id = `pill-${item.expId}`;
-          pill.textContent = missingTable ? 'Unconfigured' :
-                             st.state==='open' ? 'Open' :
-                             st.state==='upcoming' ? 'Upcoming' :
-                             st.state==='closed' ? 'Closed' :
-                             'Not released';
+          pill.className = pillClass(st.state);
+          pill.id = `pill-${row.id}`;
+          pill.textContent = st.state==='open' ? 'Open to students'
+                         : st.state==='upcoming' ? 'Upcoming'
+                         : st.state==='closed' ? 'Closed'
+                         : 'Locked';
 
           const timeLine = document.createElement('div');
           timeLine.className = 'time-line';
-          timeLine.id = `tl-${item.expId}`;
+          timeLine.id = `tl-${row.id}`;
 
-          if(missingTable){
-            const n = document.createElement('div');
-            n.className='time-piece';
-            n.textContent = 'Admin has not set up releases yet';
-            timeLine.appendChild(n);
-          } else {
-            if(st.start){
-              const d1 = document.createElement('div');
-              d1.className='time-piece';
-              d1.id = `start-${item.expId}`;
-              d1.textContent = `Starts: ${toIST(st.start)}`;
-              timeLine.appendChild(d1);
-            }
-            if(st.end){
-              const d2 = document.createElement('div');
-              d2.className='time-piece';
-              d2.id = `end-${item.expId}`;
-              d2.textContent = `Ends: ${toIST(st.end)}`;
-              timeLine.appendChild(d2);
-            }
-            const cd = document.createElement('div');
-            cd.className='time-piece';
-            cd.id = `cd-${item.expId}`;
-            cd.textContent = st.state==='open'
-              ? (st.end ? `Closes in: ${fmtCountdown(msLeft(st.end))}` : 'No deadline')
-              : (st.state==='upcoming' && st.start ? `Opens in: ${fmtCountdown(msLeft(st.start))}` : '');
-            timeLine.appendChild(cd);
+          if(st.start){
+            const d1 = document.createElement('div');
+            d1.className='time-piece';
+            d1.id = `start-${row.id}`;
+            d1.textContent = `Starts: ${toIST(st.start)}`;
+            timeLine.appendChild(d1);
           }
+          if(st.end){
+            const d2 = document.createElement('div');
+            d2.className='time-piece';
+            d2.id = `end-${row.id}`;
+            d2.textContent = `Ends: ${toIST(st.end)}`;
+            timeLine.appendChild(d2);
+          }
+          const cd = document.createElement('div');
+          cd.className = 'time-piece';
+          cd.id = `cd-${row.id}`;
+          cd.textContent = st.state==='open'
+            ? (st.end ? `Closes in: ${fmtCountdown(msLeft(st.end))}` : 'No deadline')
+            : (st.state==='upcoming' && st.start ? `Opens in: ${fmtCountdown(msLeft(st.start))}` : '');
+          timeLine.appendChild(cd);
 
           meta.appendChild(pill);
           if(timeLine.textContent) meta.appendChild(timeLine);
@@ -368,32 +336,29 @@
           const right = document.createElement('div');
           right.className='row';
           const startBtn = document.createElement('a');
-          startBtn.href = item.url;
+          startBtn.href = url;
           startBtn.className = 'btn btn-primary';
           startBtn.textContent = 'Start';
-          startBtn.setAttribute('data-exp', item.expId);
+          startBtn.setAttribute('data-id', String(row.id));
 
-          // Intercept to enforce UI preflight
+          // Enforce UI preflight for non-admins
           startBtn.addEventListener('click', async (e)=>{
-            // Allow admins to bypass UI checks (backend should still enforce)
             if(role === 'admin') return;
             e.preventDefault();
-            const expId = e.currentTarget.getAttribute('data-exp');
-            const r = await canStart(expId);
+            const id = Number(e.currentTarget.getAttribute('data-id'));
+            const r = await canStartById(id);
             if(!r.ok){
               alert(`Cannot start: ${r.reason}`);
               return;
             }
-            window.location.href = item.url;
+            window.location.href = url;
           });
 
-          if(missingTable || st.state!=='open'){
-            if(role !== 'admin'){
-              startBtn.classList.add('btn-ghost');
-              startBtn.classList.remove('btn-primary');
-              startBtn.textContent = 'Start (Unavailable)';
-              startBtn.addEventListener('click', (e)=>{ if(role!=='admin') e.preventDefault(); });
-            }
+          if(st.state !== 'open' && role !== 'admin'){
+            startBtn.classList.add('btn-ghost');
+            startBtn.classList.remove('btn-primary');
+            startBtn.textContent = 'Start (Unavailable)';
+            startBtn.addEventListener('click', (e)=>{ if(role!=='admin') e.preventDefault(); });
           }
 
           right.appendChild(startBtn);
@@ -402,9 +367,9 @@
             const adminTools = document.createElement('div');
             adminTools.className='admin-tools';
             const manage = document.createElement('a');
-            manage.href = `admin_portal.html?exp=${encodeURIComponent(item.expId)}`;
+            manage.href = `admin_portal.html?exp=${encodeURIComponent(String(row.id))}`;
             manage.className='btn btn-ghost';
-            manage.textContent='Manage Release';
+            manage.textContent='Manage';
             adminTools.appendChild(manage);
             right.appendChild(adminTools);
           }
@@ -420,21 +385,19 @@
 
       // Countdown refresher
       let tickTimer = null;
-      function startTicker(releaseMap){
+      function startTicker(rows){
         if(tickTimer) clearInterval(tickTimer);
         tickTimer = setInterval(()=>{
-          ASSESSMENTS.forEach(item=>{
-            const rec = releaseMap?.[item.expId];
-            if(!rec) return;
-            const st = computeState(rec);
-            const cdEl = document.getElementById(`cd-${item.expId}`);
-            const pill = document.getElementById(`pill-${item.expId}`);
+          rows.forEach(row=>{
+            const st = stateForRow(row);
+            const cdEl = document.getElementById(`cd-${row.id}`);
+            const pill = document.getElementById(`pill-${row.id}`);
             if(!cdEl || !pill) return;
 
             if(st.state==='open'){
               const ms = msLeft(st.end);
               cdEl.textContent = st.end ? `Closes in: ${fmtCountdown(ms)}` : 'No deadline';
-              pill.textContent = 'Open';
+              pill.textContent = 'Open to students';
               pill.className = 'pill open';
             } else if(st.state==='upcoming'){
               const ms = msLeft(st.start);
@@ -447,11 +410,24 @@
               pill.className = 'pill closed';
             } else {
               cdEl.textContent = '';
-              pill.textContent = 'Not released';
+              pill.textContent = 'Locked';
               pill.className = 'pill';
             }
           });
         }, 1000);
+      }
+
+      async function loadAssessments(){
+        const { data, error } = await sb
+          .from('assessments')
+          .select('id,title,locked,window_start,window_end')
+          .order('id', { ascending:true });
+        if(error){
+          console.error('Failed to load assessments:', error);
+          throw error;
+        }
+        // Keep only rows that have a URL mapped
+        return (data || []).filter(r => URLS_BY_ID[r.id]);
       }
 
       async function init(){
@@ -471,12 +447,9 @@
           }
           showState('allowed');
 
-          // Load release map for defined expIds
-          const expIds = ASSESSMENTS.map(a=>a.expId);
-          const releaseMap = await fetchReleaseMap(expIds);
-
-          renderList(releaseMap, role);
-          if(!releaseMap.__missingTable) startTicker(releaseMap);
+          const rows = await loadAssessments();
+          renderList(rows, role);
+          startTicker(rows);
 
           // Auth changes
           sb.auth.onAuthStateChange(async (_evt, newSession)=>{
