@@ -582,7 +582,7 @@
       try{
         const { error } = await sb.from('portal_notifications').insert([{
           message: msg, severity: sev, active: true,
-          starts_at: sUtc, ends_at: eUtc, created_by: currentUser.id
+          starts_at: sUtc, ends_at: eUtc
         }]);
         if(error){
           if(String(error?.code) === '42P01'){ notifSetupHint.style.display = 'block'; }
