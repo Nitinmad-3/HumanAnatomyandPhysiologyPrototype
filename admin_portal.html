@@ -51,6 +51,12 @@
     th { background:#f0f6ff; color:#1565c0; }
     .lock-on { color:#2e7d32; font-weight:700; }
     .lock-off { color:#c62828; font-weight:700; }
+
+    /* Assessments table */
+    .assess-table { width:100%; border-collapse:collapse; margin-top:8px; }
+    .assess-table th, .assess-table td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; }
+    .assess-table th { background:#f0f6ff; color:#1565c0; }
+    .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
   </style>
 </head>
 <body>
@@ -89,7 +95,7 @@
           </div>
           <div class="row" style="margin-top:8px;">
             <button id="user-create" class="btn">Create Student</button>
-            <span id="user-create-hint" class="hint">Requires Edge Function admin_create_user (service role). Shows hint if not configured.</span>
+            <span id="user-create-hint" class="hint">Requires Edge Function admin_create_user (service role).</span>
           </div>
           <div id="user-create-status" class="muted" role="status" aria-live="polite"></div>
         </details>
@@ -118,54 +124,34 @@
       </div>
     </section>
 
-    <!-- Assessment Lock & Schedule -->
-    <section class="panel" aria-labelledby="assess-controls-title">
-      <h2 id="assess-controls-title" class="section-title">Assessment Lock & Schedule</h2>
-      <div class="grid">
-        <div>
-          <label for="exp-select">Assessment</label>
-          <select id="exp-select" class="input" aria-describedby="exp-select-hint">
-            <option value="">Select an assessment</option>
-          </select>
-          <div id="exp-select-hint" class="hint">Source: public.assessments</div>
-        </div>
-
-        <div>
-          <label for="lock-toggle-btn">Lock control</label>
-          <div class="row">
-            <button id="lock-toggle-btn" class="btn">—</button>
-            <span id="locked-effective" class="pill info" aria-live="polite">—</span>
-          </div>
-          <div class="hint">Toggle to lock/unlock assessment for students.</div>
-        </div>
-
-        <div>
-          <label for="start-ist">Start (IST)</label>
-          <input type="datetime-local" id="start-ist" class="input" aria-describedby="start-hint" />
-          <div id="start-hint" class="hint">Optional. If empty, opens immediately when unlocked.</div>
-        </div>
-
-        <div>
-          <label for="end-ist">Deadline (IST)</label>
-          <input type="datetime-local" id="end-ist" class="input" aria-describedby="end-hint" />
-          <div id="end-hint" class="hint">Optional. If empty, no deadline.</div>
-        </div>
-
-        <div>
-          <label>Status</label>
-          <div class="row">
-            <span id="avail-effective" class="pill info" aria-live="polite">—</span>
-          </div>
-          <div class="hint">Computed from lock and optional dates.</div>
-        </div>
+    <!-- Assessment Lock & Schedule (full list + per-row and bulk controls) -->
+    <section class="panel" aria-labelledby="assess-table-title">
+      <h2 id="assess-table-title" class="section-title">Assessment Lock & Schedule</h2>
+      <div class="row" style="margin-bottom:12px;">
+        <button id="unlock-all-btn" class="btn all">Unlock All</button>
+        <button id="lock-all-btn" class="btn all warn">Lock All</button>
+        <span id="table-status" class="muted" style="margin-left:10px;"></span>
       </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="save-release" class="btn">Save Dates</button>
-        <span id="release-status" class="status" role="status" aria-live="polite"></span>
+      <div style="overflow:auto; max-height:65vh;">
+        <table class="assess-table" id="assess-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Locked?</th>
+              <th>Status</th>
+              <th>Start (IST)</th>
+              <th>Deadline (IST)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="assess-tbody">
+            <tr><td colspan="7" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
-      <div id="release-setup-hint" class="hint" style="margin-top:8px; display:none;">
-        No row found for this assessment. Create it once in public.assessments.
+      <div id="assess-table-hint" class="hint" style="margin-top:8px; display:none;">
+        No rows found in public.assessments.
       </div>
     </section>
 
@@ -232,7 +218,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <script>
-    // Supabase init
+    // Supabase init (anon key)
     const sb = window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
@@ -256,16 +242,13 @@
     const userCreate = $('#user-create');
     const userCreateStatus = $('#user-create-status');
 
-    // Assessment controls
-    const expSelect = $('#exp-select');
-    const lockToggleBtn = $('#lock-toggle-btn');
-    const lockedEffective = $('#locked-effective');
-    const availEffective = $('#avail-effective');
-    const startIst = $('#start-ist');
-    const endIst = $('#end-ist');
-    const saveReleaseBtn = $('#save-release');
-    const releaseStatus = $('#release-status');
-    const releaseSetupHint = $('#release-setup-hint');
+    // Assessments table
+    const assessTbody = $('#assess-tbody');
+    const assessTableHint = $('#assess-table-hint');
+    const unlockAllBtn = $('#unlock-all-btn');
+    const lockAllBtn = $('#lock-all-btn');
+    const tableStatus = $('#table-status');
+    let allAssessRows = [];
 
     // Notifications
     const notifMsg = $('#notif-message');
@@ -304,28 +287,25 @@
       const ist = new Date(istMs);
       return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}T${pad(ist.getHours())}:${pad(ist.getMinutes())}`;
     }
-    function nowUtcISO(){ return new Date().toISOString(); }
 
-    // Availability helpers (no "released" anymore)
-    function availabilityState(locked, startUtc, endUtc){
-      if(locked) return 'locked';
-      const now = new Date();
-      const start = startUtc ? new Date(startUtc) : null;
-      const end = endUtc ? new Date(endUtc) : null;
-      if(start && now < start) return 'upcoming';
-      if(end && now > end) return 'closed';
+    // Availability helpers (no "released" usage)
+    function stateForRow(row){
+      if(row.locked) return 'locked';
+      const now = Date.now();
+      const s = row.window_start ? new Date(row.window_start).getTime() : null;
+      const e = row.window_end ? new Date(row.window_end).getTime() : null;
+      if(s && now < s) return 'upcoming';
+      if(e && now > e) return 'closed';
       return 'open';
+    }
+    function pillClass(state){
+      if(state==='open') return 'pill success';
+      if(state==='upcoming') return 'pill info';
+      if(state==='closed') return 'pill error';
+      return 'pill error';
     }
 
     function setStatus(msg){ statusEl.textContent = msg; }
-    function setPill(el, ok, text){
-      el.textContent = text;
-      el.className = 'pill ' + (ok ? 'success' : 'error');
-    }
-    function setInfoPill(el, text){
-      el.textContent = text;
-      el.className = 'pill info';
-    }
     function htmlesc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
     async function requireAdmin(){
@@ -444,154 +424,141 @@
       }
     }
 
-    // Load assessments (id + title) for dropdown
-    async function loadExperiments(){
+    // Assessments
+    async function loadAssessments(){
+      // Use * to be resilient if window_end column doesn't exist yet
       const { data, error } = await sb
         .from('assessments')
-        .select('id,title')
-        .order('id', { ascending: true });
+        .select('*')
+        .order('id', { ascending:true });
       if(error){
-        console.warn('loadExperiments', error);
+        console.warn('loadAssessments', error);
+        return [];
+      }
+      return data || [];
+    }
+
+    function renderAssessments(rows){
+      allAssessRows = rows;
+      if(!rows.length){
+        assessTbody.innerHTML = '<tr><td colspan="7" class="muted">No assessments found.</td></tr>';
+        assessTableHint.style.display='block';
         return;
       }
-      expSelect.innerHTML = '<option value="">Select an assessment</option>';
-      (data || []).forEach(row=>{
-        const opt = document.createElement('option');
-        opt.value = String(row.id);   // value used for updates
-        opt.textContent = row.title || String(row.id); // show human-readable title
-        expSelect.appendChild(opt);
+      assessTableHint.style.display='none';
+      assessTbody.innerHTML = rows.map(r=>{
+        const state = stateForRow(r);
+        return `<tr data-id="${r.id}">
+          <td>${r.id}</td>
+          <td>${htmlesc(r.title || '')}</td>
+          <td>${r.locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Unlocked</span>'}</td>
+          <td><span class="${pillClass(state)}">${
+            state==='open' ? 'Open to students' :
+            state==='upcoming' ? 'Upcoming' :
+            state==='closed' ? 'Closed' : 'Locked'
+          }</span></td>
+          <td><input type="datetime-local" class="input start-input" value="${utcToIstDatetimeLocal(r.window_start)}" /></td>
+          <td><input type="datetime-local" class="input end-input" value="${utcToIstDatetimeLocal(r.window_end)}" /></td>
+          <td>
+            <button class="btn small lock-btn">${r.locked ? 'Unlock' : 'Lock'}</button>
+            <button class="btn small ghost save-btn">Save Dates</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      // Wire row actions
+      assessTbody.querySelectorAll('button.lock-btn').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          btn.disabled = true;
+          tableStatus.textContent = 'Toggling…';
+          try{
+            const row = allAssessRows.find(r=>String(r.id)===String(id));
+            const newLocked = !row.locked;
+            const { error } = await sb.from('assessments').update({ locked: newLocked }).eq('id', id);
+            if(error) throw error;
+            const updated = await loadAssessments();
+            renderAssessments(updated);
+            tableStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
+          }catch(e){
+            console.warn('toggle row', e);
+            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e);
+          }finally{
+            btn.disabled = false;
+            setTimeout(()=>tableStatus.textContent='', 2500);
+          }
+        };
+      });
+
+      assessTbody.querySelectorAll('button.save-btn').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          const startVal = tr.querySelector('.start-input').value;
+          const endVal = tr.querySelector('.end-input').value;
+          btn.disabled = true;
+          tableStatus.textContent = 'Saving dates…';
+          try{
+            const payload = {
+              window_start: istLocalToUTC(startVal),
+              window_end: istLocalToUTC(endVal)
+            };
+            let { error } = await sb.from('assessments').update(payload).eq('id', id);
+            // If window_end column doesn't exist, retry with only window_start
+            if(error && (String(error.code) === '42703' || /column .*window_end.* does not exist/i.test(error.message || ''))){
+              const { error:err2 } = await sb.from('assessments')
+                .update({ window_start: istLocalToUTC(startVal) })
+                .eq('id', id);
+              if(err2) throw err2;
+            } else if(error){
+              throw error;
+            }
+            const updated = await loadAssessments();
+            renderAssessments(updated);
+            tableStatus.textContent = 'Dates saved.';
+          }catch(e){
+            console.warn('save dates', e);
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
+          }finally{
+            btn.disabled = false;
+            setTimeout(()=>tableStatus.textContent='', 2500);
+          }
+        };
       });
     }
 
-    function updateLockBtnUI(isLocked){
-      lockToggleBtn.textContent = isLocked ? 'Unlock assessment' : 'Lock assessment';
-    }
-    function setLockedPill(isLocked){
-      if(isLocked){ setPill(lockedEffective, false, 'Locked'); }
-      else { setPill(lockedEffective, true, 'Unlocked'); }
-    }
-    function setAvailabilityPill(locked, startUtc, endUtc){
-      const state = availabilityState(locked, startUtc, endUtc);
-      if(state === 'open') setPill(availEffective, true, 'Open to students');
-      else if(state === 'upcoming') setPill(availEffective, false, 'Upcoming');
-      else if(state === 'closed') setPill(availEffective, false, 'Closed');
-      else setPill(availEffective, false, 'Locked');
-    }
-
-    // Load lock + schedule for selected id
-    async function loadReleaseFor(idStr){
-      const id = Number(idStr);
-      startIst.value = '';
-      endIst.value = '';
-      releaseStatus.textContent = 'Loading…';
-      lockToggleBtn.disabled = true;
+    // Bulk lock/unlock
+    async function unlockAll(){
+      unlockAllBtn.disabled = true; lockAllBtn.disabled = true;
+      tableStatus.textContent = 'Unlocking all…';
       try{
-        const { data, error } = await sb.from('assessments')
-          .select('id,locked,window_start,window_end,updated_at')
-          .eq('id', id)
-          .maybeSingle();
-
-        if(error && String(error?.code) === '42P01'){
-          releaseSetupHint.style.display = 'block';
-          releaseStatus.textContent = 'Backend table not found.';
-          updateLockBtnUI(true);
-          setInfoPill(lockedEffective, '—');
-          setInfoPill(availEffective, '—');
-          return;
-        }
-        if(!data){
-          releaseSetupHint.style.display = 'block';
-          releaseStatus.textContent = 'No record yet.';
-          lockToggleBtn.disabled = true;
-          updateLockBtnUI(true);
-          setInfoPill(lockedEffective, '—');
-          setInfoPill(availEffective, '—');
-          return;
-        }
-
-        releaseSetupHint.style.display = 'none';
-        lockToggleBtn.disabled = false;
-
-        updateLockBtnUI(!!data.locked);
-        setLockedPill(!!data.locked);
-        startIst.value = utcToIstDatetimeLocal(data.window_start);
-        endIst.value = utcToIstDatetimeLocal(data.window_end);
-        setAvailabilityPill(!!data.locked, data.window_start, data.window_end);
-
-        releaseStatus.textContent = `Updated: ${data.updated_at ? new Date(data.updated_at).toLocaleString() : '—'}`;
-      } catch(e){
-        console.warn('loadReleaseFor', e);
-        releaseStatus.textContent = 'Failed to load.';
-        lockToggleBtn.disabled = true;
+        const { error } = await sb.from('assessments').update({ locked:false });
+        if(error) throw error;
+        const updated = await loadAssessments();
+        renderAssessments(updated);
+        tableStatus.textContent = 'All assessments unlocked.';
+      }catch(e){
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+      }finally{
+        unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
+        setTimeout(()=>tableStatus.textContent='', 2500);
       }
     }
-
-    // Toggle lock only
-    async function toggleLock(){
-      const idStr = expSelect.value;
-      if(!idStr){ alert('Select an assessment.'); return; }
-      const id = Number(idStr);
-      lockToggleBtn.disabled = true;
-      releaseStatus.textContent = 'Toggling…';
+    async function lockAll(){
+      unlockAllBtn.disabled = true; lockAllBtn.disabled = true;
+      tableStatus.textContent = 'Locking all…';
       try{
-        const { data:row, error:readErr } = await sb.from('assessments')
-          .select('locked')
-          .eq('id', id)
-          .maybeSingle();
-        if(readErr) throw readErr;
-        if(!row){
-          releaseSetupHint.style.display = 'block';
-          releaseStatus.textContent = 'No record to toggle.';
-          lockToggleBtn.disabled = false;
-          return;
-        }
-        const newLocked = !row.locked;
-        const { error:updErr } = await sb.from('assessments')
-          .update({ locked: newLocked, updated_at: nowUtcISO() })
-          .eq('id', id);
-        if(updErr) throw updErr;
-
-        await loadReleaseFor(id);
-        releaseStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
-      } catch(e){
-        console.warn('toggleLock', e);
-        releaseStatus.textContent = 'Toggle failed.';
-        alert('Toggle failed: ' + (e?.message || e));
-      } finally {
-        lockToggleBtn.disabled = false;
-      }
-    }
-
-    // Save dates only
-    async function saveRelease(){
-      const idStr = expSelect.value;
-      if(!idStr){ alert('Select an assessment.'); return; }
-      const id = Number(idStr);
-      const payload = {
-        window_start: istLocalToUTC(startIst.value),
-        window_end: istLocalToUTC(endIst.value),
-        updated_at: nowUtcISO()
-      };
-      releaseStatus.textContent = 'Saving…';
-      try{
-        const { data:exists } = await sb.from('assessments').select('id').eq('id', id).maybeSingle();
-        if(!exists){
-          releaseSetupHint.style.display = 'block';
-          releaseStatus.textContent = 'Save blocked (row missing).';
-          alert('Row missing in public.assessments for id=' + id + '. Please create it once in DB.');
-          return;
-        }
-        const { error } = await sb.from('assessments').update(payload).eq('id', id);
-        if(error){
-          if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
-          throw error;
-        }
-        await loadReleaseFor(id);
-        releaseStatus.textContent = 'Saved.';
-      } catch(e){
-        console.warn('saveRelease', e);
-        releaseStatus.textContent = 'Save failed.';
-        alert('Save failed: ' + (e?.message || e));
+        const { error } = await sb.from('assessments').update({ locked:true });
+        if(error) throw error;
+        const updated = await loadAssessments();
+        renderAssessments(updated);
+        tableStatus.textContent = 'All assessments locked.';
+      }catch(e){
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+      }finally{
+        unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
+        setTimeout(()=>tableStatus.textContent='', 2500);
       }
     }
 
@@ -601,7 +568,6 @@
       if(sev === 'warning') return 'info';
       return 'success';
     }
-
     async function publishNotification(){
       const msg = notifMsg.value.trim();
       if(!msg){ alert('Enter a message.'); return; }
@@ -626,7 +592,6 @@
         alert('Publish failed: ' + (e?.message || e));
       }
     }
-
     async function loadNotifications(){
       notifList.innerHTML = '<div class="muted">Loading…</div>';
       try{
@@ -702,7 +667,6 @@
         </div>`;
       chatBox.appendChild(wrap);
     }
-
     async function loadChat(room){
       chatBox.innerHTML = '';
       try{
@@ -722,9 +686,7 @@
         console.warn('loadChat', e);
       }
     }
-
     function subscribeChat(room){
-      // Re-subscribe fresh each time
       const ch = sb.channel('portal_chat_room_'+room)
         .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
           renderMsg(payload.new);
@@ -735,7 +697,6 @@
         });
       return ch;
     }
-
     async function sendChat(){
       const txt = chatInput.value.trim();
       if(!txt) return;
@@ -759,30 +720,17 @@
       if(!(await requireAdmin())) return;
       setStatus('Loading data…');
 
+      // Users
       await listStudents();
       userRefresh.onclick = listStudents;
       userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
       userCreate.onclick = createStudent;
 
-      await loadExperiments();
-
-      expSelect.onchange = async () => {
-        const idStr = expSelect.value;
-        if(!idStr) return;
-        await loadReleaseFor(idStr);
-      };
-      const expParam = new URLSearchParams(location.search).get('exp'); // optional: if you pass ?exp=ID
-      if(expParam){
-        const trySelect = () => {
-          const opt = Array.from(expSelect.options).find(o => o.value === String(expParam));
-          if(opt){ expSelect.value = String(expParam); loadReleaseFor(String(expParam)); }
-        };
-        setTimeout(trySelect, 100);
-      }
-
-      // Lock button and Save Dates
-      lockToggleBtn.onclick = toggleLock;
-      saveReleaseBtn.onclick = saveRelease;
+      // Assessments
+      const rows = await loadAssessments();
+      renderAssessments(rows);
+      unlockAllBtn.onclick = unlockAll;
+      lockAllBtn.onclick = lockAll;
 
       // Notifications
       notifPublishBtn.onclick = publishNotification;
