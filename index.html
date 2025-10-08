@@ -77,6 +77,7 @@
       transform: translateY(-1px);
     }
 
+    /* Modern Profile Dashboard Card */
     .card {
       max-width: 920px;
       margin: 18px auto 12px auto;
@@ -101,31 +102,100 @@
       border: 1px solid var(--chip-bd);
       box-shadow: inset 0 0 0 2px #eef5ff;
     }
-    .title-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .name{ font-size: 1.35rem; font-weight: 700; color: var(--blue-600); letter-spacing: .2px; }
-    .chip{ display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; font-size:.85rem; font-weight:600; border-radius:999px; background: var(--chip-bg); border:1px solid var(--chip-bd); color: var(--blue); }
+    .title-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .name{
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--blue-600);
+      letter-spacing: .2px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 4px 10px;
+      font-size:.85rem;
+      font-weight:600;
+      border-radius:999px;
+      background: var(--chip-bg);
+      border:1px solid var(--chip-bd);
+      color: var(--blue);
+    }
     .muted{ color: var(--muted); }
-    .meta-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 6px 0; }
-    .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .btn{ border:0; border-radius:10px; padding: 10px 14px; font-size:.95rem; font-weight:700; cursor:pointer; transition: transform .04s ease, background .2s ease, box-shadow .2s ease; }
+    .meta-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:8px 0 6px 0;
+    }
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      border:0;
+      border-radius:10px;
+      padding: 10px 14px;
+      font-size:.95rem;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
+    }
     .btn:hover{ transform: translateY(-1px); }
-    .btn-primary{ background: var(--blue); color:#fff; box-shadow: var(--shadow-soft); }
-    .btn-ghost{ background:#ffffff; color: var(--blue); border:1px solid var(--chip-bd); box-shadow: var(--shadow-soft); }
-    .note{ font-size:.95rem; color:#0d47a1; background:#eef6ff; border:1px dashed var(--chip-bd); border-radius:10px; padding:8px 10px; margin-top:8px; }
+    .btn-primary{
+      background: var(--blue);
+      color:#fff;
+      box-shadow: var(--shadow-soft);
+    }
+    .btn-ghost{
+      background:#ffffff;
+      color: var(--blue);
+      border:1px solid var(--chip-bd);
+      box-shadow: var(--shadow-soft);
+    }
+    .note{
+      font-size:.95rem;
+      color:#0d47a1;
+      background:#eef6ff;
+      border:1px dashed var(--chip-bd);
+      border-radius:10px;
+      padding:8px 10px;
+      margin-top:8px;
+    }
 
-    .chat-card{ margin-top:14px; border:1px solid var(--chip-bd); background:#fff; border-radius:14px; box-shadow: var(--shadow-soft); padding:12px; }
+    /* Chat styles */
+    .chat-card{
+      margin-top:14px;
+      border:1px solid var(--chip-bd);
+      background:#fff;
+      border-radius:14px;
+      box-shadow: var(--shadow-soft);
+      padding:12px;
+    }
     .chat-head{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
     .chat-head .left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .chat-title{ font-weight:800; color:var(--blue-600); }
     .room-select{ padding:6px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#f9fbff; }
-    .chat-box{ margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe; border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px; }
+    .chat-box{
+      margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe;
+      border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px;
+    }
     .chat-line{ display:flex; gap:8px; }
     .msg{ padding:8px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#fff; max-width:75%; }
     .me .msg{ background:#e8f5e9; border-color:#c8e6c9; }
     .meta{ font-size:11px; color:#6b84c7; margin-top:4px; }
     .chat-input-row{ display:flex; gap:8px; margin-top:10px; }
     .chat-input{ flex:1; padding:10px; border-radius:10px; border:1px solid var(--chip-bd); }
-    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background: var(--blue); color:#fff; font-weight:800; }
+    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background:var(--blue); color:#fff; font-weight:800; }
 
     .intro {
       max-width: 920px;
@@ -168,7 +238,7 @@
     <!-- Notifications Banner -->
     <div id="home-notifications"></div>
 
-    <!-- Unified Profile + Dashboard card -->
+    <!-- Unified Profile + Dashboard card (modern, no avatar upload) -->
     <section id="profile-dashboard-card" class="card" style="display:none;">
       <div class="profile-wrap">
         <img id="pc-avatar" class="avatar" alt="Profile avatar" />
@@ -190,7 +260,7 @@
           </div>
           <div id="pc-note" class="note" style="display:none;"></div>
 
-          <!-- Chat (disabled via feature flag) -->
+          <!-- Student Chat (disabled by feature flag in JS) -->
           <div id="chat-section" class="chat-card" style="display:none;">
             <div class="chat-head">
               <div class="left">
@@ -217,7 +287,9 @@
 
     <!-- Welcome/Intro -->
     <div class="intro">
-      <p>Welcome to the Human Anatomy & Physiology Experiments Portal!</p>
+      <p>
+        Welcome to the Human Anatomy & Physiology Experiments Portal!
+      </p>
       <ul>
         <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
         <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
@@ -231,8 +303,54 @@
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <!-- Home notifications banner (flashes on Home when active) -->
-  <script src="home_notifications.js"></script>
+
+  <!-- Inline Home Notifications (avoid 404 on missing external file) -->
+  <script>
+    // Renders Active notifications on Home; treats null Starts/Ends as "always visible".
+    // Works with your current RLS (authenticated users can read).
+    (function () {
+      function renderNotification(n) {
+        let color = '#1565c0';
+        const sev = (n.severity || 'info').toLowerCase();
+        if (sev === 'danger') color = '#c62828';
+        else if (sev === 'warning') color = '#ffb300';
+        return '<div style="border-left:6px solid '+color+'; background:#f0f6ff; padding:10px; margin:10px auto; border-radius:8px; max-width:920px; box-shadow: 0 2px 10px rgba(13,37,62,.10); border:1px solid #cfe0ff;">'
+          + '<strong style="color:'+color+'; text-transform:uppercase;">'+sev+'</strong>'
+          + '<span style="margin-left:.5rem; color:#123;">'+(n.message || '')+'</span>'
+          + '</div>';
+      }
+      function isWithinWindow(n, now) {
+        const sOk = !n.starts_at || new Date(n.starts_at) <= now;
+        const eOk = !n.ends_at || new Date(n.ends_at) >= now;
+        return sOk && eOk;
+      }
+      async function loadHomeNotifications(sb) {
+        const container = document.getElementById('home-notifications');
+        if (!container) return;
+
+        // With your current RLS, anon users cannot SELECT; render nothing if logged out.
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) { container.innerHTML = ''; return; }
+        } catch (_) {}
+
+        container.innerHTML = '';
+        const now = new Date();
+        const { data, error } = await sb
+          .from('portal_notifications')
+          .select('id,message,severity,active,starts_at,ends_at,created_at')
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .limit(25);
+
+        if (error) { console.warn('home_notifications load error:', error); return; }
+        const rows = (data || []).filter(n => isWithinWindow(n, now));
+        container.innerHTML = rows.map(renderNotification).join('');
+      }
+      // Expose to outer script so we can call after client is created
+      window.__loadHomeNotifications = loadHomeNotifications;
+    })();
+  </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -245,7 +363,7 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
-      // FEATURE FLAG: disable chat end-to-end
+      // FEATURE FLAG: completely disable chat to avoid portal_chat 404s
       const ENABLE_CHAT = false;
 
       const AVATAR_BUCKET = 'Avatar';
@@ -270,7 +388,7 @@
       const pcAdminBtn = document.getElementById('pc-admin-portal');
       const pcNote = document.getElementById('pc-note');
 
-      // Chat elements (will remain hidden if ENABLE_CHAT=false)
+      // Chat elements (kept hidden if ENABLE_CHAT=false)
       const chatSection = document.getElementById('chat-section');
       const chatRoomSel = document.getElementById('chat-room');
       const chatBox = document.getElementById('chat-box');
@@ -339,13 +457,15 @@
         const bubble = document.createElement('div');
         bubble.className = 'msg';
         const who = m.sender_name || (me ? 'You' : (m.role === 'admin' ? 'Admin' : 'User'));
-        bubble.innerHTML = `<div style="font-size:12px; color:#0d47a1; font-weight:700;">${who}</div>${(m.message || '').replace(/</g,'&lt;')}<div class="meta">${new Date(m.created_at).toLocaleString()}</div>`;
+        bubble.innerHTML = '<div style="font-size:12px; color:#0d47a1; font-weight:700;">'+who+'</div>'
+          + (m.message || '').replace(/</g,'&lt;')
+          + '<div class="meta">'+new Date(m.created_at).toLocaleString()+'</div>';
         line.appendChild(bubble);
         chatBox.appendChild(line);
       }
 
       async function loadChat(room){
-        if (!ENABLE_CHAT) return; // hard exit
+        if (!ENABLE_CHAT) return;
         chatBox.innerHTML = '';
         chatStatus.textContent = 'Loading…';
         try{
@@ -370,7 +490,7 @@
       }
 
       function subscribeChat(room){
-        if (!ENABLE_CHAT) return null; // hard exit
+        if (!ENABLE_CHAT) return null;
         if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
         chatSubscription = sb.channel('portal_chat_room_'+room)
           .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
@@ -383,8 +503,8 @@
       }
 
       async function sendChat(){
-        if (!ENABLE_CHAT) return; // hard exit
-        const txt = chatInput.value.trim();
+        if (!ENABLE_CHAT) return;
+        const txt = (chatInput.value || '').trim();
         if(!txt) return;
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? ('dm:' + currentUser.id) : 'global';
@@ -402,7 +522,7 @@
       async function initChat(){
         if (!ENABLE_CHAT) { if (chatSection) chatSection.style.display='none'; return; }
         if(!currentUser){ chatSection.style.display='none'; return; }
-        const dmRoom = 'dm:' + currentUser.id;
+        dmRoom = 'dm:' + currentUser.id;
         chatSection.style.display='block';
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? dmRoom : 'global';
@@ -418,11 +538,18 @@
         chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
       }
 
+      // Helper: zero-pad
+      function pad(n){ return String(n).padStart(2,'0'); }
+
       async function refreshUI() {
         try {
-          const { data: { session } } = await sb.auth.getSession();
+          const { data: { session} } = await sb.auth.getSession();
           if (!session?.user) {
+            currentUser = null;
+            currentRole = 'unknown';
             setNav(false);
+            // Refresh notifications (RLS requires auth; will render nothing)
+            if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
             return;
           }
           setNav(true);
@@ -449,15 +576,15 @@
 
           // Fill the Profile Dashboard Card
           if (profileCard) profileCard.style.display = 'block';
-          pcName.textContent = `Welcome ${profile?.name ? profile.name : ''}`.trim() || 'Welcome';
+          pcName.textContent = ('Welcome ' + (profile?.name ? profile.name : '')).trim() || 'Welcome';
           pcRole.textContent = currentRole === 'admin' ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
 
           // Meta chips (students)
           if (currentRole === 'student') {
             const showPRN = !!(profile?.prn && profile.prn.trim());
             const showBatch = !!(profile?.batch && profile.batch.trim());
-            pcPRN.textContent = `PRN: ${showPRN ? profile.prn : '—'}`;
-            pcBatch.textContent = `Batch: ${showBatch ? profile.batch : '—'}`;
+            pcPRN.textContent = 'PRN: ' + (showPRN ? profile.prn : '—');
+            pcBatch.textContent = 'Batch: ' + (showBatch ? profile.batch : '—');
             pcMeta.style.display = (showPRN || showBatch) ? 'flex' : 'none';
           } else {
             pcMeta.style.display = 'none';
@@ -465,11 +592,11 @@
 
           // Friendly message
           if (currentRole === 'admin') {
-            pcMessage.textContent = `You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.`;
+            pcMessage.textContent = 'You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.';
           } else if (currentRole === 'student') {
-            pcMessage.textContent = `Access your assessments and track your progress. Ensure your profile is up to date.`;
+            pcMessage.textContent = 'Access your assessments and track your progress. Ensure your profile is up to date.';
           } else {
-            pcMessage.textContent = `Set up your profile to get the best experience.`;
+            pcMessage.textContent = 'Set up your profile to get the best experience.';
           }
 
           // Completion hint
@@ -491,24 +618,30 @@
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
 
-          // Init chat (skipped when disabled)
-          if (ENABLE_CHAT) {
-            await initChat();
-          } else if (chatSection) {
-            chatSection.style.display = 'none';
-          }
+          // Init chat for logged-in users (students or admins) — will be skipped if disabled
+          await initChat();
+
+          // Refresh notifications when logged in
+          if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
 
         } catch (e) {
           console.error('refreshUI error:', e);
         }
       }
 
-      // Initial UI
+      // Initial UI + Notifications
       refreshUI();
+      if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
 
       // Keep UI in sync with auth changes and when returning focus to the tab
-      sb.auth.onAuthStateChange((_event, _session) => { refreshUI(); });
-      window.addEventListener('focus', refreshUI);
+      sb.auth.onAuthStateChange((_event, _session) => {
+        refreshUI();
+        if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
+      });
+      window.addEventListener('focus', () => {
+        refreshUI();
+        if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
+      });
 
       // Protect links
       function protectLink(el, requireAdmin=false){
