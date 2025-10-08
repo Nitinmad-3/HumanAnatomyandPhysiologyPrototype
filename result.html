@@ -231,9 +231,8 @@
 
     function setStatus(msg){ statusEl.textContent = msg; }
     function fmtPct(n){
-      if(n == null) return '—';
+      if(n == null || Number.isNaN(Number(n))) return '—';
       const num = Number(n);
-      if(Number.isNaN(num)) return '—';
       return (Math.round(num * 100) / 100).toFixed(2) + '%';
     }
 
@@ -242,19 +241,27 @@
       return row.submitted_at_utc || row.submitted_at;
     }
 
-    // Robust IST formatting
+    // Robust IST formatting: normalize to ISO, assume UTC when ambiguous
     function fmtDate(s){
       if(!s) return '—';
       try {
         let iso = s;
         if (typeof iso === 'string') {
-          if (iso.includes(' ') && !iso.includes('T')) iso = iso.replace(' ', 'T');
-          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(iso)) iso += 'Z';
+          if (iso.includes(' ') && !iso.includes('T')) {
+            iso = iso.replace(' ', 'T');
+          }
+          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(iso)) {
+            iso += 'Z';
+          }
         }
         return new Date(iso).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
           hour12: false
         });
       } catch(e){
@@ -282,7 +289,20 @@
         .replace(/'/g,'&#39;');
     }
 
-    // EFFECTIVE RESUBMISSION RULE
+    // Derived percent including assignment marks (matches "Total Marks" display)
+    function computeDerivedPercent(row){
+      const scoreNum = Number(row.score);
+      const totalNum = Number(row.total);
+      const marksVal = row.assignment_marks != null ? Number(row.assignment_marks) : null;
+      const assign = !Number.isNaN(marksVal) && marksVal != null ? marksVal : 0;
+      const s = !Number.isNaN(scoreNum) ? scoreNum : 0;
+      const t = !Number.isNaN(totalNum) ? totalNum : 0;
+      const den = t + assign;
+      if(den <= 0) return null;
+      return ((s + assign) / den) * 100;
+    }
+
+    // EFFECTIVE RESUBMISSION RULE (frontend-only)
     function effectiveResubAllowed(row){
       if (row.assignment_marks == null) return true;
       return row.resubmission_allowed === true;
@@ -320,52 +340,24 @@
       } catch(e){ console.warn('loadExperiments', e); }
     }
 
-    // Try multiple arg-name variants for the admin RPC to avoid backend changes
     async function fetchResults({ exp_id='', search='', batch='' } = {}){
-      const exp = has(exp_id) ? exp_id : null;
-      const q = has(search) ? search : null;
-      const b = has(batch) ? batch : null;
-
-      if (isAdmin) {
-        const variants = [
-          { exp_id: exp, search_text: q, batch_text: b },
-          { exp_id: exp, search: q, batch: b },
-          { exp_id: exp, q: q, batch: b },
-          { exp_id: exp, search_query: q, batch_filter: b }
-        ];
-        for (const args of variants) {
-          try {
-            const { data, error } = await sb.rpc('get_assessment_results_admin_v2', args);
-            if (!error && Array.isArray(data)) {
-              console.log('Admin RPC args variant used:', Object.keys(args));
-              return data;
-            }
-            // If signature mismatch, PostgREST returns 404/42883 — try next
-            if (error && (String(error.code) === '42883' || String(error.code) === '404')) {
-              continue;
-            }
-            // Any other error: log and try next
-            if (error) {
-              console.warn('Admin RPC variant error', args, error);
-              continue;
-            }
-          } catch (e) {
-            console.warn('Admin RPC variant threw', e);
-          }
-        }
-        throw new Error('Admin RPC failed for all parameter variants. Please align frontend param names with the DB function.');
-      } else {
-        // Students: pass only exp_id to avoid signature mismatch
-        const { data, error } = await sb.rpc('get_results_student_test', { exp_id: exp });
-        if(error) throw error;
-        return Array.isArray(data) ? data : [];
-      }
+      const args = {
+        exp_id: has(exp_id) ? exp_id : null,
+        search_text: has(search) ? search : null,
+        batch_text: has(batch) ? batch : null
+      };
+      const fn = isAdmin ? 'get_assessment_results_admin_v2' : 'get_results_student_test';
+      const { data, error } = await sb.rpc(fn, args);
+      if(error) throw error;
+      return Array.isArray(data) ? data : [];
     }
 
     /***************** Summary *****************/
     function renderSummaryForStudent(rows){
       const attempts = rows.length;
-      const percents = rows.map(r => Number(r.percent ?? r.percentage)).filter(n => !Number.isNaN(n));
+      const percents = rows
+        .map(computeDerivedPercent)
+        .filter(n => n != null && !Number.isNaN(n));
       const avg = percents.length ? percents.reduce((a,b)=>a+b,0) / percents.length : 0;
       const best = percents.length ? Math.max(...percents) : 0;
       const lastRow = rows.slice().sort(
@@ -610,10 +602,21 @@
     async function reloadRows(){
       const exp_id = filterExperiment.value || '';
       const search = filterSearch?.value || '';
-      const batch = filterBatch?.value || '';
-      const rows = await fetchResults({ exp_id, search, batch });
+      const batchInput = filterBatch?.value || '';
 
-      // Always sort newest-first on the client
+      let rows = await fetchResults({ exp_id, search, batch: batchInput });
+
+      // Frontend-only Batch fix: ensure Batch filters the batch column (case-insensitive)
+      const b = (batchInput || '').trim().toLowerCase();
+      if (b) {
+        rows = rows.filter(r =>
+          String(r.meta?.batch ?? r.batch ?? '')
+            .toLowerCase()
+            .includes(b)
+        );
+      }
+
+      // Always sort newest-first on the client, using UTC first, fallback to legacy.
       rows.sort((a,b) => {
         const ta = new Date(getSubmittedAt(a) || 0).getTime();
         const tb = new Date(getSubmittedAt(b) || 0).getTime();
@@ -627,7 +630,7 @@
 
     function renderRows(rows){
       currentRows = rows;
-      window.currentRows = rows;
+      window.currentRows = rows; // expose updated rows for console
       countEl.textContent = rows.length;
       if(!rows.length){
         tbody.innerHTML = '<tr><td colspan="12" class="muted">No results.</td></tr>';
@@ -639,14 +642,22 @@
         const prn = r.meta?.prn || r.prn || '—';
         const batch = r.meta?.batch || r.batch || '—';
         const assessmentTitle = r.meta?.assessment_title || r.assessment_title || '—';
-        const percentVal = r.percent ?? r.percentage;
+        const percentVal = computeDerivedPercent(r); // fixed to include assignment marks
         const scoreNum = Number(r.score);
         const totalNum = Number(r.total);
-        const scoreTxt = (!isNaN(scoreNum) && !isNaN(totalNum)) ? `${scoreNum}/${totalNum}` : (r.score ?? '—');
         const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
-        const totalMarks = (scoreNum||0) + (marksVal||0);
-        const totalMarksTxt = `<span class="total-marks">${totalMarks}/${isNaN(totalNum)?'?': totalNum + (isNaN(marksVal)?0:marksVal)}</span>`;
 
+        const scoreTxt = (!isNaN(scoreNum) && !isNaN(totalNum)) ? `${scoreNum}/${totalNum}` : (r.score ?? '—');
+
+        const assign = !isNaN(marksVal) && marksVal != null ? marksVal : 0;
+        const scoreNumSafe = !isNaN(scoreNum) ? scoreNum : 0;
+        const totalNumSafe = !isNaN(totalNum) ? totalNum : 0;
+
+        const totalMarksNum = scoreNumSafe + assign;
+        const totalMarksDen = totalNumSafe + assign;
+        const totalMarksTxt = `<span class="total-marks">${totalMarksNum}/${isNaN(totalMarksDen)?'?': totalMarksDen}</span>`;
+
+        // Marks cell
         let marksCell = '';
         if(isAdmin){
           marksCell = `<div class="marks-cell">
@@ -658,6 +669,7 @@
           marksCell = `<span class="marks-label">${marksVal!=null?marksVal:'<span class="marks-pending">Pending</span>'}</span>`;
         }
 
+        // Assignment button
         let assignmentBtn = `<span class="muted" style="font-size:13px;">—</span>`;
         const canView = isAdmin || (currentUser && r.user_id===currentUser.id);
         if(r.assignment_path && canView){
@@ -669,8 +681,10 @@
           assignmentBtn = `<span class="muted" style="font-size:13px;">Restricted</span>`;
         }
 
+        // Resubmission cell
         const effective = effectiveResubAllowed(r);
         const marksPending = (r.assignment_marks == null);
+
         let resubmitCell = '<div class="resubmission-status-box">';
         if(isAdmin){
           const btnDisabled = marksPending ? 'disabled' : '';
@@ -739,7 +753,13 @@
         const scoreNum = Number(r.score);
         const totalNum = Number(r.total);
         const marksVal = r.assignment_marks != null ? Number(r.assignment_marks) : null;
-        const totalMarks = (scoreNum||0)+(marksVal||0);
+
+        const assign = !isNaN(marksVal) && marksVal != null ? marksVal : 0;
+        const s = !isNaN(scoreNum) ? scoreNum : 0;
+        const t = !isNaN(totalNum) ? totalNum : 0;
+        const den = t + assign;
+        const derived = den > 0 ? ((s + assign) / den) * 100 : null;
+
         return {
           RowID: r.id,
           StudentName: r.user_name || email || r.user_id || '',
@@ -749,8 +769,9 @@
           Batch: batch,
           Score: !isNaN(scoreNum)&&!isNaN(totalNum)? `${scoreNum}/${totalNum}`: r.score,
           AssignmentMarks: marksVal,
-          TotalMarks: totalMarks,
-          Percentage: r.percent ?? r.percentage,
+          TotalMarksNumerator: s + assign,
+          TotalMarksDenominator: den,
+          Percentage: derived,
           SubmittedAt: r.submitted_at,
           SubmittedAtUTC: r.submitted_at_utc || '',
           SubmittedAtISTDisplay: fmtDate(getSubmittedAt(r)),
@@ -844,10 +865,6 @@
       if(urlExp) filterExperiment.value = urlExp;
 
       btnApply.addEventListener('click', applyFilters);
-      // Allow Enter to apply
-      if(filterSearch){ filterSearch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
-      if(filterBatch){ filterBatch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
-
       btnReset.addEventListener('click', ()=>{
         filterExperiment.value='';
         if(filterSearch) filterSearch.value='';
@@ -862,6 +879,10 @@
         if(!currentRows.length){ alert('No data to export.'); return; }
         exportWithDetails();
       });
+
+      // Enter to apply for search and batch
+      if(filterSearch){ filterSearch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
+      if(filterBatch){ filterBatch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
 
       await applyFilters();
       setStatus('Ready.');
