@@ -517,7 +517,7 @@
             tableStatus.textContent = 'Dates saved.';
           }catch(e){
             console.warn('save dates', e);
-            tableStatus.textContent = 'Save failed: ' + (e?.message || e));
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -593,7 +593,7 @@
         notifStatus.textContent = 'Published.';
       } catch(e){
         notifStatus.textContent = 'Publish failed.';
-        alert('Publish failed: ' + (e?.message || e));
+        alert('Publish failed: ' + (e?.message || e);
       }
     }
     async function loadNotifications(){
