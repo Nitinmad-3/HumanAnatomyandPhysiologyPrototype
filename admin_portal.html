@@ -127,7 +127,7 @@
           <select id="exp-select" class="input" aria-describedby="exp-select-hint">
             <option value="">Select an assessment</option>
           </select>
-          <div id="exp-select-hint" class="hint">Source: list_experiments_for_results</div>
+          <div id="exp-select-hint" class="hint">Source: public.assessments</div>
         </div>
 
         <div>
@@ -307,14 +307,6 @@
     function nowUtcISO(){ return new Date().toISOString(); }
 
     // Availability helpers (no "released" anymore)
-    function withinWindow(startUtc, endUtc){
-      const now = new Date();
-      const start = startUtc ? new Date(startUtc) : null;
-      const end = endUtc ? new Date(endUtc) : null;
-      if(start && now < start) return false;
-      if(end && now > end) return false;
-      return true;
-    }
     function availabilityState(locked, startUtc, endUtc){
       if(locked) return 'locked';
       const now = new Date();
@@ -452,20 +444,21 @@
       }
     }
 
-    // Load experiments and hydrate select
+    // Load assessments (id + title) for dropdown
     async function loadExperiments(){
-      const { data, error } = await sb.rpc('list_experiments_for_results');
+      const { data, error } = await sb
+        .from('assessments')
+        .select('id,title')
+        .order('id', { ascending: true });
       if(error){
-        console.warn('list_experiments_for_results', error);
+        console.warn('loadExperiments', error);
         return;
       }
       expSelect.innerHTML = '<option value="">Select an assessment</option>';
       (data || []).forEach(row=>{
-        const id = row.experiment_id || row.experiment || row.id;
-        if(!id) return;
         const opt = document.createElement('option');
-        opt.value = id;
-        opt.textContent = id;
+        opt.value = String(row.id);   // value used for updates
+        opt.textContent = row.title || String(row.id); // show human-readable title
         expSelect.appendChild(opt);
       });
     }
@@ -473,12 +466,10 @@
     function updateLockBtnUI(isLocked){
       lockToggleBtn.textContent = isLocked ? 'Unlock assessment' : 'Lock assessment';
     }
-
     function setLockedPill(isLocked){
       if(isLocked){ setPill(lockedEffective, false, 'Locked'); }
       else { setPill(lockedEffective, true, 'Unlocked'); }
     }
-
     function setAvailabilityPill(locked, startUtc, endUtc){
       const state = availabilityState(locked, startUtc, endUtc);
       if(state === 'open') setPill(availEffective, true, 'Open to students');
@@ -487,16 +478,17 @@
       else setPill(availEffective, false, 'Locked');
     }
 
-    async function loadReleaseFor(expId){
-      // Reset UI
+    // Load lock + schedule for selected id
+    async function loadReleaseFor(idStr){
+      const id = Number(idStr);
       startIst.value = '';
       endIst.value = '';
       releaseStatus.textContent = 'Loading…';
       lockToggleBtn.disabled = true;
       try{
         const { data, error } = await sb.from('assessments')
-          .select('experiment_id,locked,window_start,window_end,updated_at')
-          .eq('experiment_id', expId)
+          .select('id,locked,window_start,window_end,updated_at')
+          .eq('id', id)
           .maybeSingle();
 
         if(error && String(error?.code) === '42P01'){
@@ -520,7 +512,6 @@
         releaseSetupHint.style.display = 'none';
         lockToggleBtn.disabled = false;
 
-        // Hydrate UI
         updateLockBtnUI(!!data.locked);
         setLockedPill(!!data.locked);
         startIst.value = utcToIstDatetimeLocal(data.window_start);
@@ -537,14 +528,15 @@
 
     // Toggle lock only
     async function toggleLock(){
-      const expId = expSelect.value;
-      if(!expId){ alert('Select an assessment.'); return; }
+      const idStr = expSelect.value;
+      if(!idStr){ alert('Select an assessment.'); return; }
+      const id = Number(idStr);
       lockToggleBtn.disabled = true;
       releaseStatus.textContent = 'Toggling…';
       try{
         const { data:row, error:readErr } = await sb.from('assessments')
           .select('locked')
-          .eq('experiment_id', expId)
+          .eq('id', id)
           .maybeSingle();
         if(readErr) throw readErr;
         if(!row){
@@ -556,10 +548,10 @@
         const newLocked = !row.locked;
         const { error:updErr } = await sb.from('assessments')
           .update({ locked: newLocked, updated_at: nowUtcISO() })
-          .eq('experiment_id', expId);
+          .eq('id', id);
         if(updErr) throw updErr;
 
-        await loadReleaseFor(expId);
+        await loadReleaseFor(id);
         releaseStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
       } catch(e){
         console.warn('toggleLock', e);
@@ -572,8 +564,9 @@
 
     // Save dates only
     async function saveRelease(){
-      const expId = expSelect.value;
-      if(!expId){ alert('Select an assessment.'); return; }
+      const idStr = expSelect.value;
+      if(!idStr){ alert('Select an assessment.'); return; }
+      const id = Number(idStr);
       const payload = {
         window_start: istLocalToUTC(startIst.value),
         window_end: istLocalToUTC(endIst.value),
@@ -581,19 +574,19 @@
       };
       releaseStatus.textContent = 'Saving…';
       try{
-        const { data:exists } = await sb.from('assessments').select('id').eq('experiment_id', expId).maybeSingle();
+        const { data:exists } = await sb.from('assessments').select('id').eq('id', id).maybeSingle();
         if(!exists){
           releaseSetupHint.style.display = 'block';
           releaseStatus.textContent = 'Save blocked (row missing).';
-          alert('Row missing in public.assessments for experiment_id=' + expId + '. Please create it once in DB.');
+          alert('Row missing in public.assessments for id=' + id + '. Please create it once in DB.');
           return;
         }
-        const { error } = await sb.from('assessments').update(payload).eq('experiment_id', expId);
+        const { error } = await sb.from('assessments').update(payload).eq('id', id);
         if(error){
           if(String(error?.code) === '42P01'){ releaseSetupHint.style.display = 'block'; }
           throw error;
         }
-        await loadReleaseFor(expId);
+        await loadReleaseFor(id);
         releaseStatus.textContent = 'Saved.';
       } catch(e){
         console.warn('saveRelease', e);
@@ -774,15 +767,15 @@
       await loadExperiments();
 
       expSelect.onchange = async () => {
-        const expId = expSelect.value;
-        if(!expId) return;
-        await loadReleaseFor(expId);
+        const idStr = expSelect.value;
+        if(!idStr) return;
+        await loadReleaseFor(idStr);
       };
-      const expParam = new URLSearchParams(location.search).get('exp');
+      const expParam = new URLSearchParams(location.search).get('exp'); // optional: if you pass ?exp=ID
       if(expParam){
         const trySelect = () => {
-          const opt = Array.from(expSelect.options).find(o => o.value === expParam);
-          if(opt){ expSelect.value = expParam; loadReleaseFor(expParam); }
+          const opt = Array.from(expSelect.options).find(o => o.value === String(expParam));
+          if(opt){ expSelect.value = String(expParam); loadReleaseFor(String(expParam)); }
         };
         setTimeout(trySelect, 100);
       }
