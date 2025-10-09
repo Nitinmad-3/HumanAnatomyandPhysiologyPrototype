@@ -210,7 +210,7 @@
     .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
     .intro li{ margin: .15rem 0; }
 
-    /* Continuous marquee notification bar (corrected for right-edge start) */
+    /* Corrected continuous marquee notification bar */
     .marquee-notification {
       position: relative;
       overflow: hidden;
@@ -228,19 +228,21 @@
     .marquee-track {
       position: absolute;
       top: 0;
-      left: 100%; /* Start just outside the right edge */
+      left: 0;
       display: flex;
       align-items: center;
       white-space: nowrap;
       will-change: transform;
-      animation: marquee-left 22s linear infinite;
       height: 100%;
+      /* Duration: Adjust for speed */
+      animation: marquee-left linear infinite;
+      animation-duration: 22s;
     }
     @keyframes marquee-left {
-      from {
-        transform: translateX(0);
+      0% {
+        transform: translateX(100%);
       }
-      to {
+      100% {
         transform: translateX(-100%);
       }
     }
@@ -344,8 +346,6 @@
 
   <!-- Inline Home Notifications (avoid 404 on missing external file) -->
   <script>
-    // Renders Active notifications on Home; treats null Starts/Ends as "always visible".
-    // Works with your current RLS (authenticated users can read).
     (function () {
       function renderNotification(n) {
         let color = '#1565c0';
@@ -354,7 +354,7 @@
         else if (sev === 'warning') color = '#ffb300';
         const msg = `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
           <span style="margin-left:.5rem; color:#123;">${n.message || ''}</span>`;
-        // Duplicate the message for smooth, continuous scroll
+        // Duplicate message for smooth looping
         return `
           <div class="marquee-notification" style="border-left:6px solid ${color};">
             <div class="marquee-track">
@@ -373,13 +373,10 @@
       async function loadHomeNotifications(sb) {
         const container = document.getElementById('home-notifications');
         if (!container) return;
-
-        // With your current RLS, anon users cannot SELECT; render nothing if logged out.
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) { container.innerHTML = ''; return; }
         } catch (_) {}
-
         container.innerHTML = '';
         const now = new Date();
         const { data, error } = await sb
@@ -388,12 +385,10 @@
           .eq('active', true)
           .order('created_at', { ascending: false })
           .limit(25);
-
         if (error) { console.warn('home_notifications load error:', error); return; }
         const rows = (data || []).filter(n => isWithinWindow(n, now));
         container.innerHTML = rows.map(renderNotification).join('');
       }
-      // Expose to outer script so we can call after client is created
       window.__loadHomeNotifications = loadHomeNotifications;
     })();
   </script>
@@ -448,7 +443,6 @@
       let dmRoom = null;
       let chatSubscription = null;
 
-      // Signed avatar helpers
       async function setSignedAvatar(path) {
         if (!pcAvatar) return;
         if (!path) {
@@ -496,7 +490,6 @@
       }
 
       function renderMsg(m){
-        // Not used when chat disabled
         const me = m.sender_id === currentUser?.id;
         const line = document.createElement('div');
         line.className = 'chat-line ' + (me ? 'me' : 'them');
@@ -584,7 +577,6 @@
         chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
       }
 
-      // Helper: zero-pad
       function pad(n){ return String(n).padStart(2,'0'); }
 
       async function refreshUI() {
@@ -594,24 +586,18 @@
             currentUser = null;
             currentRole = 'unknown';
             setNav(false);
-            // Refresh notifications (RLS requires auth; will render nothing)
             if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
             return;
           }
           setNav(true);
           currentUser = session.user;
-
-          // Profile
           const { data: profile, error: profErr } = await sb
             .from('profiles')
             .select('name, role, prn, batch, avatar_path')
             .eq('id', currentUser.id)
             .maybeSingle();
           if (profErr) console.warn('Profile fetch error:', profErr);
-
           currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
-
-          // Show Admin Portal links only for admins
           if (currentRole === 'admin') {
             if (adminPortalLink) adminPortalLink.style.display = 'inline';
             if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
@@ -619,13 +605,9 @@
             if (adminPortalLink) adminPortalLink.style.display = 'none';
             if (pcAdminBtn) pcAdminBtn.style.display = 'none';
           }
-
-          // Fill the Profile Dashboard Card
           if (profileCard) profileCard.style.display = 'block';
           pcName.textContent = ('Welcome ' + (profile?.name ? profile.name : '')).trim() || 'Welcome';
           pcRole.textContent = currentRole === 'admin' ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
-
-          // Meta chips (students)
           if (currentRole === 'student') {
             const showPRN = !!(profile?.prn && profile.prn.trim());
             const showBatch = !!(profile?.batch && profile.batch.trim());
@@ -635,8 +617,6 @@
           } else {
             pcMeta.style.display = 'none';
           }
-
-          // Friendly message
           if (currentRole === 'admin') {
             pcMessage.textContent = 'You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.';
           } else if (currentRole === 'student') {
@@ -644,8 +624,6 @@
           } else {
             pcMessage.textContent = 'Set up your profile to get the best experience.';
           }
-
-          // Completion hint
           const baseComplete = !!(profile?.name && profile?.role);
           const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
           const adminComplete = baseComplete;
@@ -658,28 +636,19 @@
           } else {
             pcNote.style.display = 'none';
           }
-
-          // Avatar
           const avatarPath = profile?.avatar_path || null;
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
-
-          // Init chat for logged-in users (students or admins) — will be skipped if disabled
           await initChat();
-
-          // Refresh notifications when logged in
           if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
-
         } catch (e) {
           console.error('refreshUI error:', e);
         }
       }
 
-      // Initial UI + Notifications
       refreshUI();
       if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
 
-      // Keep UI in sync with auth changes and when returning focus to the tab
       sb.auth.onAuthStateChange((_event, _session) => {
         refreshUI();
         if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
@@ -689,7 +658,6 @@
         if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
       });
 
-      // Protect links
       function protectLink(el, requireAdmin=false){
         if(!el) return;
         el.addEventListener('click', async (e) => {
@@ -713,7 +681,6 @@
       protectLink(adminPortalLink, true);
       protectLink(document.getElementById('pc-admin-portal'), true);
 
-      // Logout
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
           e.preventDefault();
