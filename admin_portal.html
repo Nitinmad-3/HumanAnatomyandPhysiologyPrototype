@@ -255,7 +255,11 @@
     </section>
   </main>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <!-- NEW: SheetJS for local XLSX export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <script>
     // Supabase init (anon key)
     const sb = window.supabase.createClient(
@@ -471,6 +475,140 @@
       }
     }
 
+    // NEW — Export (server) via Edge Function
+    async function exportUserResultsServer(userId){
+      usersStatus.textContent = 'Exporting (server)…';
+      try{
+        const { data, error } = await sb.functions.invoke('admin_export_user_results', {
+          body: { user_id: userId }
+        });
+        if(error) throw error;
+        const s = data?.files?.summary?.url;
+        const d = data?.files?.details?.url;
+        if(!s && !d){ alert('Export ready, but URLs are missing.'); return; }
+        if(s) window.open(s, '_blank');
+        if(d) window.open(d, '_blank');
+      }catch(e){
+        alert('Server export failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
+    // NEW — Export (local) XLSX using SheetJS
+    function computeDerivedPercentLocal(row){
+      const s = Number(row.score ?? 0);
+      const t = Number(row.total ?? 0);
+      const a = Number(row.assignment_marks ?? 0);
+      const den = t + a;
+      if(!den || !isFinite(den)) return null;
+      return ((s + a) / den) * 100;
+    }
+    function normalizeBreakdownLocal(bd){
+      if(!bd) return [];
+      try{
+        const obj = typeof bd === 'string' ? JSON.parse(bd) : bd;
+        if(Array.isArray(obj)) return obj;
+        if(obj && typeof obj === 'object' && Array.isArray(obj.questions)) return obj.questions;
+      }catch{}
+      return [];
+    }
+    async function exportUserResultsLocal(userId, email){
+      usersStatus.textContent = 'Exporting (local)…';
+      try{
+        // Direct select; if RLS blocks, prefer server export.
+        const { data, error } = await sb
+          .from('assessment_results')
+          .select(`
+            id,user_id,assessment_id,score,total,assignment_marks,
+            submitted_at,submitted_at_utc,duration_sec,breakdown,
+            profiles:profiles!inner(id,name,email,prn,batch),
+            assessments:assessments!inner(id,title)
+          `)
+          .eq('user_id', userId)
+          .order('submitted_at_utc', { ascending:false });
+        if(error) throw error;
+
+        const rows = data || [];
+        const summary = rows.map(r => {
+          const s = Number(r.score ?? 0), t = Number(r.total ?? 0), a = Number(r.assignment_marks ?? 0);
+          const pct = computeDerivedPercentLocal(r);
+          return {
+            RowID: r.id,
+            UserID: r.user_id,
+            Name: r.profiles?.name || r.profiles?.email || '',
+            Email: r.profiles?.email || '',
+            PRN: r.profiles?.prn || '',
+            Batch: r.profiles?.batch || '',
+            Assessment: r.assessments?.title || '',
+            Score: isFinite(s)&&isFinite(t)? `${s}/${t}`: r.score,
+            AssignmentMarks: r.assignment_marks ?? null,
+            TotalMarksNumerator: s + a,
+            TotalMarksDenominator: t + a,
+            Percentage: pct==null? null : Math.round(pct*100)/100,
+            SubmittedAtUTC: r.submitted_at_utc || '',
+            SubmittedAt: r.submitted_at || '',
+            DurationSec: r.duration_sec ?? null
+          };
+        });
+
+        const details = [];
+        rows.forEach(r => {
+          const email2 = r.profiles?.email || '';
+          const title = r.assessments?.title || '';
+          const bd = normalizeBreakdownLocal(r.breakdown);
+          let idx = 0;
+          bd.forEach(q => {
+            if(!q || q.type === 'meta') return;
+            idx++;
+            details.push({
+              RowID: r.id,
+              UserID: r.user_id,
+              Name: r.profiles?.name || email2 || '',
+              Email: email2,
+              Assessment: title,
+              QuestionIndex: idx,
+              Question: q.question || '',
+              Type: q.type || '',
+              SelectedAnswer: q.answer ?? '',
+              CorrectAnswer: q.correct ?? '',
+              IsCorrect: q.isCorrect === true
+            });
+          });
+        });
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Results');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(details), 'Details');
+
+        const filename = `export_${(email||userId).replace(/[^A-Za-z0-9_.-]/g,'_')}.xlsx`;
+        XLSX.writeFile(wb, filename);
+      }catch(e){
+        alert('Local export failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
+    // NEW — Permanent delete via Edge Function
+    async function deleteStudentPermanently(id){
+      if(!id) return;
+      if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
+      usersStatus.textContent = 'Deleting…';
+      try{
+        const { data, error } = await sb.functions.invoke('admin_delete_user', {
+          body: { user_id: id, delete_storage: true }
+        });
+        if(error) throw error;
+        alert('Student deleted permanently.');
+        await refreshUsers();
+      }catch(e){
+        alert('Delete failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
     // USERS — Renderers
     function renderStatusChips(row){
       const chips = [];
@@ -492,13 +630,17 @@
           <td>${htmlesc(r.name || '')}</td>
           <td>${htmlesc(r.prn || '')}</td>
           <td>${htmlesc(r.batch || '')}</td>
-          <td>${htmlesc(r.email || '')}</td>
+          <td data-email="${htmlesc(r.email || '')}">${htmlesc(r.email || '')}</td>
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
           <td class="row" style="gap:6px;">
             <button class="btn small" data-act="approve">Approve</button>
             <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
+            <!-- NEW buttons -->
+            <button class="btn small ghost" data-act="export-server">Export (Server)</button>
+            <button class="btn small ghost" data-act="export-local">Export (Local)</button>
+            <button class="btn small warn" data-act="delete">Delete</button>
           </td>
         </tr>`;
       }).join('');
@@ -516,6 +658,19 @@
           toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
         };
       });
+      // NEW: wire export/delete
+      pendingTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
+        b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
+      });
+      pendingTbody.querySelectorAll('button[data-act="export-local"]').forEach(b=>{
+        b.onclick = () => {
+          const tr = b.closest('tr');
+          exportUserResultsLocal(tr.getAttribute('data-id'), tr.querySelector('[data-email]')?.getAttribute('data-email') || '');
+        };
+      });
+      pendingTbody.querySelectorAll('button[data-act="delete"]').forEach(b=>{
+        b.onclick = () => deleteStudentPermanently(b.closest('tr').getAttribute('data-id'));
+      });
     }
 
     function renderApproved(rows){
@@ -531,13 +686,17 @@
           <td>${htmlesc(r.name || '')}</td>
           <td>${htmlesc(r.prn || '')}</td>
           <td>${htmlesc(r.batch || '')}</td>
-          <td>${htmlesc(r.email || '')}</td>
+          <td data-email="${htmlesc(r.email || '')}">${htmlesc(r.email || '')}</td>
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
           <td class="row" style="gap:6px;">
             <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
             <button class="btn small" data-act="activate" ${r.active ? 'disabled' : ''}>Activate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
+            <!-- NEW buttons -->
+            <button class="btn small ghost" data-act="export-server">Export (Server)</button>
+            <button class="btn small ghost" data-act="export-local">Export (Local)</button>
+            <button class="btn small warn" data-act="delete">Delete</button>
           </td>
         </tr>`;
       }).join('');
@@ -554,6 +713,19 @@
           const lockedNow = !!tr.querySelector('.lock-on');
           toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
         };
+      });
+      // NEW: wire export/delete
+      approvedTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
+        b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
+      });
+      approvedTbody.querySelectorAll('button[data-act="export-local"]').forEach(b=>{
+        b.onclick = () => {
+          const tr = b.closest('tr');
+          exportUserResultsLocal(tr.getAttribute('data-id'), tr.querySelector('[data-email]')?.getAttribute('data-email') || '');
+        };
+      });
+      approvedTbody.querySelectorAll('button[data-act="delete"]').forEach(b=>{
+        b.onclick = () => deleteStudentPermanently(b.closest('tr').getAttribute('data-id'));
       });
     }
 
@@ -602,7 +774,7 @@
       }
     }
 
-    // Assessments
+    // Assessments (unchanged)
     async function loadAssessments(){
       const { data, error } = await sb
         .from('assessments')
@@ -643,7 +815,6 @@
         </tr>`;
       }).join('');
 
-      // Wire row actions
       assessTbody.querySelectorAll('button.lock-btn').forEach(btn=>{
         btn.onclick = async ()=>{
           const tr = btn.closest('tr');
