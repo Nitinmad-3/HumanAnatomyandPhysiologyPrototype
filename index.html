@@ -211,48 +211,45 @@
     .intro li{ margin: .15rem 0; }
 
     /* Marquee notification bar: continuous and smooth */
-    .marquee-notification {
-      position: relative;
-      overflow: hidden;
-      background: #f0f6ff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(13,37,62,.10);
-      border: 1px solid #cfe0ff;
-      margin: 10px auto;
-      max-width: 920px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      padding: 0;
-    }
-    .marquee-track {
-      position: absolute;
-      top: 0;
-      left: 0;
-      display: flex;
-      align-items: center;
-      white-space: nowrap;
-      will-change: transform;
-      height: 100%;
-      /* Duration: Adjust for speed */
-      animation: marquee-left linear infinite;
-      animation-duration: 38s; /* slow down the scroll */
-    }
-    @keyframes marquee-left {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-    .marquee-notification:hover .marquee-track {
-      animation-play-state: paused;
-    }
-
-    @media (max-width: 700px) {
-      h1 { font-size: 1.6rem; }
-      .profile-wrap{ grid-template-columns: 1fr; }
-      .avatar{ width:96px; height:96px; border-radius:12px; }
-      nav a, nav button { font-size: .95rem; }
-    }
-  </style>
+    <div class="marquee-notification" style="border-left:6px solid #1565c0;">
+  <div class="marquee-track">
+    <strong style="color:#1565c0; text-transform:uppercase;">info</strong>
+    <span style="margin-left:.5rem; color:#123;">This is your notification message scrolling continuously!</span>
+    <span style="padding-left: 2rem;"></span>
+    <strong style="color:#1565c0; text-transform:uppercase;">info</strong>
+    <span style="margin-left:.5rem; color:#123;">This is your notification message scrolling continuously!</span>
+  </div>
+</div>
+<style>
+.marquee-notification {
+  position: relative;
+  overflow: hidden;
+  background: #f0f6ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(13,37,62,.10);
+  border: 1px solid #cfe0ff;
+  margin: 10px auto;
+  max-width: 920px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+  align-items: center;
+  height: 100%;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-notification:hover .marquee-track {
+  animation-play-state: paused;
+}
+</style>
 </head>
 <body>
   <div class="overlay">
