@@ -17,6 +17,7 @@
     .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .muted { color:#375a9e; font-size:.95rem; }
     .badge { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; }
+    .pill { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #cfe0ff; color:#375a9e; background:#f0f6ff; }
     .input, select { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
     .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
     .btn.small { padding:6px 10px; font-size:12px; }
@@ -195,7 +196,8 @@
       if(box) box.textContent = msg;
     }
 
-    const sb = window.supabase.createClient(
+    // Reuse global client if present to share session; otherwise create one
+    const sb = (window.sb && window.sb.auth) ? window.sb : window.supabase.createClient(
       'https://hunlistfklwvpivfjmbk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     );
@@ -308,7 +310,7 @@
       return row.resubmission_allowed === true;
     }
 
-    /***************** Auth & Role *****************/
+    /***************** Auth, Approval & Role *****************/
     async function requireLogin(){
       const { data:{ session } } = await sb.auth.getSession();
       if(!session?.user){
@@ -322,6 +324,26 @@
       const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
       if(error) console.warn('role error', error);
       return (data?.role || 'unknown').toLowerCase();
+    }
+    async function getApprovalStatus() {
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user) return { loggedIn:false };
+      const { data: p, error } = await sb
+        .from('profiles')
+        .select('role, approved, active')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if (error) { console.warn('approval status fetch error', error); }
+      const role = (p?.role || '').toLowerCase();
+      const isAdminLocal = role === 'admin';
+      return {
+        loggedIn: true,
+        role,
+        isAdmin: isAdminLocal,
+        approved: !!p?.approved,
+        active: !!p?.active,
+        isApprovedActive: isAdminLocal || (!!p?.approved && !!p?.active)
+      };
     }
 
     /***************** Data Fetch *****************/
@@ -840,14 +862,28 @@
     }
 
     async function init(){
-      if(!(await requireLogin())) return;
-      const role = await getRole(currentUser.id);
-      isAdmin = (role === 'admin');
-      roleBadge.textContent = isAdmin ? 'Admin' : 'Student';
+      // Must be logged in
+      const loggedIn = await requireLogin();
+      if(!loggedIn) return;
+
+      // Approval/Active gating (admins bypass)
+      const st = await getApprovalStatus();
+      isAdmin = st.isAdmin === true;
+
+      roleBadge.textContent = isAdmin ? 'Admin' : (st.role || 'Student');
       roleBadge.style.borderColor = isAdmin ? '#2ea043' : '#cfe0ff';
       roleBadge.style.color = isAdmin ? '#0a5' : '#375a9e';
 
-      // Expose for console debugging
+      if(!st.isApprovedActive){
+        alert(st.active === false
+          ? 'Your account is deactivated. Please contact an administrator.'
+          : 'Your account is awaiting admin approval.');
+        // Friendly redirect back to home
+        window.location.replace('index.html');
+        return;
+      }
+
+      // Proceed
       window.isAdmin = isAdmin;
       window.currentUser = currentUser;
 
@@ -880,7 +916,6 @@
         exportWithDetails();
       });
 
-      // Enter to apply for search and batch
       if(filterSearch){ filterSearch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
       if(filterBatch){ filterBatch.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilters(); }); }
 
