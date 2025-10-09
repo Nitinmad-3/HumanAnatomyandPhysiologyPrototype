@@ -2,140 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login | Human Anatomy & Physiology Portal</title>
+  <title>Login / Sign up | Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0;}
     header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
     h1 { color: #33691e; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
-    nav a { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px;}
-    nav a:hover { background: #aed581; }
+    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;}
+    nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer; }
+    nav a:hover, nav button:hover { background: #aed581; }
+
     .login-container {
-      max-width: 400px;
+      max-width: 430px;
       margin: 3rem auto 0 auto;
       background: #fff;
       border-radius: 16px;
-      padding: 2rem;
+      padding: 1.5rem;
       box-shadow: 0 2px 12px #c5e1a5;
-      font-size: 1.08rem;
+      font-size: 1.04rem;
     }
     .login-container h2 {
       color: #33691e;
       text-align: center;
-      margin-bottom: 1.5rem;
-      letter-spacing: 1px;
+      margin: 0 0 1rem 0;
+      letter-spacing: 0.2px;
     }
-    .login-form label {
-      display: block;
-      margin-bottom: 0.3em;
-      color: #558b2f;
-      font-weight: bold;
-      letter-spacing: 0.5px;
+
+    .tabbar {
+      display:flex; gap:6px; background:#f3f8e7; padding:4px; border-radius:10px; margin-bottom: 1rem; border:1px solid #d9ebc2;
     }
-    .login-form input[type="email"],
-    .login-form input[type="password"] {
-      width: 100%;
-      padding: 0.7em;
-      margin-bottom: 1.2em;
-      border: 1px solid #aed581;
-      border-radius: 6px;
-      background: #f1f8e9;
-      font-size: 1em;
-      box-sizing: border-box;
-      transition: border 0.2s;
+    .tabbar button {
+      flex:1; padding:.6rem .8rem; border-radius:8px; border:0; cursor:pointer; font-weight:800; color:#2e7d32; background:transparent;
     }
-    .login-form input[type="email"]:focus,
-    .login-form input[type="password"]:focus {
-      border: 1.5px solid #33691e;
-      outline: none;
+    .tabbar button.active { background:#cfe7b0; }
+
+    .login-form label, .signup-form label { display:block; margin-bottom: .35em; color:#558b2f; font-weight:700; letter-spacing:.2px; }
+    .login-form input, .signup-form input {
+      width:100%; padding:.7em; margin-bottom: .9em; border:1px solid #aed581; border-radius:6px; background:#f1f8e9; font-size:1em; box-sizing:border-box; transition: border .2s;
     }
-    .login-form button {
-      width: 100%;
-      padding: 0.8em;
-      background: #558b2f;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 1.08em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-bottom: 0.8em;
-    }
-    .login-form button:hover {
-      background: #33691e;
-    }
+    .login-form input:focus, .signup-form input:focus { border: 1.5px solid #33691e; outline:none; }
+    .btn-wide { width:100%; padding:.85em; background:#558b2f; color:#fff; border:none; border-radius:6px; font-size:1.05em; font-weight:800; cursor:pointer; transition: background .2s; margin:.1em 0 .8em 0; }
+    .btn-wide:hover { background:#33691e; }
+    .link-btn { background:transparent; border:0; color:#2e7d32; cursor:pointer; font-weight:700; padding:0; }
+    .row-inline { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+
     .error-message, .success-message {
-      color: #fff; font-weight: bold; text-align: center; padding: 0.7em 1em; margin-bottom: 1em; border-radius: 6px; display: none;
+      color:#fff; font-weight:700; text-align:center; padding:.7em 1em; margin:.6em 0; border-radius:6px; display:none;
     }
-    .error-message { background: #c62828;}
-    .success-message { background: #33691e;}
-    .inline-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-    .btn-inline { padding: 0.5em 0.9em; background: #c5e1a5; color: #2e7d32; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; }
-    .btn-inline.primary { background: #558b2f; color: #fff; }
+    .error-message { background:#c62828;}
+    .success-message { background:#33691e;}
+
+    .hint { color:#6b8f47; font-size:.95rem; }
+    .muted { color:#6b8f47; font-size:.9rem; }
+    .hidden { display:none; }
+
     @media (max-width: 600px) {
       .login-container { padding: 1.2rem; }
       nav { flex-direction: column; gap: 1rem; }
-      .inline-actions { flex-direction: column; }
+      .row-inline { flex-direction:column; align-items:stretch; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Login</h1>
+    <h1>Login / Sign up</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="experiments.html">Experiments</a>
       <a id="assessment-tab" href="assessments.html">Assessments</a>
       <a href="references.html">References</a>
       <a id="login-btn" href="login_Version4.html">Login</a>
-      <a id="logout-btn" href="#" style="display:none;">Logout</a>
+      <button id="logout-btn" style="display:none;">Logout</button>
     </nav>
   </header>
 
   <div class="login-container">
-    <h2>Sign in to your account</h2>
+    <h2>Welcome</h2>
 
-    <!-- Already signed in view (shown if session exists) -->
-    <div id="already-signed-in" style="display:none;">
-      <div class="success-message" style="display:block;">You're already signed in as <span id="signed-in-email"></span>.</div>
-      <div class="inline-actions">
-        <button id="continue-btn" class="btn-inline primary">Continue</button>
-        <button id="switch-btn" class="btn-inline">Switch account</button>
+    <!-- Already signed in view -->
+    <div id="already-signed-in" class="hidden">
+      <div class="success-message" style="display:block;">You're signed in as <span id="signed-in-email"></span>.</div>
+      <div class="row-inline" style="margin:.5rem 0 1rem;">
+        <button id="continue-btn" class="btn-wide" style="margin:0;">Continue</button>
+        <button id="switch-btn" class="link-btn" title="Sign out and use another account">Switch account</button>
       </div>
-      <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #eee;" />
-      <div class="hint" style="color:#6b8f47; font-size:0.95rem;">
-        Continue will send you to your dashboard if your role is set, or to Profile to finish setup.
+      <div class="hint">
+        Continue sends you to your dashboard if approved, or to Profile to finish setup. If your account is pending approval, an admin must approve before you can access Assessments/Results.
       </div>
+      <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #e9efd9;" />
     </div>
 
-    <!-- Email/password form (hidden if already signed in) -->
+    <!-- Tab bar -->
+    <div id="auth-tabs" class="tabbar">
+      <button id="tab-login" class="active" type="button">Sign in</button>
+      <button id="tab-signup" type="button">Create account</button>
+    </div>
+
+    <!-- Messages -->
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
+
+    <!-- Login form -->
     <form id="login-form" class="login-form" autocomplete="on">
-      <div id="error-message" class="error-message"></div>
-      <div id="success-message" class="success-message"></div>
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus />
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Password" required />
-      <button type="submit" id="submit-btn">Login</button>
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" name="email" placeholder="you@example.com" required />
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" name="password" placeholder="Password" required />
+      <button type="submit" id="login-submit" class="btn-wide">Sign in</button>
+      <div class="row-inline">
+        <button id="forgot-btn" type="button" class="link-btn">Forgot password?</button>
+        <span class="muted">No account? <button type="button" id="switch-to-signup" class="link-btn">Create one</button></span>
+      </div>
+    </form>
+
+    <!-- Signup form -->
+    <form id="signup-form" class="signup-form hidden" autocomplete="on">
+      <label for="signup-name">Full Name</label>
+      <input type="text" id="signup-name" name="name" placeholder="Your full name" maxlength="100" required />
+      <label for="signup-email">Email</label>
+      <input type="email" id="signup-email" name="email" placeholder="you@example.com" required />
+      <label for="signup-password">Password</label>
+      <input type="password" id="signup-password" name="password" placeholder="At least 6 characters" minlength="6" required />
+      <label for="signup-password2">Confirm Password</label>
+      <input type="password" id="signup-password2" name="password2" placeholder="Re-enter password" minlength="6" required />
+      <button type="submit" id="signup-submit" class="btn-wide">Create account</button>
+      <div class="muted">
+        After creating your account, please check your email to verify. Once verified, sign in and complete your Profile. Admin will approve your account before you can access Assessments/Results.
+      </div>
+      <div class="row-inline" style="margin-top:.6rem;">
+        <span class="muted">Already have an account?</span>
+        <button type="button" id="switch-to-login" class="link-btn">Sign in</button>
+      </div>
     </form>
   </div>
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Load Supabase SDK with a fallback CDN, then initialize and wire up UI.
     document.addEventListener('DOMContentLoaded', () => {
       const errorDiv = document.getElementById('error-message');
       const successDiv = document.getElementById('success-message');
+
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
 
-      const form = document.getElementById('login-form');
-      const submitBtn = document.getElementById('submit-btn');
       const alreadyDiv = document.getElementById('already-signed-in');
       const signedInEmail = document.getElementById('signed-in-email');
       const continueBtn = document.getElementById('continue-btn');
       const switchBtn = document.getElementById('switch-btn');
+
+      const tabLogin = document.getElementById('tab-login');
+      const tabSignup = document.getElementById('tab-signup');
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+
+      const loginEmail = document.getElementById('login-email');
+      const loginPassword = document.getElementById('login-password');
+      const loginSubmit = document.getElementById('login-submit');
+
+      const signupName = document.getElementById('signup-name');
+      const signupEmail = document.getElementById('signup-email');
+      const signupPassword = document.getElementById('signup-password');
+      const signupPassword2 = document.getElementById('signup-password2');
+      const signupSubmit = document.getElementById('signup-submit');
+
+      const forgotBtn = document.getElementById('forgot-btn');
+      const switchToSignup = document.getElementById('switch-to-signup');
+      const switchToLogin = document.getElementById('switch-to-login');
 
       let routing = false;
 
@@ -155,32 +190,24 @@
           successDiv.style.display = 'block';
         }
       }
-
-      function addScript(src) {
-        return new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = src;
-          s.async = true;
-          s.onload = () => (window.supabase ? resolve() : reject(new Error('SDK loaded but window.supabase missing')));
-          s.onerror = () => reject(new Error('Failed to load ' + src));
-          document.head.appendChild(s);
-        });
+      function clearMessages() {
+        if (errorDiv) errorDiv.style.display = 'none';
+        if (successDiv) successDiv.style.display = 'none';
       }
 
-      async function loadSupabaseSdkWithFallback() {
-        if (window.supabase) return;
-        try {
-          await addScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js');
-        } catch (e) {
-          console.warn('jsDelivr failed, trying unpkg:', e);
-          await addScript('https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js');
-        }
-        if (!window.supabase) throw new Error('Supabase SDK not available after loading');
+      function activateTab(which) {
+        clearMessages();
+        const isLogin = which === 'login';
+        tabLogin.classList.toggle('active', isLogin);
+        tabSignup.classList.toggle('active', !isLogin);
+        loginForm.classList.toggle('hidden', !isLogin);
+        signupForm.classList.toggle('hidden', isLogin);
+        if (isLogin) loginEmail?.focus(); else signupName?.focus();
       }
 
       function updateAuthUI(session) {
         if (!loginBtn || !logoutBtn) return;
-        if (session && session.user) {
+        if (session?.user) {
           loginBtn.style.display = 'none';
           logoutBtn.style.display = 'inline';
         } else {
@@ -190,17 +217,18 @@
         }
       }
 
-      // Helper: allow safe next= param (relative paths only, to avoid open redirects)
       function getNextUrl() {
         const next = new URLSearchParams(location.search).get('next');
         if (next && /^([a-zA-Z0-9_./-])+\.html(\?.*)?$/.test(next)) return next;
         return null;
       }
 
-      // Ensure there is a profile row, then decide where to route
+      function siteUrl(path) {
+        try { return new URL(path, window.location.origin).toString(); }
+        catch { return window.location.origin + '/' + String(path || '').replace(/^\//,''); }
+      }
+
       async function ensureProfile(sb, uid, email) {
-        // Try read first (requires SELECT policy)
-        let profile = null;
         try {
           const { data, error } = await sb
             .from('profiles')
@@ -208,155 +236,205 @@
             .eq('id', uid)
             .maybeSingle();
           if (error) throw error;
-          profile = data;
+          if (data) return data;
         } catch (e) {
-          console.warn('profiles SELECT failed (RLS likely). Sending to profile setup...', e);
-          window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
+          // If SELECT blocked, we'll route to profile anyway
+        }
+        try {
+          const { data: inserted, error: insErr } = await sb
+            .from('profiles')
+            .insert({ id: uid, email })
+            .select()
+            .maybeSingle();
+          if (insErr) throw insErr;
+          return inserted;
+        } catch (e) {
+          // Ignore; profile page will handle completion
           return null;
         }
-
-        // Insert if missing (requires INSERT policy)
-        if (!profile) {
-          try {
-            const { data: inserted, error: insErr } = await sb
-              .from('profiles')
-              .insert({ id: uid, email })
-              .select()
-              .maybeSingle();
-            if (insErr) throw insErr;
-            profile = inserted;
-          } catch (e) {
-            console.error('profiles INSERT failed (RLS). Sending to profile setup...', e);
-            window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
-            return null;
-          }
-        }
-
-        return profile;
       }
 
       async function routeAfterAuth(sb, user) {
         if (routing) return;
         routing = true;
-        if (continueBtn) continueBtn.disabled = true;
-
-        const prof = await ensureProfile(sb, user.id, user.email || '');
-        if (!prof) return; // ensureProfile already routed on failure
-
-        const role = (prof.role || '').toLowerCase();
-        if (role !== 'admin' && role !== 'student') {
-          // Role not assigned yet → send to profile to finish setup
-          window.location.href = 'profile.html?next=' + encodeURIComponent(getNextUrl() || 'index.html');
-          return;
-        }
-
+        try {
+          await ensureProfile(sb, user.id, user.email || '');
+        } catch {}
         const nextUrl = getNextUrl();
+        // After login, send to index (which shows dashboard), or profile to complete if needed.
         window.location.href = nextUrl || 'index.html';
       }
 
-      async function init() {
-        try {
-          await loadSupabaseSdkWithFallback();
-
-          // Use a global client named "sb"
-          if (!window.sb) {
-            const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
-            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
-            window.sb = window.supabase.createClient(supabaseUrl, supabaseKey);
-          }
-          const sb = window.sb;
-
-          // Initial UI state on load
-          const { data: { session } } = await sb.auth.getSession();
-          updateAuthUI(session);
-
-          // If already signed in, show the "already signed in" panel instead of auto-redirecting
-          if (session?.user) {
-            signedInEmail.textContent = session.user.email || '(no email)';
-            alreadyDiv.style.display = 'block';
-            form.style.display = 'none';
-
-            continueBtn.onclick = () => routeAfterAuth(sb, session.user);
-            switchBtn.onclick = async () => {
-              try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
-              // Show the login form now
-              routing = false;
-              if (continueBtn) continueBtn.disabled = false;
-              alreadyDiv.style.display = 'none';
-              form.style.display = 'block';
-              updateAuthUI(null);
-              showSuccess('Signed out. Please sign in.');
-            };
-          } else {
-            // Not signed in → show the login form
-            alreadyDiv.style.display = 'none';
-            form.style.display = 'block';
-          }
-
-          // Keep UI in sync with future auth changes (no auto-routing)
-          sb.auth.onAuthStateChange((_event, newSession) => {
-            updateAuthUI(newSession);
-            if (newSession && newSession.user) {
-              signedInEmail.textContent = newSession.user.email || '(no email)';
-              alreadyDiv.style.display = 'block';
-              form.style.display = 'none';
-              continueBtn.onclick = () => routeAfterAuth(sb, newSession.user);
-            }
-          });
-
-          // Logout link in navbar
-          if (logoutBtn) {
-            logoutBtn.onclick = async (e) => {
-              e.preventDefault();
-              try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
-              updateAuthUI(null);
-              window.location.href = 'index.html';
-            };
-          }
-
-          // Login submit handler
-          if (form) {
-            form.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const email = document.getElementById('email').value.trim();
-              const password = document.getElementById('password').value;
-
-              if (!email || !password) {
-                showError('Please enter both email and password.');
-                return;
-              }
-
-              showSuccess('Logging in...');
-              submitBtn.disabled = true;
-
-              try {
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
-                if (error) {
-                  showError('Login failed: ' + error.message);
-                  submitBtn.disabled = false;
-                  return;
-                }
-                if (!data || !data.user) {
-                  showError('Login failed. User not found.');
-                  submitBtn.disabled = false;
-                  return;
-                }
-
-                // Route based on profile role (create or load profile first)
-                await routeAfterAuth(sb, data.user);
-              } catch (err) {
-                console.error('Login error:', err);
-                showError('Unexpected error: ' + (err?.message || String(err)));
-                submitBtn.disabled = false;
-              }
-            });
-          }
-        } catch (err) {
-          console.error('Auth init error:', err);
-          showError('Authentication library failed to load. Please check your internet connection and refresh.');
-        }
+      function wireTabs() {
+        tabLogin?.addEventListener('click', () => activateTab('login'));
+        tabSignup?.addEventListener('click', () => activateTab('signup'));
+        switchToSignup?.addEventListener('click', () => activateTab('signup'));
+        switchToLogin?.addEventListener('click', () => activateTab('login'));
       }
 
+      async function init() {
+        if (!window.supabase) {
+          showError('Failed to load authentication library. Please refresh.');
+          return;
+        }
+
+        // Use a shared client "sb" if exists
+        if (!window.sb) {
+          const supabaseUrl = 'https://hunlistfklwvpivfjmbk.supabase.co';
+          const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs';
+          window.sb = window.supabase.createClient(supabaseUrl, supabaseKey);
+        }
+        const sb = window.sb;
+
+        wireTabs();
+
+        // Initial auth state
+        const { data: { session } } = await sb.auth.getSession();
+        updateAuthUI(session);
+
+        if (session?.user) {
+          signedInEmail.textContent = session.user.email || '(no email)';
+          alreadyDiv.classList.remove('hidden');
+          document.getElementById('auth-tabs').classList.add('hidden');
+          loginForm.classList.add('hidden');
+          signupForm.classList.add('hidden');
+
+          continueBtn.onclick = () => routeAfterAuth(sb, session.user);
+          switchBtn.onclick = async () => {
+            try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+            routing = false;
+            alreadyDiv.classList.add('hidden');
+            document.getElementById('auth-tabs').classList.remove('hidden');
+            activateTab('login');
+            updateAuthUI(null);
+            showSuccess('Signed out. Please sign in.');
+          };
+        } else {
+          alreadyDiv.classList.add('hidden');
+          document.getElementById('auth-tabs').classList.remove('hidden');
+          activateTab('login');
+        }
+
+        // Subscribe to future auth changes (no auto-route)
+        sb.auth.onAuthStateChange((_evt, newSession) => {
+          updateAuthUI(newSession);
+          if (newSession?.user) {
+            signedInEmail.textContent = newSession.user.email || '(no email)';
+            alreadyDiv.classList.remove('hidden');
+            document.getElementById('auth-tabs').classList.add('hidden');
+            loginForm.classList.add('hidden');
+            signupForm.classList.add('hidden');
+            continueBtn.onclick = () => routeAfterAuth(sb, newSession.user);
+          }
+        });
+
+        // Navbar logout
+        logoutBtn?.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await sb.auth.signOut(); } catch (err) { console.warn('signOut error:', err); }
+          updateAuthUI(null);
+          window.location.href = 'index.html';
+        });
+
+        // Login submit
+        loginForm?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          clearMessages();
+          const email = (loginEmail.value || '').trim();
+          const password = loginPassword.value || '';
+          if (!email || !password) return showError('Please enter both email and password.');
+
+          loginSubmit.disabled = true;
+          showSuccess('Signing in…');
+
+          try {
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) {
+              showError('Sign-in failed: ' + error.message);
+              loginSubmit.disabled = false;
+              return;
+            }
+            if (!data?.user) {
+              showError('Sign-in failed. User not found.');
+              loginSubmit.disabled = false;
+              return;
+            }
+            await routeAfterAuth(sb, data.user);
+          } catch (err) {
+            console.error('Login error:', err);
+            showError('Unexpected error: ' + (err?.message || String(err)));
+            loginSubmit.disabled = false;
+          }
+        });
+
+        // Forgot password
+        forgotBtn?.addEventListener('click', async () => {
+          clearMessages();
+          const email = (loginEmail.value || '').trim();
+          if (!email) return showError('Enter your email above, then click “Forgot password?”.');
+          try {
+            const { error } = await sb.auth.resetPasswordForEmail(email, {
+              redirectTo: siteUrl('login_Version4.html')
+            });
+            if (error) return showError('Reset failed: ' + error.message);
+            showSuccess('Password reset email sent. Check your inbox (and spam).');
+          } catch (err) {
+            showError('Unexpected error: ' + (err?.message || String(err)));
+          }
+        });
+
+        // Signup submit
+        signupForm?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          clearMessages();
+          const fullName = (signupName.value || '').trim();
+          const email = (signupEmail.value || '').trim();
+          const pw = signupPassword.value || '';
+          const pw2 = signupPassword2.value || '';
+
+          if (!fullName || !email || !pw || !pw2) return showError('Please fill all fields.');
+          if (pw.length < 6) return showError('Password must be at least 6 characters.');
+          if (pw !== pw2) return showError('Passwords do not match.');
+
+          signupSubmit.disabled = true;
+          showSuccess('Creating your account…');
+
+          try {
+            const { data, error } = await sb.auth.signUp({
+              email,
+              password: pw,
+              options: {
+                data: {
+                  full_name: fullName,
+                  role: 'student' // your signup trigger will default role; this is a hint
+                },
+                emailRedirectTo: siteUrl('login_Version4.html')
+              }
+            });
+            if (error) {
+              // Common: user already registered
+              if ((error.message || '').toLowerCase().includes('already')) {
+                showError('An account with this email already exists. Try signing in.');
+              } else {
+                showError('Sign-up failed: ' + error.message);
+              }
+              signupSubmit.disabled = false;
+              return;
+            }
+
+            // Supabase sends a confirmation email if email confirmations are enabled.
+            showSuccess('Account created. Please check your email to verify, then return to sign in.');
+            // Keep the form but disable button to avoid spam
+            signupSubmit.disabled = true;
+          } catch (err) {
+            console.error('Signup error:', err);
+            showError('Unexpected error: ' + (err?.message || String(err)));
+            signupSubmit.disabled = false;
+          }
+        });
+      }
+
+      // Start
       init();
     });
   </script>
