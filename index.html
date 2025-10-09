@@ -364,16 +364,16 @@
         const tempDiv = document.createElement('div');
         tempDiv.style.visibility = 'hidden';
         tempDiv.style.position = 'absolute';
-        tempDiv.style.whiteSpace = 'nowrap';
-        tempDiv.innerHTML = msgHTML;
+        const measure = document.createElement('div');
+        measure.style.whiteSpace = 'nowrap';
+        measure.innerHTML = msgHTML;
+        tempDiv.appendChild(measure);
         document.body.appendChild(tempDiv);
 
-        // Get the width of the ribbon container or fallback value
         const ribbonWidth = document.querySelector('.marquee-notification')?.offsetWidth || 920;
-        const msgWidth = Math.max(tempDiv.offsetWidth, 1);
+        const msgWidth = Math.max(measure.offsetWidth, 1);
         document.body.removeChild(tempDiv);
 
-        // Calculate repeat count: enough to fill 2x ribbon width for continuous scroll
         let repeatCount = Math.ceil((ribbonWidth * 2) / msgWidth);
         if (repeatCount < 2) repeatCount = 2;
 
@@ -466,6 +466,8 @@
       const chatSend = document.getElementById('chat-send');
       const chatStatus = document.getElementById('chat-status');
       const chatSetupHint = document.getElementById('chat-setup-hint');
+      const pcStartAssessments = document.getElementById('pc-start-assessments');
+      const pcViewResults = document.getElementById('pc-view-results');
 
       let currentUser = null;
       let currentRole = 'unknown';
@@ -516,6 +518,51 @@
         const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
         if (error) console.warn('Role fetch error:', error);
         return (data?.role || 'unknown').toString().trim().toLowerCase();
+      }
+
+      // Approval/Active helpers and link protection
+      async function getApprovalStatus(sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session?.user) return { loggedIn: false };
+        const { data: p, error } = await sb
+          .from('profiles')
+          .select('role, approved, active')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (error) console.warn('approval status fetch error', error);
+        return {
+          loggedIn: true,
+          role: (p?.role || '').toLowerCase(),
+          approved: !!p?.approved,
+          active: !!p?.active
+        };
+      }
+
+      function protectLinkApproved(el, allowedRoles = ['student','admin']) {
+        if (!el) return;
+        el.addEventListener('click', async (e) => {
+          const st = await getApprovalStatus(sb);
+          if (!st.loggedIn) {
+            e.preventDefault();
+            window.location.href = 'login_Version4.html';
+            return;
+          }
+          if (!allowedRoles.includes(st.role)) {
+            e.preventDefault();
+            alert('You do not have permission to access this page.');
+            return;
+          }
+          if (!st.active) {
+            e.preventDefault();
+            alert('Your account is deactivated. Please contact admin.');
+            return;
+          }
+          if (!st.approved && st.role !== 'admin') {
+            e.preventDefault();
+            alert('Your account is awaiting admin approval.');
+            return;
+          }
+        });
       }
 
       function renderMsg(m){
@@ -622,21 +669,32 @@
           currentUser = session.user;
           const { data: profile, error: profErr } = await sb
             .from('profiles')
-            .select('name, role, prn, batch, avatar_path')
+            .select('name, role, prn, batch, avatar_path, approved, active')
             .eq('id', currentUser.id)
             .maybeSingle();
           if (profErr) console.warn('Profile fetch error:', profErr);
           currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
-          if (currentRole === 'admin') {
+
+          const approved = !!profile?.approved;
+          const active = !!profile?.active;
+          const isAdmin = currentRole === 'admin';
+          const isApprovedActive = (approved && active) || isAdmin;
+
+          // Admin UI bits
+          if (isAdmin) {
             if (adminPortalLink) adminPortalLink.style.display = 'inline';
             if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
           } else {
             if (adminPortalLink) adminPortalLink.style.display = 'none';
             if (pcAdminBtn) pcAdminBtn.style.display = 'none';
           }
+
+          // Show profile card
           if (profileCard) profileCard.style.display = 'block';
           pcName.textContent = ('Welcome ' + (profile?.name ? profile.name : '')).trim() || 'Welcome';
-          pcRole.textContent = currentRole === 'admin' ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
+          pcRole.textContent = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
+
+          // Student meta
           if (currentRole === 'student') {
             const showPRN = !!(profile?.prn && profile.prn.trim());
             const showBatch = !!(profile?.batch && profile.batch.trim());
@@ -646,29 +704,53 @@
           } else {
             pcMeta.style.display = 'none';
           }
-          if (currentRole === 'admin') {
+
+          // Message
+          if (isAdmin) {
             pcMessage.textContent = 'You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.';
           } else if (currentRole === 'student') {
             pcMessage.textContent = 'Access your assessments and track your progress. Ensure your profile is up to date.';
           } else {
             pcMessage.textContent = 'Set up your profile to get the best experience.';
           }
-          const baseComplete = !!(profile?.name && profile?.role);
-          const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
-          const adminComplete = baseComplete;
-          const isComplete = currentRole === 'admin' ? adminComplete : (currentRole === 'student' ? studentComplete : baseComplete);
-          if (!isComplete) {
+
+          // Gated nav + buttons
+          if (assessmentTab) assessmentTab.style.display = isApprovedActive ? 'inline' : 'none';
+          if (resultsTab) resultsTab.style.display = isApprovedActive ? 'inline' : 'none';
+          if (pcStartAssessments) pcStartAssessments.style.display = isApprovedActive ? 'inline-flex' : 'none';
+          if (pcViewResults) pcViewResults.style.display = isApprovedActive ? 'inline-flex' : 'none';
+
+          // Friendly banners: deactivated > pending > incomplete profile
+          if (!active && !isAdmin) {
             pcNote.style.display = 'block';
-            pcNote.textContent = currentRole === 'student'
-              ? 'Your profile looks incomplete. Please add your PRN and Batch.'
-              : 'Please complete your profile details for a better experience.';
+            pcNote.textContent = 'Your account is deactivated. Please contact an administrator.';
+          } else if (!approved && !isAdmin) {
+            pcNote.style.display = 'block';
+            pcNote.textContent = 'Your account is awaiting admin approval.';
           } else {
-            pcNote.style.display = 'none';
+            const baseComplete = !!(profile?.name && profile?.role);
+            const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
+            const adminComplete = baseComplete;
+            const isComplete = isAdmin ? adminComplete : (currentRole === 'student' ? studentComplete : baseComplete);
+            if (!isComplete) {
+              pcNote.style.display = 'block';
+              pcNote.textContent = currentRole === 'student'
+                ? 'Your profile looks incomplete. Please add your PRN and Batch.'
+                : 'Please complete your profile details for a better experience.';
+            } else {
+              pcNote.style.display = 'none';
+            }
           }
+
+          // Avatar
           const avatarPath = profile?.avatar_path || null;
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
+
+          // Chat
           await initChat();
+
+          // Notifications
           if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
         } catch (e) {
           console.error('refreshUI error:', e);
@@ -705,10 +787,16 @@
           }
         });
       }
-      protectLink(assessmentTab, false);
-      protectLink(resultsTab, false);
+
+      // Keep admin-only protection for Admin Portal
       protectLink(adminPortalLink, true);
       protectLink(document.getElementById('pc-admin-portal'), true);
+
+      // Gate Assessments/Results by approval/active
+      protectLinkApproved(assessmentTab, ['student','admin']);
+      protectLinkApproved(resultsTab, ['student','admin']);
+      protectLinkApproved(pcStartAssessments, ['student','admin']);
+      protectLinkApproved(pcViewResults, ['student','admin']);
 
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
