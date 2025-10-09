@@ -737,7 +737,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
