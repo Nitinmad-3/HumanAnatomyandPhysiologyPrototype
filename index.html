@@ -210,10 +210,9 @@
     .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
     .intro li{ margin: .15rem 0; }
 
-    /* Marquee effect for notification bar */
+    /* Continuous marquee notification bar */
     .marquee-notification {
       overflow: hidden;
-      white-space: nowrap;
       position: relative;
       background: #f0f6ff;
       border-radius: 8px;
@@ -221,18 +220,24 @@
       border: 1px solid #cfe0ff;
       margin: 10px auto;
       max-width: 920px;
+      height: 38px;
+      display: flex;
+      align-items: center;
       padding: 0;
     }
-    .marquee-inner {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 14s linear infinite;
-      min-width: 100%;
-      padding: 10px 0 10px 0;
+    .marquee-track {
+      display: flex;
+      align-items: center;
+      width: max-content;
+      /* Duration: Adjust for desired speed, longer means slower */
+      animation: marquee-left 22s linear infinite;
     }
-    @keyframes marquee {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
+    @keyframes marquee-left {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee-notification:hover .marquee-track {
+      animation-play-state: paused;
     }
 
     @media (max-width: 700px) {
@@ -339,11 +344,15 @@
         const sev = (n.severity || 'info').toLowerCase();
         if (sev === 'danger') color = '#c62828';
         else if (sev === 'warning') color = '#ffb300';
+        const msg = `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
+          <span style="margin-left:.5rem; color:#123;">${n.message || ''}</span>`;
+        // Duplicate the message for smooth, continuous scroll
         return `
           <div class="marquee-notification" style="border-left:6px solid ${color};">
-            <div class="marquee-inner">
-              <strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
-              <span style="margin-left:.5rem; color:#123;">${n.message || ''}</span>
+            <div class="marquee-track">
+              ${msg}
+              <span style="padding-left: 2rem;"></span>
+              ${msg}
             </div>
           </div>
         `;
