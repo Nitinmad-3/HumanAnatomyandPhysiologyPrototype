@@ -47,10 +47,15 @@
 
     /* Users */
     table { width:100%; border-collapse:collapse; }
-    th, td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; }
+    th, td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; vertical-align:top; }
     th { background:#f0f6ff; color:#1565c0; }
     .lock-on { color:#2e7d32; font-weight:700; }
     .lock-off { color:#c62828; font-weight:700; }
+    .chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid #cfe0ff; }
+    .chip.approved { background:#e8f5e9; color:#1b5e20; }
+    .chip.pending { background:#fff8e1; color:#e65100; }
+    .chip.active { background:#e3f2fd; color:#1565c0; }
+    .chip.inactive { background:#ffebee; color:#c62828; }
 
     /* Assessments table */
     .assess-table { width:100%; border-collapse:collapse; margin-top:8px; }
@@ -70,7 +75,7 @@
   </header>
 
   <main>
-    <!-- Users (list, search, add, lock toggle) -->
+    <!-- Users: Pending Approval + Approved Students -->
     <section class="panel" id="users-panel">
       <h2 class="section-title">Users</h2>
       <div class="grid">
@@ -101,24 +106,58 @@
         </details>
       </div>
 
-      <div style="overflow:auto; max-height:55vh; margin-top:10px;">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">PRN</th>
-              <th scope="col">Batch</th>
-              <th scope="col">Email</th>
-              <th scope="col">Role</th>
-              <th scope="col">Profile Editing</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-tbody">
-            <tr><td colspan="7" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
+      <!-- Pending approvals -->
+      <div style="margin-top:14px;">
+        <div class="row" style="justify-content:space-between;">
+          <h3 class="section-title" style="margin:0;">Pending Approvals</h3>
+          <span id="count-pending" class="badge">0</span>
+        </div>
+        <div style="overflow:auto; max-height:40vh; margin-top:8px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>PRN</th>
+                <th>Batch</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Profile Editing</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pending-tbody">
+              <tr><td colspan="7" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- Approved students -->
+      <div style="margin-top:18px;">
+        <div class="row" style="justify-content:space-between;">
+          <h3 class="section-title" style="margin:0;">Approved Students</h3>
+          <span id="count-approved" class="badge">0</span>
+        </div>
+        <div style="overflow:auto; max-height:40vh; margin-top:8px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>PRN</th>
+                <th>Batch</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Profile Editing</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approved-tbody">
+              <tr><td colspan="7" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div id="users-setup-hint" class="hint" style="display:none; margin-top:6px;">
         If listing fails, ensure RLS allows admin to SELECT profiles.
       </div>
@@ -172,11 +211,11 @@
           </select>
         </div>
         <div>
-          <label for="notif-start-ist">Starts (IST)</label>
+          <label for="notif-start-ist">Starts (Local)</label>
           <input type="datetime-local" id="notif-start-ist" class="input" />
         </div>
         <div>
-          <label for="notif-end-ist">Ends (IST)</label>
+          <label for="notif-end-ist">Ends (Local)</label>
           <input type="datetime-local" id="notif-end-ist" class="input" />
         </div>
       </div>
@@ -232,7 +271,6 @@
     const userSearch = $('#user-search');
     const userRefresh = $('#user-refresh');
     const usersStatus = $('#users-status');
-    const usersTbody = $('#users-tbody');
     const usersSetupHint = $('#users-setup-hint');
 
     const newEmail = $('#new-email');
@@ -241,6 +279,11 @@
     const newBatch = $('#new-batch');
     const userCreate = $('#user-create');
     const userCreateStatus = $('#user-create-status');
+
+    const pendingTbody = $('#pending-tbody');
+    const approvedTbody = $('#approved-tbody');
+    const countPending = $('#count-pending');
+    const countApproved = $('#count-approved');
 
     // Assessments table
     const assessTbody = $('#assess-tbody');
@@ -272,19 +315,17 @@
 
     // Helpers: datetime-local (treat as local), convert to/from UTC for DB
     function pad(n){ return String(n).padStart(2,'0'); }
-    // Convert a datetime-local string (local clock) to UTC ISO string
     function istLocalToUTC(dtLocal){
       if(!dtLocal) return null;
       const [d,t] = dtLocal.split('T');
       const [y,m,day] = d.split('-').map(Number);
       const [hh,mm] = (t||'00:00').split(':').map(Number);
-      const local = new Date(y, (m||1)-1, day||1, hh||0, mm||0, 0, 0); // local time
-      return local.toISOString(); // UTC ISO
+      const local = new Date(y, (m||1)-1, day||1, hh||0, mm||0, 0, 0);
+      return local.toISOString();
     }
-    // Convert a UTC ISO string from DB to a datetime-local value in the admin's local timezone
     function utcToIstDatetimeLocal(utcStr){
       if(!utcStr) return '';
-      const d = new Date(utcStr); // this represents the same instant; getters use local tz
+      const d = new Date(utcStr);
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
@@ -327,43 +368,124 @@
       return true;
     }
 
-    // USERS — direct SELECT (no RPC), only role='student'
-    async function listStudents(){
-      usersStatus.textContent = 'Loading…';
-      usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+    // USERS — Queries
+    function buildSearchOr(search){
+      return search
+        ? `name.ilike.%${search}%,email.ilike.%${search}%,prn.ilike.%${search}%,batch.ilike.%${search}%`
+        : null;
+    }
+
+    async function listPendingStudents(){
+      const search = (userSearch?.value || '').trim();
+      const orFilter = buildSearchOr(search);
+      let q = sb.from('profiles')
+        .select('id,name,prn,batch,role,email,profile_edit_locked,approved,active,approved_at,approved_by')
+        .eq('role','student')
+        .eq('approved', false)
+        .order('created_at', { ascending:true });
+      if(orFilter) q = q.or(orFilter);
+      const { data, error } = await q;
+      if(error) throw error;
+      return data || [];
+    }
+
+    async function listApprovedStudents(){
+      const search = (userSearch?.value || '').trim();
+      const orFilter = buildSearchOr(search);
+      let q = sb.from('profiles')
+        .select('id,name,prn,batch,role,email,profile_edit_locked,approved,active,approved_at,approved_by')
+        .eq('role','student')
+        .eq('approved', true)
+        .order('name', { ascending:true });
+      if(orFilter) q = q.or(orFilter);
+      const { data, error } = await q;
+      if(error) throw error;
+      return data || [];
+    }
+
+    // USERS — Actions (RPCs)
+    async function approveUser(id){
+      usersStatus.textContent = 'Approving…';
       try{
-        const search = (userSearch?.value || '').trim();
-        const orFilter = search
-          ? `name.ilike.%${search}%,email.ilike.%${search}%,prn.ilike.%${search}%,batch.ilike.%${search}%`
-          : null;
-
-        let q = sb.from('profiles')
-          .select('id,name,prn,batch,role,email,profile_edit_locked')
-          .eq('role','student')
-          .order('name', { ascending:true });
-
-        if(orFilter) q = q.or(orFilter);
-
-        const { data, error } = await q;
+        const { error } = await sb.rpc('admin_set_user_approved', {
+          target_user: id,
+          is_approved: true,
+          reason: null
+        });
         if(error) throw error;
-
-        usersSetupHint.style.display='none';
-        renderUsers(data || []);
+        await refreshUsers();
+      }catch(e){
+        alert('Approve failed: ' + (e?.message || e));
+      }finally{
         usersStatus.textContent = '';
-      } catch(e){
-        console.warn('listStudents failed', e);
-        usersStatus.textContent = 'Failed to load.';
-        usersTbody.innerHTML = '<tr><td colspan="7" class="muted">Failed.</td></tr>';
-        usersSetupHint.style.display='block';
       }
     }
 
-    function renderUsers(rows){
+    async function deactivateUser(id){
+      const reason = prompt('Deactivation reason (optional):','');
+      usersStatus.textContent = 'Deactivating…';
+      try{
+        const { error } = await sb.rpc('admin_set_user_active', {
+          target_user: id,
+          make_active: false,
+          reason
+        });
+        if(error) throw error;
+        await refreshUsers();
+      }catch(e){
+        alert('Deactivate failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
+    async function activateUser(id){
+      usersStatus.textContent = 'Reactivating…';
+      try{
+        const { error } = await sb.rpc('admin_set_user_active', {
+          target_user: id,
+          make_active: true,
+          reason: null
+        });
+        if(error) throw error;
+        await refreshUsers();
+      }catch(e){
+        alert('Activate failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
+    async function toggleProfileLock(id, currentLocked){
+      usersStatus.textContent = 'Updating…';
+      try{
+        const { error } = await sb.from('profiles')
+          .update({ profile_edit_locked: !currentLocked })
+          .eq('id', id);
+        if(error) throw error;
+        await refreshUsers();
+      }catch(e){
+        alert('Update failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
+    // USERS — Renderers
+    function renderStatusChips(row){
+      const chips = [];
+      chips.push(row.approved ? '<span class="chip approved">Approved</span>' : '<span class="chip pending">Pending</span>');
+      chips.push(row.active ? '<span class="chip active">Active</span>' : '<span class="chip inactive">Inactive</span>');
+      return chips.join(' ');
+    }
+
+    function renderPending(rows){
+      countPending.textContent = rows.length;
       if(!rows.length){
-        usersTbody.innerHTML = '<tr><td colspan="7" class="muted">No students found.</td></tr>';
+        pendingTbody.innerHTML = '<tr><td colspan="7" class="muted">No pending students.</td></tr>';
         return;
       }
-      usersTbody.innerHTML = rows.map(r=>{
+      pendingTbody.innerHTML = rows.map(r=>{
         const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Editable</span>';
         const btnLabel = r.profile_edit_locked ? 'Unlock' : 'Lock';
         return `<tr data-id="${r.id}">
@@ -371,31 +493,88 @@
           <td>${htmlesc(r.prn || '')}</td>
           <td>${htmlesc(r.batch || '')}</td>
           <td>${htmlesc(r.email || '')}</td>
-          <td>${htmlesc(r.role || '')}</td>
+          <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
-          <td><button class="btn small" data-act="toggle">${btnLabel}</button></td>
+          <td class="row" style="gap:6px;">
+            <button class="btn small" data-act="approve">Approve</button>
+            <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
+            <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
+          </td>
         </tr>`;
       }).join('');
 
-      usersTbody.querySelectorAll('button[data-act="toggle"]').forEach(btn=>{
-        btn.onclick = async ()=>{
-          const tr = btn.closest('tr');
-          const id = tr.getAttribute('data-id');
-          btn.disabled = true;
-          usersStatus.textContent = 'Updating…';
-          try{
-            const lockedNow = !!tr.querySelector('.lock-on');
-            const { error } = await sb.from('profiles').update({ profile_edit_locked: !lockedNow }).eq('id', id);
-            if(error) throw error;
-            await listStudents();
-          } catch(e){
-            alert('Update failed: ' + (e?.message || e));
-          } finally {
-            btn.disabled = false;
-            usersStatus.textContent = '';
-          }
+      pendingTbody.querySelectorAll('button[data-act="approve"]').forEach(b=>{
+        b.onclick = () => approveUser(b.closest('tr').getAttribute('data-id'));
+      });
+      pendingTbody.querySelectorAll('button[data-act="deactivate"]').forEach(b=>{
+        b.onclick = () => deactivateUser(b.closest('tr').getAttribute('data-id'));
+      });
+      pendingTbody.querySelectorAll('button[data-act="toggle"]').forEach(b=>{
+        b.onclick = () => {
+          const tr = b.closest('tr');
+          const lockedNow = !!tr.querySelector('.lock-on');
+          toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
         };
       });
+    }
+
+    function renderApproved(rows){
+      countApproved.textContent = rows.length;
+      if(!rows.length){
+        approvedTbody.innerHTML = '<tr><td colspan="7" class="muted">No approved students.</td></tr>';
+        return;
+      }
+      approvedTbody.innerHTML = rows.map(r=>{
+        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Editable</span>';
+        const btnLabel = r.profile_edit_locked ? 'Unlock' : 'Lock';
+        return `<tr data-id="${r.id}">
+          <td>${htmlesc(r.name || '')}</td>
+          <td>${htmlesc(r.prn || '')}</td>
+          <td>${htmlesc(r.batch || '')}</td>
+          <td>${htmlesc(r.email || '')}</td>
+          <td>${renderStatusChips(r)}</td>
+          <td>${lockTxt}</td>
+          <td class="row" style="gap:6px;">
+            <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
+            <button class="btn small" data-act="activate" ${r.active ? 'disabled' : ''}>Activate</button>
+            <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      approvedTbody.querySelectorAll('button[data-act="deactivate"]').forEach(b=>{
+        b.onclick = () => deactivateUser(b.closest('tr').getAttribute('data-id'));
+      });
+      approvedTbody.querySelectorAll('button[data-act="activate"]').forEach(b=>{
+        b.onclick = () => activateUser(b.closest('tr').getAttribute('data-id'));
+      });
+      approvedTbody.querySelectorAll('button[data-act="toggle"]').forEach(b=>{
+        b.onclick = () => {
+          const tr = b.closest('tr');
+          const lockedNow = !!tr.querySelector('.lock-on');
+          toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
+        };
+      });
+    }
+
+    async function refreshUsers(){
+      usersStatus.textContent = 'Loading…';
+      try{
+        const [pending, approved] = await Promise.all([
+          listPendingStudents(),
+          listApprovedStudents()
+        ]);
+        usersSetupHint.style.display='none';
+        renderPending(pending);
+        renderApproved(approved);
+        usersStatus.textContent = '';
+      }catch(e){
+        console.warn('Users listing failed', e);
+        usersStatus.textContent = 'Failed to load.';
+        usersSetupHint.style.display='block';
+        pendingTbody.innerHTML = '<tr><td colspan="7" class="muted">Failed to load.</td></tr>';
+        approvedTbody.innerHTML = '<tr><td colspan="7" class="muted">Failed to load.</td></tr>';
+      }
     }
 
     async function createStudent(){
@@ -412,7 +591,7 @@
         if(!data?.ok){ throw new Error(data?.error || 'Create failed'); }
         userCreateStatus.textContent = 'Created.';
         newEmail.value = ''; newName.value=''; newPRN.value=''; newBatch.value='';
-        await listStudents();
+        await refreshUsers();
       } catch(e){
         console.warn('createStudent failed', e);
         userCreateStatus.textContent = 'Failed: ' + (e?.message || e);
@@ -503,7 +682,6 @@
               window_end: istLocalToUTC(endVal)
             };
             let { error } = await sb.from('assessments').update(payload).eq('id', id);
-            // If window_end column doesn't exist, retry with only window_start
             if(error && (String(error.code) === '42703' || /column .*window_end.* does not exist/i.test(error.message || ''))){
               const { error:err2 } = await sb.from('assessments')
                 .update({ window_start: istLocalToUTC(startVal) })
@@ -517,7 +695,7 @@
             tableStatus.textContent = 'Dates saved.';
           }catch(e){
             console.warn('save dates', e);
-            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -526,7 +704,7 @@
       });
     }
 
-    // Bulk lock/unlock (PostgREST requires a WHERE clause)
+    // Bulk lock/unlock
     async function unlockAll(){
       unlockAllBtn.disabled = true; lockAllBtn.disabled = true;
       tableStatus.textContent = 'Unlocking all…';
@@ -534,13 +712,13 @@
         const { error } = await sb
           .from('assessments')
           .update({ locked:false })
-          .not('id','is', null); // matches all rows
+          .not('id','is', null);
         if(error) throw error;
         const updated = await loadAssessments();
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -553,13 +731,13 @@
         const { error } = await sb
           .from('assessments')
           .update({ locked:true })
-          .not('id','is', null); // matches all rows
+          .not('id','is', null);
         if(error) throw error;
         const updated = await loadAssessments();
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -607,7 +785,6 @@
           if(String(error?.code) === '42P01'){ notifSetupHint.style.display = 'block'; }
           throw error;
         }
-        // render
         notifList.innerHTML = '';
         (data||[]).forEach(n=>{
           const el = document.createElement('div');
@@ -721,9 +898,9 @@
       setStatus('Loading data…');
 
       // Users
-      await listStudents();
-      userRefresh.onclick = listStudents;
-      userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') listStudents(); });
+      await refreshUsers();
+      userRefresh.onclick = refreshUsers;
+      userSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter') refreshUsers(); });
       userCreate.onclick = createStudent;
 
       // Assessments
