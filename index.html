@@ -346,25 +346,50 @@
 
   <!-- Inline Home Notifications (avoid 404 on missing external file) -->
   <script>
+    // Renders Active notifications on Home; treats null Starts/Ends as "always visible".
+    // Works with your current RLS (authenticated users can read).
     (function () {
       function renderNotification(n) {
         let color = '#1565c0';
         const sev = (n.severity || 'info').toLowerCase();
         if (sev === 'danger') color = '#c62828';
         else if (sev === 'warning') color = '#ffb300';
-        const msg = `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
+
+        // Render the message HTML
+        const msgHTML = `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
           <span style="margin-left:.5rem; color:#123;">${n.message || ''}</span>`;
-        // Duplicate message for smooth looping
+
+        // Create a temporary element to measure message width
+        const tempDiv = document.createElement('div');
+        tempDiv.style.visibility = 'hidden';
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.whiteSpace = 'nowrap';
+        tempDiv.innerHTML = msgHTML;
+        document.body.appendChild(tempDiv);
+
+        // Get the width of the ribbon container or fallback value
+        const ribbonWidth = document.querySelector('.marquee-notification')?.offsetWidth || 920;
+        const msgWidth = tempDiv.offsetWidth;
+        document.body.removeChild(tempDiv);
+
+        // Calculate repeat count: enough to fill 2x ribbon width for continuous scroll
+        let repeatCount = Math.ceil((ribbonWidth * 2) / msgWidth);
+        if (repeatCount < 2) repeatCount = 2; // Always at least 2
+
+        let marqueeContent = '';
+        for (let i = 0; i < repeatCount; i++) {
+          marqueeContent += msgHTML + '<span style="padding-left: 2rem;"></span>';
+        }
+
         return `
           <div class="marquee-notification" style="border-left:6px solid ${color};">
             <div class="marquee-track">
-              ${msg}
-              <span style="padding-left: 2rem;"></span>
-              ${msg}
+              ${marqueeContent}
             </div>
           </div>
         `;
       }
+
       function isWithinWindow(n, now) {
         const sOk = !n.starts_at || new Date(n.starts_at) <= now;
         const eOk = !n.ends_at || new Date(n.ends_at) >= now;
@@ -373,10 +398,12 @@
       async function loadHomeNotifications(sb) {
         const container = document.getElementById('home-notifications');
         if (!container) return;
+
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) { container.innerHTML = ''; return; }
         } catch (_) {}
+
         container.innerHTML = '';
         const now = new Date();
         const { data, error } = await sb
@@ -385,6 +412,7 @@
           .eq('active', true)
           .order('created_at', { ascending: false })
           .limit(25);
+
         if (error) { console.warn('home_notifications load error:', error); return; }
         const rows = (data || []).filter(n => isWithinWindow(n, now));
         container.innerHTML = rows.map(renderNotification).join('');
