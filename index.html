@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Human Anatomy & Physiology Portal</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <!-- Fix favicon 404 by providing an inline SVG favicon -->
+  <link
+    rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif">H</text></svg>'
+  />
+
   <style>
     :root{
       --blue:#1565c0;
@@ -210,46 +217,38 @@
     .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
     .intro li{ margin: .15rem 0; }
 
-    /* Marquee notification bar: continuous and smooth */
-    <div class="marquee-notification" style="border-left:6px solid #1565c0;">
-  <div class="marquee-track">
-    <strong style="color:#1565c0; text-transform:uppercase;">info</strong>
-    <span style="margin-left:.5rem; color:#123;">This is your notification message scrolling continuously!</span>
-    <span style="padding-left: 2rem;"></span>
-    <strong style="color:#1565c0; text-transform:uppercase;">info</strong>
-    <span style="margin-left:.5rem; color:#123;">This is your notification message scrolling continuously!</span>
-  </div>
-</div>
-<style>
-.marquee-notification {
-  position: relative;
-  overflow: hidden;
-  background: #f0f6ff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(13,37,62,.10);
-  border: 1px solid #cfe0ff;
-  margin: 10px auto;
-  max-width: 920px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  padding: 0;
-}
-.marquee-track {
-  display: flex;
-  white-space: nowrap;
-  animation: marquee 30s linear infinite;
-  align-items: center;
-  height: 100%;
-}
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.marquee-notification:hover .marquee-track {
-  animation-play-state: paused;
-}
-</style>
+    /* Marquee notification bar: continuous and smooth (moved out of HTML, pure CSS only) */
+    .marquee-notification {
+      position: relative;
+      overflow: hidden;
+      background: #f0f6ff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(13,37,62,.10);
+      border: 1px solid #cfe0ff;
+      margin: 10px auto;
+      max-width: 920px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+    .marquee-track {
+      display: inline-flex;
+      white-space: nowrap;
+      align-items: center;
+      height: 100%;
+      will-change: transform;
+      animation: marquee 30s linear infinite;
+      padding-left: 100%;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee-notification:hover .marquee-track {
+      animation-play-state: paused;
+    }
+  </style>
 </head>
 <body>
   <div class="overlay">
@@ -268,8 +267,8 @@
       </nav>
     </header>
 
-    <!-- Notifications Banner -->
-    <div id="home-notifications"></div>
+    <!-- Notifications Banner (JS will render marquee banners here) -->
+    <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Unified Profile + Dashboard card (modern, no avatar upload) -->
     <section id="profile-dashboard-card" class="card" style="display:none;">
@@ -339,15 +338,27 @@
 
   <script>
     (function () {
+      // Safely escape notification text
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
       function renderNotification(n) {
         let color = '#1565c0';
         const sev = (n.severity || 'info').toLowerCase();
         if (sev === 'danger') color = '#c62828';
         else if (sev === 'warning') color = '#ffb300';
 
+        const messageText = escapeHtml(n.message || '');
+
         // Render the message HTML
         const msgHTML = `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
-          <span style="margin-left:.5rem; color:#123;">${n.message || ''}</span>`;
+          <span style="margin-left:.5rem; color:#123;">${messageText}</span>`;
 
         // Create a temporary element to measure message width
         const tempDiv = document.createElement('div');
@@ -359,7 +370,7 @@
 
         // Get the width of the ribbon container or fallback value
         const ribbonWidth = document.querySelector('.marquee-notification')?.offsetWidth || 920;
-        const msgWidth = tempDiv.offsetWidth;
+        const msgWidth = Math.max(tempDiv.offsetWidth, 1);
         document.body.removeChild(tempDiv);
 
         // Calculate repeat count: enough to fill 2x ribbon width for continuous scroll
@@ -373,7 +384,7 @@
 
         return `
           <div class="marquee-notification" style="border-left:6px solid ${color};">
-            <div class="marquee-track">
+            <div class="marquee-track" role="marquee" aria-label="Notification: ${sev}">
               ${marqueeContent}
             </div>
           </div>
@@ -385,6 +396,7 @@
         const eOk = !n.ends_at || new Date(n.ends_at) >= now;
         return sOk && eOk;
       }
+
       async function loadHomeNotifications(sb) {
         const container = document.getElementById('home-notifications');
         if (!container) return;
@@ -405,6 +417,12 @@
 
         if (error) { console.warn('home_notifications load error:', error); return; }
         const rows = (data || []).filter(n => isWithinWindow(n, now));
+
+        if (rows.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
         container.innerHTML = rows.map(renderNotification).join('');
       }
       window.__loadHomeNotifications = loadHomeNotifications;
