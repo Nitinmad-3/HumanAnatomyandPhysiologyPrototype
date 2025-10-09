@@ -217,7 +217,7 @@
     .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
     .intro li{ margin: .15rem 0; }
 
-    /* Efficient Marquee notification bar: two-segment loop */
+    /* Efficient Marquee notification bar: two-segment loop (or multi-segment if configured) */
     .marquee-notification {
       position: relative;
       overflow: hidden;
@@ -346,6 +346,15 @@
 
   <script>
     (function () {
+      // CONFIG: Choose how the marquee renders
+      // 'infinite' (recommended): 2 segments + infinite loop (smooth, minimal DOM)
+      // 'repeat': physically repeat the message REPEAT_COUNT times (heavier DOM)
+      const MARQUEE_MODE = 'repeat'; // 'infinite' | 'repeat'
+      const MARQUEE_REPEAT_COUNT = 50; // used when MARQUEE_MODE='repeat' (clamped to [2..50])
+      const PX_PER_SEC = 100; // scroll speed in pixels per second (adjust to taste)
+      const DURATION_MIN = 12; // seconds
+      const DURATION_MAX = 40; // seconds
+
       // Reusable hidden measurer to avoid repeated DOM churn
       const __measure = document.createElement('div');
       __measure.style.cssText = 'position:absolute; left:-99999px; top:-99999px; visibility:hidden; white-space:nowrap;';
@@ -378,7 +387,7 @@
         const messageText = escapeHtml(n.message || '');
         const segment = segmentHTML(color, sev, messageText);
 
-        // Ensure measurer is attached (in case called before DOMContentLoaded)
+        // Ensure measurer is attached
         if (document.body && !document.body.contains(__measure)) {
           try { document.body.appendChild(__measure); } catch (_) {}
         }
@@ -387,16 +396,31 @@
         const segmentWidth = Math.max(__measure.firstChild?.scrollWidth || 0, 1);
         const gapPx = 32; // matches padding-right in .marquee-segment
 
-        // Distance to scroll for one full cycle = one segment + gap
+        // Distance to scroll for one full cycle = width of one segment + gap
         const distance = segmentWidth + gapPx;
 
-        // Speed: ~100 px/s feels smooth; clamp to [12s, 40s]
-        const pxPerSec = 100;
-        const duration = Math.min(40, Math.max(12, distance / pxPerSec));
+        // Compute duration based on speed, clamped
+        const duration = Math.min(DURATION_MAX, Math.max(DURATION_MIN, distance / PX_PER_SEC));
 
-        // Two segments only (second is aria-hidden) for a seamless loop
+        if (MARQUEE_MODE === 'repeat') {
+          const count = Math.max(2, Math.min(Number(MARQUEE_REPEAT_COUNT) || 2, 50));
+          let segmentsHTML = '';
+          for (let i = 0; i < count; i++) {
+            // aria-hidden on duplicates to avoid verbose SR experience
+            segmentsHTML += `<div class="marquee-segment" ${i ? 'aria-hidden="true"' : ''}>${segment}</div>`;
+          }
+          return `
+            <div class="marquee-notification" style="border-left:6px solid ${color};" data-mode="repeat" data-count="${count}">
+              <div class="marquee-track" style="--scroll-distance:${distance}px; animation-duration:${duration}s;">
+                ${segmentsHTML}
+              </div>
+            </div>
+          `;
+        }
+
+        // Default: infinite (two segments) — minimal DOM, loops forever
         return `
-          <div class="marquee-notification" style="border-left:6px solid ${color};">
+          <div class="marquee-notification" style="border-left:6px solid ${color};" data-mode="infinite">
             <div class="marquee-track" style="--scroll-distance:${distance}px; animation-duration:${duration}s;">
               <div class="marquee-segment">${segment}</div>
               <div class="marquee-segment" aria-hidden="true">${segment}</div>
