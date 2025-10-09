@@ -186,12 +186,32 @@
         if(loggedIn){
           if(loginBtn) loginBtn.style.display='none';
           if(logoutBtn) logoutBtn.style.display='inline';
-          if(resultsTab) resultsTab.style.display='inline';
         }else{
           if(logoutBtn) logoutBtn.style.display='none';
           if(loginBtn){ loginBtn.style.display='inline'; loginBtn.href='login_Version4.html'; }
           if(resultsTab) resultsTab.style.display='none';
         }
+      }
+
+      async function getApprovalStatus() {
+        const { data:{ session } } = await sb.auth.getSession();
+        if(!session?.user) return { loggedIn:false };
+        const { data: p, error } = await sb
+          .from('profiles')
+          .select('role, approved, active')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (error) { console.warn('approval status fetch error', error); }
+        const role = (p?.role || '').toLowerCase();
+        const isAdmin = role === 'admin';
+        return {
+          loggedIn: true,
+          role,
+          isAdmin,
+          approved: !!p?.approved,
+          active: !!p?.active,
+          isApprovedActive: isAdmin || (!!p?.approved && !!p?.active)
+        };
       }
 
       async function getRole(uid){
@@ -423,11 +443,31 @@
           .select('id,title,locked,window_start,window_end')
           .order('id', { ascending:true });
         if(error){
+          // If RLS denies, show access denied rather than generic error
+          const msg = (error && (error.message||'')).toLowerCase();
+          if (msg.includes('permission') || msg.includes('not allowed') || msg.includes('rls')) {
+            showState('denied');
+            return [];
+          }
           console.error('Failed to load assessments:', error);
           throw error;
         }
         // Keep only rows that have a URL mapped
         return (data || []).filter(r => URLS_BY_ID[r.id]);
+      }
+
+      // Gate clicks to Results by approval/active
+      function protectResultsLink(el){
+        if(!el) return;
+        el.addEventListener('click', async (e)=>{
+          const st = await getApprovalStatus();
+          if(!st.loggedIn){ e.preventDefault(); window.location.href='login_Version4.html'; return; }
+          if(!st.isApprovedActive){
+            e.preventDefault();
+            alert(st.active === false ? 'Your account is deactivated.' : 'Your account is awaiting admin approval.');
+            return;
+          }
+        });
       }
 
       async function init(){
@@ -440,13 +480,22 @@
           }
           setNav(true);
 
-          const role = await getRole(session.user.id);
-          if(!role){
+          // Check approval + active
+          const st = await getApprovalStatus();
+          // Toggle Results visibility based on approval/active (admins always see)
+          if (resultsTab) resultsTab.style.display = st.isApprovedActive ? 'inline' : 'none';
+          protectResultsLink(resultsTab);
+
+          if(!st.isApprovedActive){
+            // Not approved or deactivated (and not admin) => deny
             showState('denied');
             return;
           }
+
+          // Proceed (allowed)
           showState('allowed');
 
+          const role = st.role || (await getRole(session.user.id)) || '';
           const rows = await loadAssessments();
           renderList(rows, role);
           startTicker(rows);
@@ -459,17 +508,20 @@
               return;
             }
             setNav(true);
-            const r = await getRole(newSession.user.id);
-            if(!r) showState('denied'); else showState('allowed');
+            const nxt = await getApprovalStatus();
+            if (resultsTab) resultsTab.style.display = nxt.isApprovedActive ? 'inline' : 'none';
+            if(!nxt.isApprovedActive) showState('denied'); else showState('allowed');
+            if(nxt.isApprovedActive){
+              const rows2 = await loadAssessments();
+              const role2 = nxt.role || (await getRole(newSession.user.id)) || '';
+              renderList(rows2, role2);
+              startTicker(rows2);
+            } else {
+              assessListEl.innerHTML = '';
+              assessCount.textContent = '0';
+              if(tickTimer) clearInterval(tickTimer);
+            }
           });
-
-          // Protect Results link
-          if(resultsTab){
-            resultsTab.addEventListener('click', async (e)=>{
-              const { data:{ session } } = await sb.auth.getSession();
-              if(!session?.user){ e.preventDefault(); window.location.href='login_Version4.html'; }
-            });
-          }
 
           // Logout hardened
           if(logoutBtn){
