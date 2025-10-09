@@ -8,7 +8,7 @@
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0; }
     header { text-align: center; padding: 2rem 1rem 1rem 1rem; }
     h1 { color: #33691e; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
+    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
     nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer; }
     nav a:hover, nav button:hover { background: #aed581; }
 
@@ -18,6 +18,16 @@
     .notice.info { color: #1b5e20; background: #e8f5e9; border: 1px solid #c8e6c9; }
     .notice.warn { color: #b28704; background: #fff8e1; border: 1px solid #ffe082; }
     .notice.error { color: #b71c1c; background: #ffebee; border: 1px solid #ffcdd2; }
+
+    .chips { display:flex; gap:8px; flex-wrap:wrap; margin: 0 0 12px 0; }
+    .chip {
+      display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:.85rem; font-weight:700;
+      border:1px solid #d7e9c2; background:#eef7e6; color:#33691e;
+    }
+    .chip.role { background:#eef7e6; border-color:#d7e9c2; color:#33691e; }
+    .chip.approved { background:#e8f5e9; border-color:#c8e6c9; color:#1b5e20; }
+    .chip.pending { background:#fff8e1; border-color:#ffe082; color:#e65100; }
+    .chip.deactivated { background:#ffebee; border-color:#ffcdd2; color:#b71c1c; }
 
     .grid { display: grid; grid-template-columns: 240px 1fr; gap: 1.25rem; }
     .avatar-card { background: #f9fff2; border: 1px dashed #c5e1a5; border-radius: 12px; padding: 1rem; text-align: center; }
@@ -70,6 +80,11 @@
   </header>
 
   <div class="container" id="profile-card">
+    <div class="chips" id="status-chips" aria-live="polite">
+      <span id="chip-role" class="chip role">Role: —</span>
+      <span id="chip-approval" class="chip pending">Status: Checking…</span>
+    </div>
+
     <div id="status-info" class="notice info hidden"></div>
     <div id="status-warn" class="notice warn hidden"></div>
     <div id="status-error" class="notice error hidden"></div>
@@ -150,7 +165,7 @@
         </form>
 
         <div class="footer-links">
-          <a href="assessments.html">Go to Assessments</a>
+          <a id="go-assessments-link" href="assessments.html">Go to Assessments</a>
           <a href="experiments.html">Go to Experiments</a>
           <a href="index.html">Back to Home</a>
         </div>
@@ -168,6 +183,11 @@
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const assessTab = document.getElementById('assessment-tab');
+      const goAssessLink = document.getElementById('go-assessments-link');
+
+      const statusChips = document.getElementById('status-chips');
+      const chipRole = document.getElementById('chip-role');
+      const chipApproval = document.getElementById('chip-approval');
 
       const statusInfo = document.getElementById('status-info');
       const statusWarn = document.getElementById('status-warn');
@@ -247,7 +267,6 @@
       }
 
       function applyEditLock(locked, role) {
-        // Enforce lock only for students (admins always editable)
         const isStudent = (role || '').toLowerCase() === 'student';
         const shouldLock = !!locked && isStudent;
 
@@ -262,7 +281,6 @@
         ].join(',');
 
         document.querySelectorAll(disableSelectors).forEach(el => {
-          // Keep reload button usable
           if (el.id === 'reload-btn') return;
           el.disabled = shouldLock;
         });
@@ -270,7 +288,6 @@
         if (shouldLock) {
           show(statusWarn, 'Profile editing is locked by admin.');
         } else {
-          // Only hide if there’s no other warning displayed
           if (statusWarn.textContent === 'Profile editing is locked by admin.') hide(statusWarn);
         }
       }
@@ -307,12 +324,30 @@
           show(statusError, 'Failed to load authentication library. Please refresh.');
           throw new Error('Supabase SDK missing');
         }
-        const sb = window.sb || window.supabase.createClient(
+        const existing = window.sb && window.sb.auth ? window.sb : null;
+        const sb = existing || window.supabase.createClient(
           'https://hunlistfklwvpivfjmbk.supabase.co',
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
         );
         window.sb = sb;
         return sb;
+      }
+
+      function renderChips({ role, approved, active }) {
+        const r = (role || '').toLowerCase() || 'student';
+        chipRole.textContent = 'Role: ' + (r.charAt(0).toUpperCase() + r.slice(1));
+
+        chipApproval.classList.remove('approved', 'pending', 'deactivated');
+        if (active === false) {
+          chipApproval.classList.add('deactivated');
+          chipApproval.textContent = 'Status: Deactivated';
+        } else if (approved === true || r === 'admin') {
+          chipApproval.classList.add('approved');
+          chipApproval.textContent = 'Status: Approved';
+        } else {
+          chipApproval.classList.add('pending');
+          chipApproval.textContent = 'Status: Pending Approval';
+        }
       }
 
       function subscribeToProfile(sb, uid) {
@@ -330,9 +365,8 @@
               if (schoolEl && !schoolEl.value) schoolEl.value = p.school_name || '';
               if (prnEl && !prnEl.value) prnEl.value = p.prn || '';
               if (batchEl && !batchEl.value) batchEl.value = p.batch || '';
-              toggleFieldsForRole(p.role);
 
-              // Apply lock from server updates too
+              toggleFieldsForRole(p.role);
               applyEditLock(p.profile_edit_locked === true, p.role);
 
               if (p.avatar_path !== previousAvatarPath) {
@@ -341,6 +375,7 @@
                 startAvatarAutoRefresh(sb, previousAvatarPath);
                 deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
               }
+              renderChips({ role: p.role, approved: p.approved, active: p.active });
               updateProgress(p);
               show(statusInfo, 'Profile updated by server.');
               setTimeout(() => hide(statusInfo), 2000);
@@ -364,8 +399,7 @@
       async function ensureProfile(sb, uid, authEmail) {
         const { data: profile, error } = await sb
           .from('profiles')
-          // INCLUDE the lock flag
-          .select('id, name, email, role, prn, batch, department, avatar_path, school_name, profile_edit_locked')
+          .select('id, name, email, role, prn, batch, department, avatar_path, school_name, profile_edit_locked, approved, active')
           .eq('id', uid)
           .maybeSingle();
         if (error) throw error;
@@ -381,7 +415,6 @@
           p = inserted;
         }
 
-        // Always sync email with auth email
         if (authEmail && p.email !== authEmail) {
           const { error: upEmailErr } = await sb.from('profiles').update({ email: authEmail }).eq('id', uid);
           if (!upEmailErr) p.email = authEmail;
@@ -429,19 +462,21 @@
 
         toggleFieldsForRole(p.role);
 
-        if (!p.role) {
-          show(statusWarn, 'Your role is not set yet. Please contact an administrator to get access.');
-        } else {
-          // Don’t hide here; lock message might need the warn area
+        // Friendly status banners
+        const isAdmin = (p.role || '').toLowerCase() === 'admin';
+        hide(statusInfo); hide(statusWarn); hide(statusError);
+        if (p.active === false) {
+          show(statusError, 'Your account is deactivated. Please contact an administrator.');
+        } else if (!isAdmin && p.approved === false) {
+          show(statusInfo, 'Your account is awaiting admin approval. You can still complete your profile.');
         }
 
         await setSignedAvatar(sb, previousAvatarPath);
         startAvatarAutoRefresh(sb, previousAvatarPath);
         deleteAvatarBtn.classList.toggle('hidden', !previousAvatarPath);
 
-        // Apply edit lock on initial load
         applyEditLock(p.profile_edit_locked === true, p.role);
-
+        renderChips({ role: p.role, approved: p.approved, active: p.active });
         updateProgress(p);
         subscribeToProfile(sb, currentUserId);
 
@@ -467,6 +502,26 @@
         if (!path) return;
         try { await sb.storage.from(AVATAR_BUCKET).remove([path]); }
         catch (e) { console.warn('Avatar delete warning:', e); }
+      }
+
+      async function getApprovalStatus(sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if(!session?.user) return { loggedIn: false };
+        const { data: p } = await sb
+          .from('profiles')
+          .select('role, approved, active')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        const role = (p?.role || '').toLowerCase();
+        const isAdmin = role === 'admin';
+        return {
+          loggedIn: true,
+          role,
+          isAdmin,
+          approved: !!p?.approved,
+          active: !!p?.active,
+          isApprovedActive: isAdmin || (!!p?.approved && !!p?.active)
+        };
       }
 
       async function saveProfile(sb, goNext = false) {
@@ -530,7 +585,7 @@
         const { data, error } = await sb
           .from('profiles')
           .upsert(payload, { onConflict: 'id' })
-          .select()
+          .select('id, name, email, role, prn, batch, school_name, department, avatar_path, approved, active')
           .maybeSingle();
 
         if (error) {
@@ -553,15 +608,19 @@
         }
 
         show(statusInfo, 'Profile saved successfully.');
+        renderChips({ role: data.role, approved: data.approved, active: data.active });
         updateProgress(data);
 
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get('next') || (goNext ? 'assessments.html' : '');
-        const completeNow = (data && data.name && data.email && data.role &&
-          ((data.role || '').toLowerCase() === 'admin' ? true : (data.prn && data.batch && data.school_name)));
-
-        if (completeNow && next) {
-          setTimeout(() => { window.location.href = next; }, 700);
+        // Only navigate to Assessments when approved & active (admins bypass)
+        if (goNext) {
+          const st = await getApprovalStatus(sb);
+          if (st.isApprovedActive) {
+            setTimeout(() => { window.location.href = 'assessments.html'; }, 600);
+          } else {
+            show(statusWarn, st.active === false
+              ? 'Saved. Your account is deactivated; Assessments will be available once reactivated.'
+              : 'Saved. Your account is pending approval; Assessments will be available once approved.');
+          }
         }
 
         setLoading(false);
@@ -623,18 +682,23 @@
         await loadProfile(sb);
       });
 
-      // Protect Assessments link if logged out
-      if (assessTab) {
-        assessTab.addEventListener('click', async (e) => {
-          const sb = window.sb;
-          if (!sb) return;
-          const { data: { session } } = await sb.auth.getSession();
-          if (!session || !session.user) {
-            e.preventDefault();
-            window.location.href = 'login_Version4.html';
-          }
-        });
+      // Gate Assessments links by approval/active (UX only; RLS already enforces)
+      async function guardAssessNav(e) {
+        const sb = window.sb;
+        if (!sb) return;
+        const st = await getApprovalStatus(sb);
+        if (!st.loggedIn) {
+          e.preventDefault();
+          window.location.href = 'login_Version4.html';
+          return;
+        }
+        if (!st.isApprovedActive) {
+          e.preventDefault();
+          alert(st.active === false ? 'Your account is deactivated.' : 'Your account is awaiting admin approval.');
+        }
       }
+      if (assessTab) assessTab.addEventListener('click', guardAssessNav);
+      if (goAssessLink) goAssessLink.addEventListener('click', guardAssessNav);
 
       // Initialize
       (async () => {
