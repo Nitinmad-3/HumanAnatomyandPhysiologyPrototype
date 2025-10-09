@@ -210,7 +210,7 @@
     .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
     .intro li{ margin: .15rem 0; }
 
-    /* Corrected continuous marquee notification bar */
+    /* Marquee notification bar: continuous and smooth */
     .marquee-notification {
       position: relative;
       overflow: hidden;
@@ -236,15 +236,11 @@
       height: 100%;
       /* Duration: Adjust for speed */
       animation: marquee-left linear infinite;
-      animation-duration: 22s;
+      animation-duration: 38s; /* slow down the scroll */
     }
     @keyframes marquee-left {
-      0% {
-        transform: translateX(100%);
-      }
-      100% {
-        transform: translateX(-100%);
-      }
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
     }
     .marquee-notification:hover .marquee-track {
       animation-play-state: paused;
@@ -344,10 +340,7 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
-  <!-- Inline Home Notifications (avoid 404 on missing external file) -->
   <script>
-    // Renders Active notifications on Home; treats null Starts/Ends as "always visible".
-    // Works with your current RLS (authenticated users can read).
     (function () {
       function renderNotification(n) {
         let color = '#1565c0';
@@ -374,7 +367,7 @@
 
         // Calculate repeat count: enough to fill 2x ribbon width for continuous scroll
         let repeatCount = Math.ceil((ribbonWidth * 2) / msgWidth);
-        if (repeatCount < 2) repeatCount = 2; // Always at least 2
+        if (repeatCount < 2) repeatCount = 2;
 
         let marqueeContent = '';
         for (let i = 0; i < repeatCount; i++) {
@@ -432,20 +425,15 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
-      // FEATURE FLAG: completely disable chat to avoid portal_chat 404s
       const ENABLE_CHAT = false;
-
       const AVATAR_BUCKET = 'Avatar';
 
-      // Nav elements
       const loginBtn = document.getElementById('login-btn');
       const logoutBtn = document.getElementById('logout-btn');
       const profileTab = document.getElementById('profile-tab');
       const assessmentTab = document.getElementById('assessment-tab');
       const resultsTab = document.getElementById('results-tab');
       const adminPortalLink = document.getElementById('admin-portal-link');
-
-      // Profile dashboard card elements
       const profileCard = document.getElementById('profile-dashboard-card');
       const pcAvatar = document.getElementById('pc-avatar');
       const pcName = document.getElementById('pc-name');
@@ -456,8 +444,6 @@
       const pcBatch = document.getElementById('pc-batch');
       const pcAdminBtn = document.getElementById('pc-admin-portal');
       const pcNote = document.getElementById('pc-note');
-
-      // Chat elements (kept hidden if ENABLE_CHAT=false)
       const chatSection = document.getElementById('chat-section');
       const chatRoomSel = document.getElementById('chat-room');
       const chatBox = document.getElementById('chat-box');
