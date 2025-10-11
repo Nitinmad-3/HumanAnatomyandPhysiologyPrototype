@@ -780,7 +780,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
