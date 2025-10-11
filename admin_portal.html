@@ -135,7 +135,7 @@
       </div>
     </section>
 
-    <!-- Assessment Lock & Schedule (full list + per-row and bulk controls) -->
+    <!-- Assessment Lock & Schedule -->
     <section class="panel" aria-labelledby="assess-table-title">
       <h2 id="assess-table-title" class="section-title">Assessment Lock & Schedule</h2>
       <div class="row" style="margin-bottom:12px;">
@@ -250,7 +250,7 @@
 
     let currentUser = null;
 
-    // Helpers: datetime-local (treat as local), convert to/from UTC for DB
+    // Helpers
     function pad(n){ return String(n).padStart(2,'0'); }
     function istLocalToUTC(dtLocal){
       if(!dtLocal) return null;
@@ -265,7 +265,6 @@
       const d = new Date(utcStr);
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
-
     function stateForRow(row){
       if(row.locked) return 'locked';
       const now = Date.now();
@@ -281,7 +280,6 @@
       if(state==='closed') return 'pill error';
       return 'pill error';
     }
-
     function setStatus(msg){ statusEl.textContent = msg; }
     function htmlesc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
@@ -311,7 +309,6 @@
         ? `name.ilike.%${search}%,email.ilike.%${search}%,prn.ilike.%${search}%,batch.ilike.%${search}%`
         : null;
     }
-
     async function listPendingStudents(){
       const search = (userSearch?.value || '').trim();
       const orFilter = buildSearchOr(search);
@@ -325,7 +322,6 @@
       if(error) throw error;
       return data || [];
     }
-
     async function listApprovedStudents(){
       const search = (userSearch?.value || '').trim();
       const orFilter = buildSearchOr(search);
@@ -357,7 +353,6 @@
         usersStatus.textContent = '';
       }
     }
-
     async function deactivateUser(id){
       const reason = prompt('Deactivation reason (optional):','');
       usersStatus.textContent = 'Deactivating…';
@@ -375,7 +370,6 @@
         usersStatus.textContent = '';
       }
     }
-
     async function activateUser(id){
       usersStatus.textContent = 'Reactivating…';
       try{
@@ -392,7 +386,6 @@
         usersStatus.textContent = '';
       }
     }
-
     async function toggleProfileLock(id, currentLocked){
       usersStatus.textContent = 'Updating…';
       try{
@@ -408,7 +401,7 @@
       }
     }
 
-    // NEW — Export (server) via Edge Function
+    // Export (server) via Edge Function
     async function exportUserResultsServer(userId){
       usersStatus.textContent = 'Exporting (server)…';
       try{
@@ -428,7 +421,7 @@
       }
     }
 
-    // NEW — Export (local) XLSX using SheetJS
+    // Export (local) XLSX using SheetJS
     function computeDerivedPercentLocal(row){
       const s = Number(row.score ?? 0);
       const t = Number(row.total ?? 0);
@@ -449,7 +442,6 @@
     async function exportUserResultsLocal(userId, email){
       usersStatus.textContent = 'Exporting (local)…';
       try{
-        // Direct select; if RLS blocks, prefer server export.
         const { data, error } = await sb
           .from('assessment_results')
           .select(`
@@ -523,6 +515,25 @@
       }
     }
 
+    // Delete — Edge Function (put back as requested)
+    async function deleteStudentPermanently(id){
+      if(!id) return;
+      if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
+      usersStatus.textContent = 'Deleting…';
+      try{
+        const { data, error } = await sb.functions.invoke('admin_delete_user', {
+          body: { user_id: id, delete_storage: true }
+        });
+        if(error) throw error;
+        alert('Student deleted permanently.');
+        await refreshUsers();
+      }catch(e){
+        alert('Delete failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
+      }
+    }
+
     // USERS — Renderers
     function renderStatusChips(row){
       const chips = [];
@@ -530,7 +541,6 @@
       chips.push(row.active ? '<span class="chip active">Active</span>' : '<span class="chip inactive">Inactive</span>');
       return chips.join(' ');
     }
-
     function renderPending(rows){
       countPending.textContent = rows.length;
       if(!rows.length){
@@ -551,7 +561,6 @@
             <button class="btn small" data-act="approve">Approve</button>
             <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
-            <!-- Export/Delete -->
             <button class="btn small ghost" data-act="export-server">Export (Server)</button>
             <button class="btn small ghost" data-act="export-local">Export (Local)</button>
             <button class="btn small warn" data-act="delete">Delete</button>
@@ -572,7 +581,6 @@
           toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
         };
       });
-      // Export/Delete
       pendingTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
         b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
       });
@@ -586,7 +594,6 @@
         b.onclick = () => deleteStudentPermanently(b.closest('tr').getAttribute('data-id'));
       });
     }
-
     function renderApproved(rows){
       countApproved.textContent = rows.length;
       if(!rows.length){
@@ -607,7 +614,6 @@
             <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
             <button class="btn small" data-act="activate" ${r.active ? 'disabled' : ''}>Activate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
-            <!-- Export/Delete -->
             <button class="btn small ghost" data-act="export-server">Export (Server)</button>
             <button class="btn small ghost" data-act="export-local">Export (Local)</button>
             <button class="btn small warn" data-act="delete">Delete</button>
@@ -628,7 +634,6 @@
           toggleProfileLock(tr.getAttribute('data-id'), lockedNow);
         };
       });
-      // Export/Delete
       approvedTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
         b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
       });
@@ -663,7 +668,7 @@
       }
     }
 
-    // Assessments (unchanged)
+    // Assessments
     async function loadAssessments(){
       const { data, error } = await sb
         .from('assessments')
@@ -675,7 +680,6 @@
       }
       return data || [];
     }
-
     function renderAssessments(rows){
       allAssessRows = rows;
       if(!rows.length){
@@ -704,7 +708,6 @@
         </tr>`;
       }).join('');
 
-      // Wire row actions
       assessTbody.querySelectorAll('button.lock-btn').forEach(btn=>{
         btn.onclick = async ()=>{
           const tr = btn.closest('tr');
@@ -777,7 +780,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -796,7 +799,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
