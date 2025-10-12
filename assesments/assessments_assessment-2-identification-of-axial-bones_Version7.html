@@ -23,6 +23,34 @@
     .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
     .error { color:#d32f2f; margin-top:1em; font-weight:500; }
     .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
+
+    /* Block message */
+    .block-access-msg {
+      border-radius:10px;
+      background:#ffebee;
+      color:#b71c1c;
+      border:1px solid #c62828;
+      font-size:1.05em;
+      margin:2em auto;
+      padding:1.25em 1.5em;
+      text-align:center;
+      max-width:800px;
+      font-weight:600;
+    }
+    .block-access-msg a { color:#b71c1c; text-decoration:underline; }
+
+    /* Admin banner */
+    .admin-banner {
+      margin:0 auto 14px;
+      max-width:800px;
+      background:#fff8e1;
+      color:#8d6e63;
+      border:1px solid #ffe0b2;
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:.95em;
+    }
+
     @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -38,7 +66,11 @@
     </nav>
   </header>
 
-  <div class="container">
+  <!-- Admin preview banner (injected when needed) -->
+  <div id="adminBannerMount"></div>
+
+  <!-- Shown only when access is allowed -->
+  <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
         <h2 style="margin-top:0;">Student Information</h2>
@@ -89,33 +121,173 @@
     </form>
   </div>
 
+  <!-- Shown when access is blocked or errors occur -->
+  <div id="blockMsg" style="display:none;"></div>
+
   <script>
     // ---- Supabase Constants & Init ----
+    const DEFAULT_ASSESSMENT_ID = 2; // matches admin table row for Experiment 2
     const EXPERIMENT_ID = 'assessment-2-axial-skeleton';
-    const ASSESSMENT_TITLE = 'Experiment No. 2 (Axial Skeleton)';
+    const ASSESSMENT_TITLE = 'Experiment No. 2 (Axial Skeleton)'; // used in saved meta only
     const ASSIGNMENT_BUCKET = 'assignments';
     const pageStartTime = Date.now();
 
-    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
+    // Allow overriding the assessment id via query param (?id=2)
+    const urlParams = new URLSearchParams(location.search);
+    const ASSESSMENT_ID = Number(urlParams.get('id')) || DEFAULT_ASSESSMENT_ID;
+
     let sb = null;
-    if (supabaseAvailable) {
-      try {
-        sb = window.supabase.createClient(
-          'https://hunlistfklwvpivfjmbk.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-        );
-      } catch (e) {
-        console.warn('Supabase init failed:', e);
-        supabaseAvailable = false;
-      }
+    try {
+      sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      );
+    } catch (e) {
+      console.warn('Supabase init failed:', e);
     }
 
-    // ---- Autofill from Profile (EXACT pattern from Expt 1) ----
-    async function autofillFromProfile() {
-      if (!supabaseAvailable || !sb) return;
+    // ---- Access control helpers ----
+    function showBlock(messageHtml){
+      const blockMsg = document.getElementById('blockMsg');
+      const main = document.getElementById('mainContainer');
+      if (main) main.style.display = 'none';
+      blockMsg.style.display = '';
+      blockMsg.innerHTML = `<div class="block-access-msg">${messageHtml}</div>`;
+    }
+    function showMain(){
+      const main = document.getElementById('mainContainer');
+      const blockMsg = document.getElementById('blockMsg');
+      if (blockMsg) blockMsg.style.display = 'none';
+      if (main) main.style.display = '';
+    }
+    function showAdminBanner(text){
+      const mount = document.getElementById('adminBannerMount');
+      if (!mount) return;
+      mount.innerHTML = `<div class="admin-banner"><b>Admin preview:</b> ${text}</div>`;
+    }
+
+    async function checkProfileAccess() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.user) {
+        showBlock(`Please <a href="../login_Version4.html">sign in</a> to access this experiment.`);
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      const uid = session.user.id;
+      const { data: prof, error } = await sb
+        .from('profiles')
+        .select('role, approved, active')
+        .eq('id', uid)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('profile lookup failed:', error);
+        showBlock('Unable to load your profile. Please try again.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+
+      const role = String(prof?.role || '').toLowerCase();
+      const isAdmin = role === 'admin';
+
+      if (isAdmin) {
+        // Admin bypass — login is enough
+        return { ok:true, uid, isAdmin:true };
+      }
+
+      if (!prof) {
+        showBlock('Profile not found. Please contact administrator.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      if (prof.approved === false) {
+        showBlock('Your account is not approved yet by the admin.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      if (prof.active === false) {
+        showBlock('Your account has been deactivated by the admin.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      return { ok:true, uid, isAdmin:false };
+    }
+
+    async function getAssessmentRowById(id) {
       try {
-        const { data: { session }, error: sessErr } = await sb.auth.getSession();
-        if (sessErr) console.warn('getSession error:', sessErr);
+        const { data, error } = await sb
+          .from('assessments')
+          .select('id, title, locked, window_start, window_end')
+          .eq('id', id)
+          .maybeSingle();
+        if (error) {
+          console.warn('assessments(id) lookup error:', error);
+          return null;
+        }
+        return data || null;
+      } catch { return null; }
+    }
+
+    async function gate() {
+      if (!sb) {
+        showBlock('Unable to initialize backend. Please refresh the page.');
+        return;
+      }
+
+      // 1) Require login; for students also require approved + active. Admin bypasses locks/windows AND missing rows.
+      const prof = await checkProfileAccess();
+      if (!prof.ok) return;
+
+      // 2) Load assessment row (may be null due to config/RLS; admins still bypass)
+      const row = await getAssessmentRowById(ASSESSMENT_ID);
+
+      if (prof.isAdmin) {
+        // Admin: always allow, even if row is missing
+        const flags = [];
+        if (!row) flags.push('not configured');
+        else {
+          const now = new Date();
+          const start = row.window_start ? new Date(row.window_start) : null;
+          const end   = row.window_end ? new Date(row.window_end) : null;
+          if (row.locked) flags.push('locked');
+          if (start && now < start) flags.push('not yet open');
+          if (end && now > end) flags.push('closed');
+        }
+        if (flags.length) showAdminBanner(`This assessment is ${flags.join(' & ')} for students.`);
+        showMain();
+        renderQuestions();
+        autofillFromProfile();
+        return;
+      }
+
+      // Student path: require row and enforce windows/lock
+      if (!row) {
+        showBlock('Assessment not available right now. Please try again later.');
+        return;
+      }
+
+      const now = new Date();
+      const start = row.window_start ? new Date(row.window_start) : null;
+      const end   = row.window_end ? new Date(row.window_end) : null;
+
+      if (row.locked === true) {
+        showBlock('This experiment is currently locked by the admin.');
+        return;
+      }
+      if (start && now < start) {
+        showBlock('This experiment is not yet open. Please check back later.');
+        return;
+      }
+      if (end && now > end) {
+        showBlock('This experiment is closed.');
+        return;
+      }
+
+      // Allowed -> reveal and continue
+      showMain();
+      renderQuestions();
+      autofillFromProfile();
+    }
+
+    // ---- Autofill from Profile (same pattern as Expt 1) ----
+    async function autofillFromProfile() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
         if (!session?.user) return;
 
         const uid = session.user.id;
@@ -125,14 +297,7 @@
           .eq('id', uid)
           .maybeSingle();
 
-        if (error) {
-          console.warn('Profile fetch error:', error.message);
-          return;
-        }
-        if (!profile) {
-          // Optionally: document.getElementById('profileNote').textContent = 'No profile row found for user.';
-          return;
-        }
+        if (error || !profile) return;
 
         const studentNameEl = document.getElementById('studentName');
         const schoolNameEl = document.getElementById('schoolName');
@@ -154,15 +319,7 @@
           batchEl.value = profile.batch;
         }
         if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-      } catch (e) {
-        console.warn('autofillFromProfile error:', e);
-      }
-    }
-    if (supabaseAvailable && sb) {
-      sb.auth.onAuthStateChange((_evt, _session) => {
-        autofillFromProfile();
-      });
-      autofillFromProfile();
+      } catch (e) {}
     }
 
     // ---- Utility ----
@@ -308,7 +465,6 @@
         qs.innerHTML += html;
       });
     }
-    renderQuestions();
 
     // ---- Assignment Upload ----
     let uploadedAssignmentPath = null;
@@ -499,6 +655,9 @@
 
       window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
+
+    // Start access check on load
+    window.addEventListener('DOMContentLoaded', gate);
   </script>
 </body>
 </html>
