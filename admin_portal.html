@@ -215,6 +215,9 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     );
 
+    // Edge Function slug for server export (using the deployed slug)
+    const EXPORT_FN = 'SERVICE_ROLE_KEY';
+
     const $ = s => document.querySelector(s);
     const statusEl = $('#status');
     const roleBadge = $('#role-badge');
@@ -405,12 +408,17 @@
     async function exportUserResultsServer(userId){
       usersStatus.textContent = 'Exporting (server)…';
       try{
-        const { data, error } = await sb.functions.invoke('admin_export_user_results', {
+        const { data: { session } } = await sb.auth.getSession();
+        if(!session?.access_token){
+          alert('Not signed in. Please log in again.');
+          return;
+        }
+        const { data, error } = await sb.functions.invoke(EXPORT_FN, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
           body: { user_id: userId }
         });
         if(error) throw error;
         const s = data?.files?.summary?.url;
-        // FIX 1: removed stray "ideasr" and properly declared d
         const d = data?.files?.details?.url;
         if(!s && !d){ alert('Export ready, but URLs are missing.'); return; }
         if(s) window.open(s, '_blank');
@@ -517,13 +525,19 @@
     }
 
     // NEW: Delete — Edge Function
-    // FIX 2 LOCATION: directly below export functions and BEFORE "USERS — Renderers"
+    // Location: directly below export functions and BEFORE "USERS — Renderers"
     async function deleteStudentPermanently(id){
       if(!id) return;
       if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
       usersStatus.textContent = 'Deleting…';
       try{
+        const { data: { session } } = await sb.auth.getSession();
+        if(!session?.access_token){
+          alert('Not signed in. Please log in again.');
+          return;
+        }
         const { data, error } = await sb.functions.invoke('admin_delete_user', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
           body: { user_id: id, delete_storage: true }
         });
         if(error) throw error;
@@ -782,7 +796,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -801,7 +815,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
