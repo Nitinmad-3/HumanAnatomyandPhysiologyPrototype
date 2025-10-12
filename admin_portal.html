@@ -8,19 +8,19 @@
   <style>
     /* Base */
     :root{
-      --head-pill-bg:#0b5a6e;
-      --head-pill-bd:#064557;
-      --head-pill-fg:#fff;
-      --grid-col-min:132px;    /* tighter col min to save space */
-      --grid-gap-x:8px;        /* tighter gaps */
-      --grid-gap-y:4px;
-      --head-pill-radius:8px;  /* smaller radius */
-      --head-pill-pad-y:5px;   /* compact header height */
-      --head-pill-pad-x:8px;
-      --head-pill-font:12px;   /* compact text */
-      --th-pad-y:8px;          /* default th vertical padding */
+      --th-bg:#f0f6ff;
+      --th-fg:#1565c0;
+      --th-pad-y:8px;
       --th-pad-x:6px;
-      --actions-th-pad-y:6px;  /* slightly tighter for Actions th */
+
+      /* Actions header/body grid sizing (space-optimized) */
+      --grid-col-min:120px;
+      --grid-gap-x:8px;
+      --grid-gap-y:2px;
+
+      /* Make Actions header text look like normal th labels */
+      --head-font-size:14px;
+      --head-font-weight:700;
     }
     *{ box-sizing:border-box; }
     body { font-family:'Segoe UI',Arial,sans-serif; margin:0; color:#222; background:#f6f9ff; }
@@ -54,7 +54,7 @@
     /* Users Tables */
     table { width:100%; border-collapse:collapse; table-layout:auto; }
     th, td { border-bottom:1px dashed #cfe0ff; padding:var(--th-pad-y) var(--th-pad-x); text-align:left; font-size:14px; vertical-align:top; }
-    th { background:#f0f6ff; color:#1565c0; white-space:nowrap; }
+    th { background:var(--th-bg); color:var(--th-fg); white-space:nowrap; }
     .lock-on { color:#2e7d32; font-weight:700; }
     .lock-off { color:#c62828; font-weight:700; }
     .chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid #cfe0ff; }
@@ -66,11 +66,11 @@
     /* Assessments table */
     .assess-table { width:100%; border-collapse:collapse; margin-top:8px; }
     .assess-table th, .assess-table td { border-bottom:1px dashed #cfe0ff; padding:var(--th-pad-y) var(--th-pad-x); text-align:left; font-size:14px; }
-    .assess-table th { background:#f0f6ff; color:#1565c0; }
+    .assess-table th { background:var(--th-bg); color:var(--th-fg); }
     .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
 
-    /* Actions header ribbon (space-optimized and even) */
-    .actions-th { min-width: 480px; padding-top:var(--actions-th-pad-y); padding-bottom:var(--actions-th-pad-y); }
+    /* Actions header ribbon (now styled like normal th text) */
+    .actions-th { min-width: 460px; padding-top:var(--th-pad-y); padding-bottom:var(--th-pad-y); }
     .actions-head-grid {
       display:grid;
       gap:var(--grid-gap-y) var(--grid-gap-x);
@@ -79,20 +79,21 @@
     .actions-head-grid.cols-4 { grid-template-columns: repeat(4, minmax(var(--grid-col-min), 1fr)); }
     .actions-head-grid.cols-5 { grid-template-columns: repeat(5, minmax(var(--grid-col-min), 1fr)); }
     .head-pill {
-      background:var(--head-pill-bg);
-      color:var(--head-pill-fg);
-      border:1px solid var(--head-pill-bd);
-      border-radius:var(--head-pill-radius);
-      padding:var(--head-pill-pad-y) var(--head-pill-pad-x);
+      /* Match th style (no teal pill) */
+      background:transparent;
+      color:var(--th-fg);
+      border:0;
+      border-radius:0;
+      padding:0;
       text-align:center;
-      font-weight:800;
-      font-size:var(--head-pill-font);
-      line-height:1.05;
+      font-weight:var(--head-font-weight);
+      font-size:var(--head-font-size);
+      line-height:1.1;
       white-space:nowrap;
     }
 
     /* Actions body grid (aligns with header ribbon) */
-    .actions-cell { min-width: 480px; }
+    .actions-cell { min-width: 460px; }
     .actions-cell .action-grid {
       display:grid;
       gap:var(--grid-gap-y) var(--grid-gap-x);
@@ -107,7 +108,7 @@
       gap:6px;
       padding-top:2px;
       border-right:1px solid #d4e4ff;
-      min-height:32px; /* consistent minimal height */
+      min-height:30px;
     }
     .actions-cell .action-buttons:last-child { border-right:0; }
 
