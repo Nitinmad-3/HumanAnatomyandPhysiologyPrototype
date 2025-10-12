@@ -23,8 +23,6 @@
     .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
     .error { color:#d32f2f; margin-top:1em; font-weight:500; }
     .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
-
-    /* Block message */
     .block-access-msg {
       border-radius:10px;
       background:#ffebee;
@@ -38,7 +36,6 @@
       font-weight:600;
     }
     .block-access-msg a { color:#b71c1c; text-decoration:underline; }
-
     @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -53,7 +50,7 @@
     </nav>
   </header>
 
-  <!-- Form container (hidden until access is verified) -->
+  <!-- Revealed only when access is allowed -->
   <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
@@ -105,28 +102,26 @@
     </form>
   </div>
 
-  <!-- Block message container -->
+  <!-- Shown when access is blocked or errors occur -->
   <div id="blockMsg" style="display:none;"></div>
 
   <script>
     // ---- Supabase Constants & Init ----
+    // Use numeric assessment ID to match admin_portal assessments table (ID, Title, Locked?, Start/Deadline)
+    const ASSESSMENT_ID = 1;
     const EXPERIMENT_ID = 'assessment-1-study-of-compound-microscope';
-    const ASSESSMENT_TITLE = 'Experiment No. 1 (Study of Compound Microscope)';
+    const ASSESSMENT_TITLE = '1. Study of Compound Microscope'; // matches Admin table Title
     const ASSIGNMENT_BUCKET = 'assignments';
     const pageStartTime = Date.now();
 
-    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
     let sb = null;
-    if (supabaseAvailable) {
-      try {
-        sb = window.supabase.createClient(
-          'https://hunlistfklwvpivfjmbk.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-        );
-      } catch (e) {
-        console.warn('Supabase init failed:', e);
-        supabaseAvailable = false;
-      }
+    try {
+      sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      );
+    } catch (e) {
+      console.warn('Supabase init failed:', e);
     }
 
     // ---- Access control helpers ----
@@ -142,33 +137,6 @@
       const blockMsg = document.getElementById('blockMsg');
       if (blockMsg) blockMsg.style.display = 'none';
       if (main) main.style.display = '';
-    }
-
-    // Try multiple possible assessment identifiers so we don't rely on one column existing
-    async function getAssessmentRow() {
-      const attempts = [
-        { col: 'slug',          val: EXPERIMENT_ID },
-        { col: 'experiment_id', val: EXPERIMENT_ID },
-        { col: 'code',          val: EXPERIMENT_ID },
-        { col: 'title',         val: ASSESSMENT_TITLE }
-      ];
-      for (const a of attempts) {
-        try {
-          const { data, error } = await sb
-            .from('assessments')
-            .select('id, title, locked, window_start, window_end')
-            .eq(a.col, a.val)
-            .maybeSingle();
-          if (error) {
-            // Column might not exist -> skip to next
-            if (String(error.code) === '42703' || /column .* does not exist/i.test(error.message || '')) continue;
-            console.warn('assessments lookup error ('+a.col+'):', error.message || error);
-            continue;
-          }
-          if (data) return data;
-        } catch (e) { /* ignore and try next */ }
-      }
-      return null;
     }
 
     async function checkProfileAccess() {
@@ -199,21 +167,41 @@
       return { ok:true, uid };
     }
 
+    async function getAssessmentRowById() {
+      const { data, error } = await sb
+        .from('assessments')
+        .select('id, title, locked, window_start, window_end')
+        .eq('id', ASSESSMENT_ID)
+        .maybeSingle();
+      if (error) {
+        console.warn('assessments(id) lookup error:', error);
+        return null;
+      }
+      return data || null;
+    }
+
     async function gate() {
-      if (!supabaseAvailable || !sb) {
+      if (!sb) {
         showBlock('Unable to initialize backend. Please refresh the page.');
         return;
       }
+
       // 1) Require approved + active profile
       const prof = await checkProfileAccess();
       if (!prof.ok) return;
 
       // 2) Assessment must be open (not locked and within window)
-      const row = await getAssessmentRow();
+      const row = await getAssessmentRowById();
       if (!row) {
         showBlock('Assessment not available right now. Please try again later.');
         return;
       }
+
+      // Optional: sanity check the title so you’re sure you’re gating the right page
+      if ((row.title || '').trim() !== ASSESSMENT_TITLE) {
+        console.warn('Title mismatch:', row.title, '!==', ASSESSMENT_TITLE);
+      }
+
       const now = new Date();
       const start = row.window_start ? new Date(row.window_start) : null;
       const end   = row.window_end ? new Date(row.window_end) : null;
@@ -231,7 +219,7 @@
         return;
       }
 
-      // Allowed -> reveal and continue
+      // Allowed -> reveal UI and continue
       showMain();
       renderQuestions();
       autofillFromProfile();
@@ -239,10 +227,8 @@
 
     // ---- Autofill from Profile ----
     async function autofillFromProfile() {
-      if (!supabaseAvailable || !sb) return;
       try {
-        const { data: { session }, error: sessErr } = await sb.auth.getSession();
-        if (sessErr) console.warn('getSession error:', sessErr);
+        const { data: { session } } = await sb.auth.getSession();
         if (!session?.user) return;
 
         const uid = session.user.id;
@@ -296,9 +282,9 @@
       { type: "dropdown", text: "6. What is the recommended material for cleaning microscope lenses?", options: ["Lens paper","Tissue paper","Cloth","Hands"], answer: "Lens paper" },
       { type: "dropdown", text: "7. Which mirror is used when the light source is weak?", options: ["Concave mirror","Plane mirror","Convex mirror","No mirror"], answer: "Concave mirror" },
       { type: "dropdown", text: "8. What is the usual magnification power of a standard eyepiece lens?", options: ["10x","5x","40x","100x"], answer: "10x" },
-      { 
-        type: "image-labels", 
-        text: "9. Identify the labelled parts of the microscope in the image below.", 
+      {
+        type: "image-labels",
+        text: "9. Identify the labelled parts of the microscope in the image below.",
         image: "../assets/images/experiment-1/Assessment/labelquestion.jpg",
         labels: [
           { name: "1", answer: "Eye Piece", options: ["Eye Piece","Objective Lens","Fine adjustment Screw","Condenser","Stage"] },
@@ -536,7 +522,7 @@
       window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
 
-    // Run gate on load
+    // Start access check on load
     window.addEventListener('DOMContentLoaded', gate);
   </script>
 </body>
