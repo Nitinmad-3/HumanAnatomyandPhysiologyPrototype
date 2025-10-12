@@ -23,6 +23,18 @@
     .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
     .error { color:#d32f2f; margin-top:1em; font-weight:500; }
     .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
+    .block-access-msg {
+      border-radius:10px;
+      background:#ffebee;
+      color:#b71c1c;
+      border:1px solid #c62828;
+      font-size:1.1em;
+      margin:2em auto;
+      padding:2em;
+      text-align:center;
+      max-width:600px;
+      font-weight:600;
+    }
     @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -37,7 +49,7 @@
     </nav>
   </header>
 
-  <div class="container">
+  <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
         <h2 style="margin-top:0;">Student Information</h2>
@@ -87,6 +99,7 @@
       <div id="resultMsg" class="result"></div>
     </form>
   </div>
+  <div id="blockMsg" style="display:none;"></div>
 
   <script>
     // ---- Supabase Constants & Init ----
@@ -108,6 +121,65 @@
         supabaseAvailable = false;
       }
     }
+
+    // ---- Assessment Access Control ----
+    async function checkAssessmentAccess() {
+      // Show loading spinner/message if desired
+      const mainContainer = document.getElementById('mainContainer');
+      const blockMsg = document.getElementById('blockMsg');
+      if (!supabaseAvailable || !sb) {
+        blockMsg.style.display = '';
+        blockMsg.innerHTML = '<div class="block-access-msg">Unable to load assessment. Please try again later.</div>';
+        return false;
+      }
+      try {
+        // Query the assessments table for this experiment
+        const { data, error } = await sb
+          .from('assessments')
+          .select('id, locked, window_start, window_end, title')
+          .eq('slug', EXPERIMENT_ID)
+          .maybeSingle();
+
+        if (error || !data) {
+          blockMsg.style.display = '';
+          blockMsg.innerHTML = '<div class="block-access-msg">Assessment not found or temporarily unavailable.</div>';
+          return false;
+        }
+
+        const now = new Date();
+        const start = data.window_start ? new Date(data.window_start) : null;
+        const end   = data.window_end ? new Date(data.window_end) : null;
+
+        let blockReason = '';
+        if (data.locked) blockReason = 'This experiment is currently locked by the admin.';
+        else if (start && now < start) blockReason = 'This experiment is not yet open. Please check back later.';
+        else if (end && now > end) blockReason = 'This experiment is closed.';
+        
+        if (blockReason) {
+          blockMsg.style.display = '';
+          blockMsg.innerHTML = `<div class="block-access-msg">${blockReason}</div>`;
+          return false;
+        }
+
+        // Allowed
+        mainContainer.style.display = '';
+        blockMsg.style.display = 'none';
+        return true;
+      } catch (err) {
+        blockMsg.style.display = '';
+        blockMsg.innerHTML = '<div class="block-access-msg">Error checking assessment status.</div>';
+        return false;
+      }
+    }
+
+    // Run access check before rendering questions
+    window.addEventListener('DOMContentLoaded', async () => {
+      const access = await checkAssessmentAccess();
+      if (access) {
+        renderQuestions();
+        autofillFromProfile();
+      }
+    });
 
     // ---- Autofill from Profile ----
     async function autofillFromProfile() {
@@ -153,7 +225,6 @@
       sb.auth.onAuthStateChange((_evt, _session) => {
         autofillFromProfile();
       });
-      autofillFromProfile();
     }
 
     // ---- Utility ----
@@ -227,7 +298,6 @@
         qs.innerHTML += html;
       });
     }
-    renderQuestions();
 
     // ---- Assignment Upload ----
     let uploadedAssignmentPath = null;
@@ -270,151 +340,3 @@
         uploadingAssignment = false;
         return;
       }
-
-      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
-      uploadedAssignmentPath = filePath;
-      uploadedAssignmentUrl  = urlData?.publicUrl || null;
-      uploadingAssignment = false;
-      statusEl.textContent = 'PDF uploaded successfully.';
-    });
-
-    // ---- Submission ----
-    document.getElementById('assessmentForm').onsubmit = async function(e){
-      e.preventDefault();
-      const errEl = document.getElementById('errorMsg');
-      const submitBtn = document.getElementById('submitBtn');
-      errEl.textContent = '';
-
-      if(!uploadedAssignmentPath){
-        errEl.textContent = uploadingAssignment
-          ? 'Please wait: assignment is still uploading...'
-          : 'Please upload the assignment PDF before submitting.';
-        return;
-      }
-
-      const form = e.target;
-
-      let allAnswered = true;
-      const answers = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          const v = form[`q${i}`]?.value?.trim() || '';
-          if(!v) allAnswered = false;
-          answers.push(v);
-        } else if(q.type === "image-labels"){
-          const labelVals = [];
-          for(let lid=0; lid<q.labels.length; lid++){
-            const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
-            if(!v) allAnswered = false;
-            labelVals.push(v);
-          }
-          answers.push(labelVals.join('; '));
-        }
-      }
-
-      if(!allAnswered){
-        errEl.textContent = 'Please answer all questions.';
-        return;
-      }
-      if(!form.declaration.checked){
-        errEl.textContent = 'You must agree to the declaration.';
-        return;
-      }
-
-      // Scoring
-      let marks = 0;
-      let maxMarks = 0;
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          maxMarks += 1;
-          if(answers[i] === q.answer) marks++;
-        } else if(q.type === "image-labels"){
-          maxMarks += q.labels.length;
-          const parts = answers[i].split(';').map(s => s.trim());
-          q.labels.forEach((label, lid) => {
-            if(parts[lid] && parts[lid] === label.answer) marks++;
-          });
-        }
-      }
-
-      submitBtn.disabled = true;
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        alert('Please log in so your result is stored.');
-        window.location.href = '../login_Version4.html';
-        return;
-      }
-      const uid = session.user.id;
-
-      // Breakdown for result page
-      const breakdown = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          breakdown.push({
-            question: q.text,
-            type: q.type,
-            answer: answers[i],
-            correct: q.answer,
-            isCorrect: answers[i] === q.answer
-          });
-        } else if(q.type === "image-labels"){
-          const parts = answers[i].split(';').map(s=>s.trim());
-          q.labels.forEach((label, lid) => {
-            breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
-              type: 'image-label',
-              answer: parts[lid],
-              correct: label.answer,
-              isCorrect: parts[lid] === label.answer
-            });
-          });
-        }
-      }
-      breakdown.push({
-        type: 'meta',
-        assignment: {
-          bucket: ASSIGNMENT_BUCKET,
-          path: uploadedAssignmentPath,
-          publicUrl: uploadedAssignmentUrl || null
-        }
-      });
-
-      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
-
-      const row = {
-        user_id: uid,
-        user_name: form.studentName.value.trim(),
-        experiment_id: EXPERIMENT_ID,
-        score: marks,
-        total: maxMarks,
-        submitted_at: new Date().toISOString(),
-        duration_sec: durationSec,
-        breakdown,
-        meta: {
-          email: form.emailId.value.trim(),
-          prn: form.prnNumber.value.trim(),
-          batch: form.batchNumber.value.trim(),
-          school_name: form.schoolName.value.trim(),
-          assessment_title: ASSESSMENT_TITLE
-        },
-        assignment_bucket: ASSIGNMENT_BUCKET,
-        assignment_path: uploadedAssignmentPath
-      };
-
-      const { error } = await sb.from('assessment_results').insert(row);
-      if(error){
-        console.error('Supabase insert error:', error);
-        errEl.textContent = 'Could not save result. Please retry.';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-    };
-  </script>
-</body>
-</html>
