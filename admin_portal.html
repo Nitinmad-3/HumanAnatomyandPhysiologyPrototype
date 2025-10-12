@@ -20,7 +20,7 @@
     .input, select, textarea, input[type="datetime-local"] { width:100%; padding:10px; border:1px solid #cfe0ff; border-radius:8px; background:#fff; }
     .btn { background:#1565c0; color:#fff; border:0; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
     .btn.ghost { background:transparent; color:#1565c0; border:1px solid #cfe0ff; }
-    .btn.warn { background:#c62828; }
+    .btn.warn { background:#c62828; color:#fff; }
     .btn.small { padding:6px 10px; font-size:12px; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
     .hint { font-size:12px; color:#6b84c7; }
@@ -51,6 +51,20 @@
     .assess-table th, .assess-table td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; }
     .assess-table th { background:#f0f6ff; color:#1565c0; }
     .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
+
+    /* Action groups inside table cell */
+    .actions-cell .action-groups {
+      display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start;
+    }
+    .actions-cell .action-group {
+      display:flex; flex-direction:column; gap:6px;
+      padding:8px; border:1px dashed #d4e4ff; border-radius:8px; background:#f9fbff;
+      min-width:160px;
+    }
+    .actions-cell .action-group .label {
+      font-size:11px; font-weight:700; color:#1565c0; text-transform:uppercase; letter-spacing:.02em;
+    }
+    .actions-cell .action-group .buttons { display:flex; gap:6px; flex-wrap:wrap; }
   </style>
 </head>
 <body>
@@ -278,7 +292,7 @@
     function pillClass(state){
       if(state==='open') return 'pill success';
       if(state==='upcoming') return 'pill info';
-      ifstateClosed: if(state==='closed') return 'pill error';
+      if(state==='closed') return 'pill error';
       return 'pill error';
     }
     function setStatus(msg){ statusEl.textContent = msg; }
@@ -428,13 +442,14 @@
       }
     }
 
-    // USERS — Renderers
+    // USERS — Renderers (with grouped action headers)
     function renderStatusChips(row){
       const chips = [];
       chips.push(row.approved ? '<span class="chip approved">Approved</span>' : '<span class="chip pending">Pending</span>');
       chips.push(row.active ? '<span class="chip active">Active</span>' : '<span class="chip inactive">Inactive</span>');
       return chips.join(' ');
     }
+
     function renderPending(rows){
       countPending.textContent = rows.length;
       if(!rows.length){
@@ -451,16 +466,44 @@
           <td data-email="${htmlesc(r.email || '')}">${htmlesc(r.email || '')}</td>
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
-          <td class="row" style="gap:6px;">
-            <button class="btn small" data-act="approve">Approve</button>
-            <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
-            <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
-            <button class="btn small ghost" data-act="export-server">Export (Server)</button>
-            <button class="btn small warn" data-act="delete">Delete</button>
+          <td class="actions-cell">
+            <div class="action-groups">
+              <div class="action-group">
+                <div class="label">Approval</div>
+                <div class="buttons">
+                  <button class="btn small" data-act="approve" title="Approve this student to access the portal">Approve</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Account</div>
+                <div class="buttons">
+                  <button class="btn small warn" data-act="deactivate" title="Deactivate account (can be reactivated)" ${r.active ? '' : 'disabled'}>Deactivate</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Profile Editing</div>
+                <div class="buttons">
+                  <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Results</div>
+                <div class="buttons">
+                  <button class="btn small ghost" data-act="export-server" title="Generate and download server-side CSVs">Export (Server)</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Danger Zone</div>
+                <div class="buttons">
+                  <button class="btn small warn" data-act="delete" title="Permanently delete this student and related data">Delete</button>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>`;
       }).join('');
 
+      // Wire actions
       pendingTbody.querySelectorAll('button[data-act="approve"]').forEach(b=>{
         b.onclick = () => approveUser(b.closest('tr').getAttribute('data-id'));
       });
@@ -476,8 +519,9 @@
       });
       pendingTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
         b.onclick = async () => {
+          const tr = b.closest('tr');
           b.disabled = true;
-          try { await exportUserResultsServer(b.closest('tr').getAttribute('data-id')); }
+          try { await exportUserResultsServer(tr.getAttribute('data-id')); }
           finally { setTimeout(()=>{ b.disabled = false; }, 800); }
         };
       });
@@ -485,6 +529,7 @@
         b.onclick = () => deleteStudentPermanently(b.closest('tr').getAttribute('data-id'));
       });
     }
+
     function renderApproved(rows){
       countApproved.textContent = rows.length;
       if(!rows.length){
@@ -492,7 +537,7 @@
         return;
       }
       approvedTbody.innerHTML = rows.map(r=>{
-        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Unlocked</span>';
+        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Editable</span>';
         const btnLabel = r.profile_edit_locked ? 'Unlock' : 'Lock';
         return `<tr data-id="${r.id}">
           <td>${htmlesc(r.name || '')}</td>
@@ -501,16 +546,39 @@
           <td data-email="${htmlesc(r.email || '')}">${htmlesc(r.email || '')}</td>
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
-          <td class="row" style="gap:6px;">
-            <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
-            <button class="btn small" data-act="activate" ${r.active ? 'disabled' : ''}>Activate</button>
-            <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
-            <button class="btn small ghost" data-act="export-server">Export (Server)</button>
-            <button class="btn small warn" data-act="delete">Delete</button>
+          <td class="actions-cell">
+            <div class="action-groups">
+              <div class="action-group">
+                <div class="label">Account</div>
+                <div class="buttons">
+                  <button class="btn small warn" data-act="deactivate" title="Deactivate account (can be reactivated)" ${r.active ? '' : 'disabled'}>Deactivate</button>
+                  <button class="btn small" data-act="activate" title="Reactivate account" ${r.active ? 'disabled' : ''}>Activate</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Profile Editing</div>
+                <div class="buttons">
+                  <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Results</div>
+                <div class="buttons">
+                  <button class="btn small ghost" data-act="export-server" title="Generate and download server-side CSVs">Export (Server)</button>
+                </div>
+              </div>
+              <div class="action-group">
+                <div class="label">Danger Zone</div>
+                <div class="buttons">
+                  <button class="btn small warn" data-act="delete" title="Permanently delete this student and related data">Delete</button>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>`;
       }).join('');
 
+      // Wire actions
       approvedTbody.querySelectorAll('button[data-act="deactivate"]').forEach(b=>{
         b.onclick = () => deactivateUser(b.closest('tr').getAttribute('data-id'));
       });
@@ -526,8 +594,9 @@
       });
       approvedTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
         b.onclick = async () => {
+          const tr = b.closest('tr');
           b.disabled = true;
-          try { await exportUserResultsServer(b.closest('tr').getAttribute('data-id')); }
+          try { await exportUserResultsServer(tr.getAttribute('data-id')); }
           finally { setTimeout(()=>{ b.disabled = false; }, 800); }
         };
       });
