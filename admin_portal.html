@@ -35,7 +35,7 @@
     textarea { min-height:80px; }
 
     /* Users */
-    table { width:100%; border-collapse:collapse; }
+    table { width:100%; border-collapse:collapse; table-layout:auto; }
     th, td { border-bottom:1px dashed #cfe0ff; padding:8px 6px; text-align:left; font-size:14px; vertical-align:top; }
     th { background:#f0f6ff; color:#1565c0; }
     .lock-on { color:#2e7d32; font-weight:700; }
@@ -52,46 +52,61 @@
     .assess-table th { background:#f0f6ff; color:#1565c0; }
     .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
 
-    /* Compact section headers inside Actions cell */
+    /* Actions column: header ribbon and body buttons grid */
+    .actions-th { min-width: 520px; }
+    .actions-head-grid {
+      display: grid;
+      gap: 6px 10px;
+      align-items: center;
+    }
+    .actions-head-grid.cols-4 { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+    .actions-head-grid.cols-5 { grid-template-columns: repeat(5, minmax(140px, 1fr)); }
+    .head-pill {
+      background:#0b5a6e;
+      color:#fff;
+      border:1px solid #064557;
+      border-radius:10px;
+      padding:8px 10px;
+      text-align:center;
+      font-weight:800;
+      font-size:13px;
+      line-height:1.2;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+    }
+
     .actions-cell { min-width: 520px; }
     .actions-cell .action-grid {
       display: grid;
-      grid-template-rows: auto auto; /* row 1: headers, row 2: buttons */
       gap: 6px 10px;
       align-items: start;
     }
     .actions-cell .action-grid.cols-4 { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
     .actions-cell .action-grid.cols-5 { grid-template-columns: repeat(5, minmax(140px, 1fr)); }
-    .actions-cell .action-head {
-      background: #0b5a6e;
-      color: #fff;
-      border: 1px solid #064557;
-      border-radius: 6px;
-      padding: 6px 8px;
-      text-align: center;
-      font-weight: 700;
-      font-size: 12px;
-      line-height: 1.2;
-    }
+
     .actions-cell .action-buttons {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding-top: 2px;
-      border-right: 1px solid #d4e4ff;
-      min-height: 34px;
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:6px;
+      padding-top:2px;
+      border-right:1px solid #d4e4ff;
+      min-height:34px;
     }
-    .actions-cell .action-buttons:last-child { border-right: 0; }
+    .actions-cell .action-buttons:last-child { border-right:0; }
+
     @media (max-width: 900px) {
-      .actions-cell { min-width: 0; }
-      .actions-cell .action-grid.cols-4,
-      .actions-cell .action-grid.cols-5 { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .actions-th, .actions-cell { min-width: 0; }
+      .actions-head-grid.cols-4, .actions-head-grid.cols-5,
+      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
     }
     @media (max-width: 520px) {
-      .actions-cell .action-grid.cols-4,
-      .actions-cell .action-grid.cols-5 { grid-template-columns: 1fr; }
-      .actions-cell .action-buttons { border-right: 0; }
+      .actions-head-grid.cols-4, .actions-head-grid.cols-5,
+      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 {
+        grid-template-columns: 1fr;
+      }
+      .actions-cell .action-buttons { border-right:0; }
     }
   </style>
 </head>
@@ -136,7 +151,15 @@
                 <th>Email</th>
                 <th>Status</th>
                 <th>Profile Editing</th>
-                <th>Actions</th>
+                <th class="actions-th">
+                  <div class="actions-head-grid cols-5" aria-label="Actions ribbon headers">
+                    <div class="head-pill">Approval</div>
+                    <div class="head-pill">Activate/Deactivate</div>
+                    <div class="head-pill">Profile</div>
+                    <div class="head-pill">Export Data</div>
+                    <div class="head-pill">Delete Permanently</div>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody id="pending-tbody">
@@ -162,7 +185,14 @@
                 <th>Email</th>
                 <th>Status</th>
                 <th>Profile Editing</th>
-                <th>Actions</th>
+                <th class="actions-th">
+                  <div class="actions-head-grid cols-4" aria-label="Actions ribbon headers">
+                    <div class="head-pill">Activate/Deactivate</div>
+                    <div class="head-pill">Profile</div>
+                    <div class="head-pill">Export Data</div>
+                    <div class="head-pill">Delete Permanently</div>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody id="approved-tbody">
@@ -470,7 +500,7 @@
       }
     }
 
-    // USERS — Renderers (compact headers + buttons grid)
+    // USERS — Renderers (buttons aligned under header ribbon)
     function renderStatusChips(row){
       const chips = [];
       chips.push(row.approved ? '<span class="chip approved">Approved</span>' : '<span class="chip pending">Pending</span>');
@@ -496,12 +526,6 @@
           <td>${lockTxt}</td>
           <td class="actions-cell">
             <div class="action-grid cols-5">
-              <div class="action-head">Approval</div>
-              <div class="action-head">Activate/Deactivate</div>
-              <div class="action-head">Profile</div>
-              <div class="action-head">Export Data</div>
-              <div class="action-head">Delete Permanently</div>
-
               <div class="action-buttons">
                 <button class="btn small" data-act="approve" title="Approve this student">Approve</button>
               </div>
@@ -571,11 +595,6 @@
           <td>${lockTxt}</td>
           <td class="actions-cell">
             <div class="action-grid cols-4">
-              <div class="action-head">Activate/Deactivate</div>
-              <div class="action-head">Profile</div>
-              <div class="action-head">Export Data</div>
-              <div class="action-head">Delete Permanently</div>
-
               <div class="action-buttons">
                 <button class="btn small warn" data-act="deactivate" title="Deactivate account" ${r.active ? '' : 'disabled'}>Deactivate</button>
                 <button class="btn small" data-act="activate" title="Reactivate account" ${r.active ? 'disabled' : ''}>Activate</button>
@@ -697,7 +716,7 @@
             tableStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
           }catch(e){
             console.warn('toggle row', e);
-            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
