@@ -23,6 +23,8 @@
     .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
     .error { color:#d32f2f; margin-top:1em; font-weight:500; }
     .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
+
+    /* Block message */
     .block-access-msg {
       border-radius:10px;
       background:#ffebee;
@@ -36,6 +38,7 @@
       font-weight:600;
     }
     .block-access-msg a { color:#b71c1c; text-decoration:underline; }
+
     @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -50,7 +53,7 @@
     </nav>
   </header>
 
-  <!-- Shown only when access is allowed -->
+  <!-- Form container (hidden until access is verified) -->
   <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
@@ -102,7 +105,7 @@
     </form>
   </div>
 
-  <!-- Shown when access is blocked or errors occur -->
+  <!-- Block message container -->
   <div id="blockMsg" style="display:none;"></div>
 
   <script>
@@ -126,7 +129,7 @@
       }
     }
 
-    // Helpers for blocking/unblocking UI
+    // ---- Access control helpers ----
     function showBlock(messageHtml){
       const blockMsg = document.getElementById('blockMsg');
       const main = document.getElementById('mainContainer');
@@ -141,37 +144,33 @@
       if (main) main.style.display = '';
     }
 
-    // Robust fetch for assessment row, trying multiple possible columns without breaking
+    // Try multiple possible assessment identifiers so we don't rely on one column existing
     async function getAssessmentRow() {
-      const colsToTry = [
+      const attempts = [
         { col: 'slug',          val: EXPERIMENT_ID },
         { col: 'experiment_id', val: EXPERIMENT_ID },
         { col: 'code',          val: EXPERIMENT_ID },
         { col: 'title',         val: ASSESSMENT_TITLE }
       ];
-      for (const c of colsToTry) {
+      for (const a of attempts) {
         try {
           const { data, error } = await sb
             .from('assessments')
             .select('id, title, locked, window_start, window_end')
-            .eq(c.col, c.val)
+            .eq(a.col, a.val)
             .maybeSingle();
           if (error) {
-            // Column may not exist -> PostgREST 42703; skip to next candidate
-            if (String(error.code) === '42703' || /column .* does not exist/i.test(error.message||'')) continue;
-            console.warn('assessments lookup error (', c.col, '):', error);
+            // Column might not exist -> skip to next
+            if (String(error.code) === '42703' || /column .* does not exist/i.test(error.message || '')) continue;
+            console.warn('assessments lookup error ('+a.col+'):', error.message || error);
             continue;
           }
           if (data) return data;
-        } catch (e) {
-          // If filter column doesn't exist, PostgREST throws; continue
-          continue;
-        }
+        } catch (e) { /* ignore and try next */ }
       }
       return null;
     }
 
-    // Check profile flags (approved/active)
     async function checkProfileAccess() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session?.user) {
@@ -179,7 +178,7 @@
         return { ok:false, uid:null };
       }
       const uid = session.user.id;
-      const { data: prof, error } = await sb.from('profiles').select('approved,active').eq('id', uid).maybeSingle();
+      const { data: prof, error } = await sb.from('profiles').select('approved, active').eq('id', uid).maybeSingle();
       if (error) {
         console.warn('profile lookup failed:', error);
         showBlock('Unable to load your profile. Please try again.');
@@ -200,18 +199,16 @@
       return { ok:true, uid };
     }
 
-    // Gatekeeper
-    async function checkAccessAndInit() {
+    async function gate() {
       if (!supabaseAvailable || !sb) {
         showBlock('Unable to initialize backend. Please refresh the page.');
         return;
       }
-
-      // 1) Profile access
+      // 1) Require approved + active profile
       const prof = await checkProfileAccess();
       if (!prof.ok) return;
 
-      // 2) Assessment access
+      // 2) Assessment must be open (not locked and within window)
       const row = await getAssessmentRow();
       if (!row) {
         showBlock('Assessment not available right now. Please try again later.');
@@ -234,7 +231,7 @@
         return;
       }
 
-      // Allowed -> reveal UI and continue
+      // Allowed -> reveal and continue
       showMain();
       renderQuestions();
       autofillFromProfile();
@@ -242,8 +239,10 @@
 
     // ---- Autofill from Profile ----
     async function autofillFromProfile() {
+      if (!supabaseAvailable || !sb) return;
       try {
-        const { data: { session } } = await sb.auth.getSession();
+        const { data: { session }, error: sessErr } = await sb.auth.getSession();
+        if (sessErr) console.warn('getSession error:', sessErr);
         if (!session?.user) return;
 
         const uid = session.user.id;
@@ -537,8 +536,8 @@
       window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
 
-    // Start access check on load
-    window.addEventListener('DOMContentLoaded', checkAccessAndInit);
+    // Run gate on load
+    window.addEventListener('DOMContentLoaded', gate);
   </script>
 </body>
 </html>
