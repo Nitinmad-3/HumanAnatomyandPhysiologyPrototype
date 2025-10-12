@@ -410,6 +410,7 @@
         });
         if(error) throw error;
         const s = data?.files?.summary?.url;
+        // FIX 1: removed stray "ideasr" and properly declared d
         const d = data?.files?.details?.url;
         if(!s && !d){ alert('Export ready, but URLs are missing.'); return; }
         if(s) window.open(s, '_blank');
@@ -515,7 +516,8 @@
       }
     }
 
-    // Delete — Edge Function (put back as requested)
+    // NEW: Delete — Edge Function
+    // FIX 2 LOCATION: directly below export functions and BEFORE "USERS — Renderers"
     async function deleteStudentPermanently(id){
       if(!id) return;
       if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
@@ -757,7 +759,7 @@
             tableStatus.textContent = 'Dates saved.';
           }catch(e){
             console.warn('save dates', e);
-            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -780,7 +782,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -799,7 +801,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
