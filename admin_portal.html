@@ -205,8 +205,6 @@
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <!-- SheetJS for local XLSX export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
     // Supabase init (anon key)
@@ -215,7 +213,7 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
     );
 
-    // Edge Function slug for server export (using the deployed slug)
+    // Edge Function slug for server export (current deployed slug)
     const EXPORT_FN = 'SERVICE_ROLE_KEY';
 
     const $ = s => document.querySelector(s);
@@ -280,7 +278,7 @@
     function pillClass(state){
       if(state==='open') return 'pill success';
       if(state==='upcoming') return 'pill info';
-      if(state==='closed') return 'pill error';
+      ifstateClosed: if(state==='closed') return 'pill error';
       return 'pill error';
     }
     function setStatus(msg){ statusEl.textContent = msg; }
@@ -404,7 +402,7 @@
       }
     }
 
-    // Export (server) via Edge Function (calls the deployed slug and sets Authorization header)
+    // Export (server) via Edge Function (disables button during request)
     async function exportUserResultsServer(userId){
       usersStatus.textContent = 'Exporting (server)…';
       try{
@@ -425,143 +423,6 @@
         if(d) window.open(d, '_blank');
       }catch(e){
         alert('Server export failed: ' + (e?.message || e));
-      }finally{
-        usersStatus.textContent = '';
-      }
-    }
-
-    // Export (local) XLSX using SheetJS (join-free to avoid FK requirements)
-    function computeDerivedPercentLocal(row){
-      const s = Number(row.score ?? 0);
-      const t = Number(row.total ?? 0);
-      const a = Number(row.assignment_marks ?? 0);
-      const den = t + a;
-      if(!den || !isFinite(den)) return null;
-      return ((s + a) / den) * 100;
-    }
-    function normalizeBreakdownLocal(bd){
-      if(!bd) return [];
-      try{
-        const obj = typeof bd === 'string' ? JSON.parse(bd) : bd;
-        if(Array.isArray(obj)) return obj;
-        if(obj && typeof obj === 'object' && Array.isArray(obj.questions)) return obj.questions;
-      }catch{}
-      return [];
-    }
-    async function exportUserResultsLocal(userId, email){
-      usersStatus.textContent = 'Exporting (local)…';
-      try{
-        // 1) results without joins
-        const { data: results, error: resErr } = await sb
-          .from('assessment_results')
-          .select('id,user_id,assessment_id,score,total,assignment_marks,submitted_at,submitted_at_utc,duration_sec,breakdown')
-          .eq('user_id', userId)
-          .order('submitted_at_utc', { ascending:false });
-        if(resErr) throw resErr;
-        const rows = results || [];
-
-        // 2) profile
-        const { data: profile, error: pErr } = await sb
-          .from('profiles')
-          .select('id,name,email,prn,batch')
-          .eq('id', userId)
-          .maybeSingle();
-        if(pErr) throw pErr;
-
-        // 3) assessments
-        const assessIds = [...new Set(rows.map(r => r.assessment_id).filter(Boolean))];
-        let assessMap = new Map();
-        if(assessIds.length){
-          const { data: assessRows, error: aErr } = await sb
-            .from('assessments')
-            .select('id,title')
-            .in('id', assessIds);
-          if(aErr) throw aErr;
-          assessMap = new Map((assessRows||[]).map(a => [a.id, a.title]));
-        }
-
-        // Build summary JSON
-        const summary = rows.map(r => {
-          const s = Number(r.score ?? 0), t = Number(r.total ?? 0), a = Number(r.assignment_marks ?? 0);
-          const pct = computeDerivedPercentLocal(r);
-          return {
-            RowID: r.id,
-            UserID: r.user_id,
-            Name: profile?.name || profile?.email || '',
-            Email: profile?.email || '',
-            PRN: profile?.prn || '',
-            Batch: profile?.batch || '',
-            Assessment: assessMap.get(r.assessment_id) || '',
-            Score: isFinite(s)&&isFinite(t)? `${s}/${t}`: r.score,
-            AssignmentMarks: r.assignment_marks ?? null,
-            TotalMarksNumerator: s + a,
-            TotalMarksDenominator: t + a,
-            Percentage: pct==null? null : Math.round(pct*100)/100,
-            SubmittedAtUTC: r.submitted_at_utc || '',
-            SubmittedAt: r.submitted_at || '',
-            DurationSec: r.duration_sec ?? null
-          };
-        });
-
-        // Build details JSON
-        const details = [];
-        rows.forEach(r => {
-          const email2 = profile?.email || '';
-          const title = assessMap.get(r.assessment_id) || '';
-          const bd = normalizeBreakdownLocal(r.breakdown);
-          let idx = 0;
-          bd.forEach(q => {
-            if(!q || q.type === 'meta') return;
-            idx++;
-            details.push({
-              RowID: r.id,
-              UserID: r.user_id,
-              Name: profile?.name || email2 || '',
-              Email: email2,
-              Assessment: title,
-              QuestionIndex: idx,
-              Question: q.question || '',
-              Type: q.type || '',
-              SelectedAnswer: q.answer ?? '',
-              CorrectAnswer: q.correct ?? '',
-              IsCorrect: q.isCorrect === true
-            });
-          });
-        });
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Results');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(details), 'Details');
-
-        const filename = `export_${(email||userId).replace(/[^A-Za-z0-9_.-]/g,'_')}.xlsx`;
-        XLSX.writeFile(wb, filename);
-      }catch(e){
-        alert('Local export failed: ' + (e?.message || e));
-      }finally{
-        usersStatus.textContent = '';
-      }
-    }
-
-    // Delete — Edge Function (with Authorization header)
-    async function deleteStudentPermanently(id){
-      if(!id) return;
-      if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
-      usersStatus.textContent = 'Deleting…';
-      try{
-        const { data: { session } } = await sb.auth.getSession();
-        if(!session?.access_token){
-          alert('Not signed in. Please log in again.');
-          return;
-        }
-        const { data, error } = await sb.functions.invoke('admin_delete_user', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: { user_id: id, delete_storage: true }
-        });
-        if(error) throw error;
-        alert('Student deleted permanently.');
-        await refreshUsers();
-      }catch(e){
-        alert('Delete failed: ' + (e?.message || e));
       }finally{
         usersStatus.textContent = '';
       }
@@ -595,7 +456,6 @@
             <button class="btn small warn" data-act="deactivate" ${r.active ? '' : 'disabled'}>Deactivate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
             <button class="btn small ghost" data-act="export-server">Export (Server)</button>
-            <button class="btn small ghost" data-act="export-local">Export (Local)</button>
             <button class="btn small warn" data-act="delete">Delete</button>
           </td>
         </tr>`;
@@ -615,12 +475,10 @@
         };
       });
       pendingTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
-        b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
-      });
-      pendingTbody.querySelectorAll('button[data-act="export-local"]').forEach(b=>{
-        b.onclick = () => {
-          const tr = b.closest('tr');
-          exportUserResultsLocal(tr.getAttribute('data-id'), tr.querySelector('[data-email]')?.getAttribute('data-email') || '');
+        b.onclick = async () => {
+          b.disabled = true;
+          try { await exportUserResultsServer(b.closest('tr').getAttribute('data-id')); }
+          finally { setTimeout(()=>{ b.disabled = false; }, 800); }
         };
       });
       pendingTbody.querySelectorAll('button[data-act="delete"]').forEach(b=>{
@@ -634,7 +492,7 @@
         return;
       }
       approvedTbody.innerHTML = rows.map(r=>{
-        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Editable</span>';
+        const lockTxt = r.profile_edit_locked ? '<span class="lock-on">Locked</span>' : '<span class="lock-off">Unlocked</span>';
         const btnLabel = r.profile_edit_locked ? 'Unlock' : 'Lock';
         return `<tr data-id="${r.id}">
           <td>${htmlesc(r.name || '')}</td>
@@ -648,7 +506,6 @@
             <button class="btn small" data-act="activate" ${r.active ? 'disabled' : ''}>Activate</button>
             <button class="btn small ghost" data-act="toggle">${btnLabel}</button>
             <button class="btn small ghost" data-act="export-server">Export (Server)</button>
-            <button class="btn small ghost" data-act="export-local">Export (Local)</button>
             <button class="btn small warn" data-act="delete">Delete</button>
           </td>
         </tr>`;
@@ -668,12 +525,10 @@
         };
       });
       approvedTbody.querySelectorAll('button[data-act="export-server"]').forEach(b=>{
-        b.onclick = () => exportUserResultsServer(b.closest('tr').getAttribute('data-id'));
-      });
-      approvedTbody.querySelectorAll('button[data-act="export-local"]').forEach(b=>{
-        b.onclick = () => {
-          const tr = b.closest('tr');
-          exportUserResultsLocal(tr.getAttribute('data-id'), tr.querySelector('[data-email]')?.getAttribute('data-email') || '');
+        b.onclick = async () => {
+          b.disabled = true;
+          try { await exportUserResultsServer(b.closest('tr').getAttribute('data-id')); }
+          finally { setTimeout(()=>{ b.disabled = false; }, 800); }
         };
       });
       approvedTbody.querySelectorAll('button[data-act="delete"]').forEach(b=>{
@@ -922,6 +777,31 @@
       } catch(e){
         notifList.innerHTML = '<div class="muted">Failed to load notifications.</div>';
         console.warn('loadNotifications', e);
+      }
+    }
+
+    // Delete — Edge Function (with Authorization header)
+    async function deleteStudentPermanently(id){
+      if(!id) return;
+      if(!confirm('Have you exported this student’s results?\nThis will PERMANENTLY delete the account and related data.')) return;
+      usersStatus.textContent = 'Deleting…';
+      try{
+        const { data: { session } } = await sb.auth.getSession();
+        if(!session?.access_token){
+          alert('Not signed in. Please log in again.');
+          return;
+        }
+        const { data, error } = await sb.functions.invoke('admin_delete_user', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: { user_id: id, delete_storage: true }
+        });
+        if(error) throw error;
+        alert('Student deleted permanently.');
+        await refreshUsers();
+      }catch(e){
+        alert('Delete failed: ' + (e?.message || e));
+      }finally{
+        usersStatus.textContent = '';
       }
     }
 
