@@ -125,12 +125,14 @@
 
   <script>
     // ---- Supabase Constants & Init ----
-    // Use numeric assessment ID to match admin_portal assessments table (ID, Title, Locked?, Start/Deadline)
-    const ASSESSMENT_ID = 1;
+    const DEFAULT_ASSESSMENT_ID = 1; // matches your admin table row
     const EXPERIMENT_ID = 'assessment-1-study-of-compound-microscope';
-    const ASSESSMENT_TITLE = '1. Study of Compound Microscope'; // matches Admin table Title
+    const ASSESSMENT_TITLE = '1. Study of Compound Microscope'; // optional sanity check
     const ASSIGNMENT_BUCKET = 'assignments';
     const pageStartTime = Date.now();
+
+    const urlParams = new URLSearchParams(location.search);
+    const ASSESSMENT_ID = Number(urlParams.get('id')) || DEFAULT_ASSESSMENT_ID;
 
     let sb = null;
     try {
@@ -185,7 +187,7 @@
       const isAdmin = role === 'admin';
 
       if (isAdmin) {
-        // Admin bypass: login is enough
+        // Admin bypass — login is enough
         return { ok:true, uid, isAdmin:true };
       }
 
@@ -204,17 +206,19 @@
       return { ok:true, uid, isAdmin:false };
     }
 
-    async function getAssessmentRowById() {
-      const { data, error } = await sb
-        .from('assessments')
-        .select('id, title, locked, window_start, window_end')
-        .eq('id', ASSESSMENT_ID)
-        .maybeSingle();
-      if (error) {
-        console.warn('assessments(id) lookup error:', error);
-        return null;
-      }
-      return data || null;
+    async function getAssessmentRowById(id) {
+      try {
+        const { data, error } = await sb
+          .from('assessments')
+          .select('id, title, locked, window_start, window_end')
+          .eq('id', id)
+          .maybeSingle();
+        if (error) {
+          console.warn('assessments(id) lookup error:', error);
+          return null;
+        }
+        return data || null;
+      } catch { return null; }
     }
 
     async function gate() {
@@ -222,12 +226,34 @@
         showBlock('Unable to initialize backend. Please refresh the page.');
         return;
       }
-      // 1) Require login; for students also require approved + active. Admin bypasses locks/windows.
+
+      // 1) Require login; for students also require approved + active. Admin bypasses locks/windows AND missing rows.
       const prof = await checkProfileAccess();
       if (!prof.ok) return;
 
-      // 2) Check current assessment state
-      const row = await getAssessmentRowById();
+      // 2) Load assessment row (may be null due to config/RLS; admins still bypass)
+      const row = await getAssessmentRowById(ASSESSMENT_ID);
+
+      if (prof.isAdmin) {
+        // Admin: always allow, even if row is missing
+        const flags = [];
+        if (!row) flags.push('not configured');
+        else {
+          const now = new Date();
+          const start = row.window_start ? new Date(row.window_start) : null;
+          const end   = row.window_end ? new Date(row.window_end) : null;
+          if (row.locked) flags.push('locked');
+          if (start && now < start) flags.push('not yet open');
+          if (end && now > end) flags.push('closed');
+        }
+        if (flags.length) showAdminBanner(`This assessment is ${flags.join(' & ')} for students.`);
+        showMain();
+        renderQuestions();
+        autofillFromProfile();
+        return;
+      }
+
+      // Student path: require row and enforce windows/lock
       if (!row) {
         showBlock('Assessment not available right now. Please try again later.');
         return;
@@ -237,20 +263,6 @@
       const start = row.window_start ? new Date(row.window_start) : null;
       const end   = row.window_end ? new Date(row.window_end) : null;
 
-      if (prof.isAdmin) {
-        // Admin bypass: always allow but show context if it would block students
-        const flags = [];
-        if (row.locked) flags.push('locked');
-        if (start && now < start) flags.push('not yet open');
-        if (end && now > end) flags.push('closed');
-        if (flags.length) showAdminBanner(`This assessment is ${flags.join(' & ')} for students.`);
-        showMain();
-        renderQuestions();
-        autofillFromProfile();
-        return;
-      }
-
-      // Student path: enforce lock/time windows
       if (row.locked === true) {
         showBlock('This experiment is currently locked by the admin.');
         return;
@@ -305,7 +317,7 @@
           batchEl.value = profile.batch;
         }
         if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-      } catch (e) {}
+      } catch {}
     }
 
     // ---- Utility ----
