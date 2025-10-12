@@ -697,7 +697,7 @@
             tableStatus.textContent = newLocked ? 'Assessment locked.' : 'Assessment unlocked.';
           }catch(e){
             console.warn('toggle row', e);
-            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e));
+            tableStatus.textContent = 'Toggle failed: ' + (e?.message || e);
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
