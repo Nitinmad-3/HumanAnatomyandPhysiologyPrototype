@@ -23,6 +23,8 @@
     .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
     .error { color:#d32f2f; margin-top:1em; font-weight:500; }
     .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
+
+    /* Block message */
     .block-access-msg {
       border-radius:10px;
       background:#ffebee;
@@ -36,6 +38,19 @@
       font-weight:600;
     }
     .block-access-msg a { color:#b71c1c; text-decoration:underline; }
+
+    /* Admin banner */
+    .admin-banner {
+      margin:0 auto 14px;
+      max-width:800px;
+      background:#fff8e1;
+      color:#8d6e63;
+      border:1px solid #ffe0b2;
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:.95em;
+    }
+
     @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -50,7 +65,10 @@
     </nav>
   </header>
 
-  <!-- Revealed only when access is allowed -->
+  <!-- Admin preview banner (injected when needed) -->
+  <div id="adminBannerMount"></div>
+
+  <!-- Form container (hidden until access is verified) -->
   <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
@@ -102,7 +120,7 @@
     </form>
   </div>
 
-  <!-- Shown when access is blocked or errors occur -->
+  <!-- Block message container -->
   <div id="blockMsg" style="display:none;"></div>
 
   <script>
@@ -138,33 +156,52 @@
       if (blockMsg) blockMsg.style.display = 'none';
       if (main) main.style.display = '';
     }
+    function showAdminBanner(text){
+      const mount = document.getElementById('adminBannerMount');
+      if (!mount) return;
+      mount.innerHTML = `<div class="admin-banner"><b>Admin preview:</b> ${text}</div>`;
+    }
 
     async function checkProfileAccess() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session?.user) {
         showBlock(`Please <a href="../login_Version4.html">sign in</a> to access this experiment.`);
-        return { ok:false, uid:null };
+        return { ok:false, uid:null, isAdmin:false };
       }
       const uid = session.user.id;
-      const { data: prof, error } = await sb.from('profiles').select('approved, active').eq('id', uid).maybeSingle();
+      const { data: prof, error } = await sb
+        .from('profiles')
+        .select('role, approved, active')
+        .eq('id', uid)
+        .maybeSingle();
+
       if (error) {
         console.warn('profile lookup failed:', error);
         showBlock('Unable to load your profile. Please try again.');
-        return { ok:false, uid:null };
+        return { ok:false, uid:null, isAdmin:false };
       }
+
+      const role = String(prof?.role || '').toLowerCase();
+      const isAdmin = role === 'admin';
+
+      if (isAdmin) {
+        // Admin bypass: login is enough
+        return { ok:true, uid, isAdmin:true };
+      }
+
       if (!prof) {
         showBlock('Profile not found. Please contact administrator.');
-        return { ok:false, uid:null };
+        return { ok:false, uid:null, isAdmin:false };
       }
       if (prof.approved === false) {
         showBlock('Your account is not approved yet by the admin.');
-        return { ok:false, uid:null };
+        return { ok:false, uid:null, isAdmin:false };
       }
       if (prof.active === false) {
         showBlock('Your account has been deactivated by the admin.');
-        return { ok:false, uid:null };
+        return { ok:false, uid:null, isAdmin:false };
       }
-      return { ok:true, uid };
+      return { ok:true, uid, isAdmin:false };
     }
 
     async function getAssessmentRowById() {
@@ -185,27 +222,35 @@
         showBlock('Unable to initialize backend. Please refresh the page.');
         return;
       }
-
-      // 1) Require approved + active profile
+      // 1) Require login; for students also require approved + active. Admin bypasses locks/windows.
       const prof = await checkProfileAccess();
       if (!prof.ok) return;
 
-      // 2) Assessment must be open (not locked and within window)
+      // 2) Check current assessment state
       const row = await getAssessmentRowById();
       if (!row) {
         showBlock('Assessment not available right now. Please try again later.');
         return;
       }
 
-      // Optional: sanity check the title so you’re sure you’re gating the right page
-      if ((row.title || '').trim() !== ASSESSMENT_TITLE) {
-        console.warn('Title mismatch:', row.title, '!==', ASSESSMENT_TITLE);
-      }
-
       const now = new Date();
       const start = row.window_start ? new Date(row.window_start) : null;
       const end   = row.window_end ? new Date(row.window_end) : null;
 
+      if (prof.isAdmin) {
+        // Admin bypass: always allow but show context if it would block students
+        const flags = [];
+        if (row.locked) flags.push('locked');
+        if (start && now < start) flags.push('not yet open');
+        if (end && now > end) flags.push('closed');
+        if (flags.length) showAdminBanner(`This assessment is ${flags.join(' & ')} for students.`);
+        showMain();
+        renderQuestions();
+        autofillFromProfile();
+        return;
+      }
+
+      // Student path: enforce lock/time windows
       if (row.locked === true) {
         showBlock('This experiment is currently locked by the admin.');
         return;
@@ -219,7 +264,7 @@
         return;
       }
 
-      // Allowed -> reveal UI and continue
+      // Allowed -> reveal and continue
       showMain();
       renderQuestions();
       autofillFromProfile();
@@ -522,7 +567,7 @@
       window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
     };
 
-    // Start access check on load
+    // Run gate on load
     window.addEventListener('DOMContentLoaded', gate);
   </script>
 </body>
