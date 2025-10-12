@@ -52,19 +52,47 @@
     .assess-table th { background:#f0f6ff; color:#1565c0; }
     .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
 
-    /* Action groups inside table cell */
-    .actions-cell .action-groups {
-      display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start;
+    /* Compact section headers inside Actions cell */
+    .actions-cell { min-width: 520px; }
+    .actions-cell .action-grid {
+      display: grid;
+      grid-template-rows: auto auto; /* row 1: headers, row 2: buttons */
+      gap: 6px 10px;
+      align-items: start;
     }
-    .actions-cell .action-group {
-      display:flex; flex-direction:column; gap:6px;
-      padding:8px; border:1px dashed #d4e4ff; border-radius:8px; background:#f9fbff;
-      min-width:160px;
+    .actions-cell .action-grid.cols-4 { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+    .actions-cell .action-grid.cols-5 { grid-template-columns: repeat(5, minmax(140px, 1fr)); }
+    .actions-cell .action-head {
+      background: #0b5a6e;
+      color: #fff;
+      border: 1px solid #064557;
+      border-radius: 6px;
+      padding: 6px 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+      line-height: 1.2;
     }
-    .actions-cell .action-group .label {
-      font-size:11px; font-weight:700; color:#1565c0; text-transform:uppercase; letter-spacing:.02em;
+    .actions-cell .action-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 2px;
+      border-right: 1px solid #d4e4ff;
+      min-height: 34px; /* keeps row tidy when a column has 0/1 buttons */
     }
-    .actions-cell .action-group .buttons { display:flex; gap:6px; flex-wrap:wrap; }
+    .actions-cell .action-buttons:last-child { border-right: 0; }
+    @media (max-width: 900px) {
+      .actions-cell { min-width: 0; }
+      .actions-cell .action-grid.cols-4,
+      .actions-cell .action-grid.cols-5 { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .actions-cell .action-grid.cols-4,
+      .actions-cell .action-grid.cols-5 { grid-template-columns: 1fr; }
+      .actions-cell .action-buttons { border-right: 0; }
+    }
   </style>
 </head>
 <body>
@@ -442,7 +470,7 @@
       }
     }
 
-    // USERS — Renderers (with grouped action headers)
+    // USERS — Renderers (compact headers + buttons grid)
     function renderStatusChips(row){
       const chips = [];
       chips.push(row.approved ? '<span class="chip approved">Approved</span>' : '<span class="chip pending">Pending</span>');
@@ -467,36 +495,28 @@
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
           <td class="actions-cell">
-            <div class="action-groups">
-              <div class="action-group">
-                <div class="label">Approval</div>
-                <div class="buttons">
-                  <button class="btn small" data-act="approve" title="Approve this student to access the portal">Approve</button>
-                </div>
+            <div class="action-grid cols-5">
+              <div class="action-head">Approval</div>
+              <div class="action-head">Activate/Deactivate</div>
+              <div class="action-head">Profile</div>
+              <div class="action-head">Export Data</div>
+              <div class="action-head">Delete Permanently</div>
+
+              <div class="action-buttons">
+                <button class="btn small" data-act="approve" title="Approve this student">Approve</button>
               </div>
-              <div class="action-group">
-                <div class="label">Account</div>
-                <div class="buttons">
-                  <button class="btn small warn" data-act="deactivate" title="Deactivate account (can be reactivated)" ${r.active ? '' : 'disabled'}>Deactivate</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small warn" data-act="deactivate" title="Deactivate account" ${r.active ? '' : 'disabled'}>Deactivate</button>
+                <button class="btn small" data-act="activate" title="Reactivate account" ${r.active ? 'disabled' : ''}>Activate</button>
               </div>
-              <div class="action-group">
-                <div class="label">Profile Editing</div>
-                <div class="buttons">
-                  <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
               </div>
-              <div class="action-group">
-                <div class="label">Results</div>
-                <div class="buttons">
-                  <button class="btn small ghost" data-act="export-server" title="Generate and download server-side CSVs">Export (Server)</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small ghost" data-act="export-server" title="Generate and download CSVs">Export (Server)</button>
               </div>
-              <div class="action-group">
-                <div class="label">Danger Zone</div>
-                <div class="buttons">
-                  <button class="btn small warn" data-act="delete" title="Permanently delete this student and related data">Delete</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small warn" data-act="delete" title="Permanently delete student and related data">Delete</button>
               </div>
             </div>
           </td>
@@ -509,6 +529,9 @@
       });
       pendingTbody.querySelectorAll('button[data-act="deactivate"]').forEach(b=>{
         b.onclick = () => deactivateUser(b.closest('tr').getAttribute('data-id'));
+      });
+      pendingTbody.querySelectorAll('button[data-act="activate"]').forEach(b=>{
+        b.onclick = () => activateUser(b.closest('tr').getAttribute('data-id'));
       });
       pendingTbody.querySelectorAll('button[data-act="toggle"]').forEach(b=>{
         b.onclick = () => {
@@ -547,31 +570,24 @@
           <td>${renderStatusChips(r)}</td>
           <td>${lockTxt}</td>
           <td class="actions-cell">
-            <div class="action-groups">
-              <div class="action-group">
-                <div class="label">Account</div>
-                <div class="buttons">
-                  <button class="btn small warn" data-act="deactivate" title="Deactivate account (can be reactivated)" ${r.active ? '' : 'disabled'}>Deactivate</button>
-                  <button class="btn small" data-act="activate" title="Reactivate account" ${r.active ? 'disabled' : ''}>Activate</button>
-                </div>
+            <div class="action-grid cols-4">
+              <div class="action-head">Activate/Deactivate</div>
+              <div class="action-head">Profile</div>
+              <div class="action-head">Export Data</div>
+              <div class="action-head">Delete Permanently</div>
+
+              <div class="action-buttons">
+                <button class="btn small warn" data-act="deactivate" title="Deactivate account" ${r.active ? '' : 'disabled'}>Deactivate</button>
+                <button class="btn small" data-act="activate" title="Reactivate account" ${r.active ? 'disabled' : ''}>Activate</button>
               </div>
-              <div class="action-group">
-                <div class="label">Profile Editing</div>
-                <div class="buttons">
-                  <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small ghost" data-act="toggle" title="Toggle profile edit lock">${btnLabel}</button>
               </div>
-              <div class="action-group">
-                <div class="label">Results</div>
-                <div class="buttons">
-                  <button class="btn small ghost" data-act="export-server" title="Generate and download server-side CSVs">Export (Server)</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small ghost" data-act="export-server" title="Generate and download CSVs">Export (Server)</button>
               </div>
-              <div class="action-group">
-                <div class="label">Danger Zone</div>
-                <div class="buttons">
-                  <button class="btn small warn" data-act="delete" title="Permanently delete this student and related data">Delete</button>
-                </div>
+              <div class="action-buttons">
+                <button class="btn small warn" data-act="delete" title="Permanently delete student and related data">Delete</button>
               </div>
             </div>
           </td>
@@ -703,7 +719,7 @@
               window_end: istLocalToUTC(endVal)
             };
             let { error } = await sb.from('assessments').update(payload).eq('id', id);
-            if(error && (String(error.code) === '42703' || /column .*window_end.* does not exist/i.test(error.message || ''))){
+            if(error && (String(error.code) === '42703' || /column .*window_end.* does not exist/i.test(error.message || '')){
               const { error:err2 } = await sb.from('assessments').update({ window_start: istLocalToUTC(startVal) }).eq('id', id);
               if(err2) throw err2;
             } else if(error){
@@ -714,7 +730,7 @@
             tableStatus.textContent = 'Dates saved.';
           }catch(e){
             console.warn('save dates', e);
-            tableStatus.textContent = 'Save failed: ' + (e?.message || e);
+            tableStatus.textContent = 'Save failed: ' + (e?.message || e));
           }finally{
             btn.disabled = false;
             setTimeout(()=>tableStatus.textContent='', 2500);
@@ -737,7 +753,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments unlocked.';
       }catch(e){
-        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Unlock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
@@ -756,7 +772,7 @@
         renderAssessments(updated);
         tableStatus.textContent = 'All assessments locked.';
       }catch(e){
-        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e);
+        tableStatus.textContent = 'Lock all failed: ' + (e?.message || e));
       }finally{
         unlockAllBtn.disabled = false; lockAllBtn.disabled = false;
         setTimeout(()=>tableStatus.textContent='', 2500);
