@@ -23,6 +23,29 @@
     .error { color: #d32f2f; margin-bottom: 1em;}
     img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
     label.dropdown-label { display: inline-block; min-width: 80px; }
+    .block-access-msg {
+      border-radius:10px;
+      background:#ffebee;
+      color:#b71c1c;
+      border:1px solid #c62828;
+      font-size:1.05em;
+      margin:2em auto;
+      padding:1.25em 1.5em;
+      text-align:center;
+      max-width:800px;
+      font-weight:600;
+    }
+    .block-access-msg a { color:#b71c1c; text-decoration:underline; }
+    .admin-banner {
+      margin:0 auto 14px;
+      max-width:800px;
+      background:#fff8e1;
+      color:#8d6e63;
+      border:1px solid #ffe0b2;
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:.95em;
+    }
     @media (max-width: 600px) { .container { padding: 1rem; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
@@ -37,7 +60,8 @@
       <a href="../references.html">References</a>
     </nav>
   </header>
-  <div class="container">
+  <div id="adminBannerMount"></div>
+  <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
         <h2>Student Information</h2>
@@ -77,56 +101,154 @@
       <div class="result" id="resultMsg"></div>
     </form>
   </div>
+  <div id="blockMsg" style="display:none;"></div>
   <script>
     // ---- Supabase Constants & Init ----
+    const DEFAULT_ASSESSMENT_ID = 5;
     const EXPERIMENT_ID = 'assessment-5-muscular-nervous';
     const ASSESSMENT_TITLE = 'Experiment No. 5 (Microscopic Study of Muscular and Nervous Tissue)';
     const ASSIGNMENT_BUCKET = 'assignments';
     const pageStartTime = Date.now();
-
-    let supabaseAvailable = !!(window.supabase && typeof window.supabase.createClient === 'function');
+    const urlParams = new URLSearchParams(location.search);
+    const ASSESSMENT_ID = Number(urlParams.get('id')) || DEFAULT_ASSESSMENT_ID;
     let sb = null;
-    if (supabaseAvailable) {
-      try {
-        sb = window.supabase.createClient(
-          'https://hunlistfklwvpivfjmbk.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
-        );
-      } catch (e) {
-        console.warn('Supabase init failed:', e);
-        supabaseAvailable = false;
-      }
+    let isAdmin = false;
+    try {
+      sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+      );
+    } catch (e) { console.warn('Supabase init failed:', e); }
+    function showBlock(messageHtml){
+      const blockMsg = document.getElementById('blockMsg');
+      const main = document.getElementById('mainContainer');
+      if (main) main.style.display = 'none';
+      blockMsg.style.display = '';
+      blockMsg.innerHTML = `<div class="block-access-msg">${messageHtml}</div>`;
     }
-
-    // ---- Autofill from Profile ----
-    async function autofillFromProfile() {
-      if (!supabaseAvailable || !sb) return;
+    function showMain(){
+      const main = document.getElementById('mainContainer');
+      const blockMsg = document.getElementById('blockMsg');
+      if (blockMsg) blockMsg.style.display = 'none';
+      if (main) main.style.display = '';
+    }
+    function showAdminBanner(text){
+      const mount = document.getElementById('adminBannerMount');
+      if (!mount) return;
+      mount.innerHTML = `<div class="admin-banner"><b>Admin preview:</b> ${text}</div>`;
+    }
+    async function checkProfileAccess() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.user) {
+        showBlock(`Please <a href="../login_Version4.html">sign in</a> to access this experiment.`);
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      const uid = session.user.id;
+      const { data: prof, error } = await sb
+        .from('profiles')
+        .select('role, approved, active')
+        .eq('id', uid)
+        .maybeSingle();
+      if (error) {
+        console.warn('profile lookup failed:', error);
+        showBlock('Unable to load your profile. Please try again.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      const role = String(prof?.role || '').toLowerCase();
+      isAdmin = role === 'admin';
+      if (isAdmin) return { ok:true, uid, isAdmin:true };
+      if (!prof) {
+        showBlock('Profile not found. Please contact administrator.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      if (prof.approved === false) {
+        showBlock('Your account is not approved yet by the admin.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      if (prof.active === false) {
+        showBlock('Your account has been deactivated by the admin.');
+        return { ok:false, uid:null, isAdmin:false };
+      }
+      return { ok:true, uid, isAdmin:false };
+    }
+    async function getAssessmentRowById(id) {
       try {
-        const { data: { session }, error: sessErr } = await sb.auth.getSession();
-        if (sessErr) console.warn('getSession error:', sessErr);
+        const { data, error } = await sb
+          .from('assessments')
+          .select('id, title, locked, window_start, window_end')
+          .eq('id', id)
+          .maybeSingle();
+        if (error) {
+          console.warn('assessments(id) lookup error:', error);
+          return null;
+        }
+        return data || null;
+      } catch { return null; }
+    }
+    async function gate() {
+      if (!sb) {
+        showBlock('Unable to initialize backend. Please refresh the page.');
+        return;
+      }
+      const prof = await checkProfileAccess();
+      if (!prof.ok) return;
+      const row = await getAssessmentRowById(ASSESSMENT_ID);
+      if (prof.isAdmin) {
+        const flags = [];
+        if (!row) flags.push('not configured');
+        else {
+          const now = new Date();
+          const start = row.window_start ? new Date(row.window_start) : null;
+          const end   = row.window_end ? new Date(row.window_end) : null;
+          if (row.locked) flags.push('locked');
+          if (start && now < start) flags.push('not yet open');
+          if (end && now > end) flags.push('closed');
+        }
+        if (flags.length) showAdminBanner(`This assessment is ${flags.join(' & ')} for students.`);
+        showMain();
+        renderQuestions();
+        autofillFromProfile();
+        return;
+      }
+      if (!row) {
+        showBlock('Assessment not available right now. Please try again later.');
+        return;
+      }
+      const now = new Date();
+      const start = row.window_start ? new Date(row.window_start) : null;
+      const end   = row.window_end ? new Date(row.window_end) : null;
+      if (row.locked === true) {
+        showBlock('This experiment is currently locked by the admin.');
+        return;
+      }
+      if (start && now < start) {
+        showBlock('This experiment is not yet open. Please check back later.');
+        return;
+      }
+      if (end && now > end) {
+        showBlock('This experiment is closed.');
+        return;
+      }
+      showMain();
+      renderQuestions();
+      autofillFromProfile();
+    }
+    async function autofillFromProfile() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
         if (!session?.user) return;
-
         const uid = session.user.id;
         const { data: profile, error } = await sb
           .from('profiles')
           .select('name, email, prn, batch, school_name')
           .eq('id', uid)
           .maybeSingle();
-
-        if (error) {
-          console.warn('Profile fetch error:', error.message);
-          return;
-        }
-        if (!profile) {
-          return;
-        }
-
+        if (error || !profile) return;
         const studentNameEl = document.getElementById('studentName');
         const schoolNameEl = document.getElementById('schoolName');
         const prnEl = document.getElementById('prnNumber');
         const batchEl = document.getElementById('batchNumber');
         const emailEl = document.getElementById('emailId');
-
         if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
         if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
         if (prnEl && !prnEl.value) prnEl.value = profile.prn || '';
@@ -141,18 +263,22 @@
           batchEl.value = profile.batch;
         }
         if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-      } catch (e) {
-        console.warn('autofillFromProfile error:', e);
-      }
+        // LOCK FIELDS if not admin
+        if (!isAdmin) {
+          studentNameEl && (studentNameEl.readOnly = true);
+          schoolNameEl && (schoolNameEl.readOnly = true);
+          prnEl && (prnEl.readOnly = true);
+          emailEl && (emailEl.readOnly = true);
+          batchEl && (batchEl.disabled = true);
+        } else {
+          studentNameEl && (studentNameEl.readOnly = false);
+          schoolNameEl && (schoolNameEl.readOnly = false);
+          prnEl && (prnEl.readOnly = false);
+          emailEl && (emailEl.readOnly = false);
+          batchEl && (batchEl.disabled = false);
+        }
+      } catch (e) {}
     }
-    if (supabaseAvailable && sb) {
-      sb.auth.onAuthStateChange((_evt, _session) => {
-        autofillFromProfile();
-      });
-      autofillFromProfile();
-    }
-
-    // ---- Utility ----
     function shuffleArray(arr){
       for(let i = arr.length - 1; i > 0; i--){
         const j = Math.floor(Math.random() * (i + 1));
@@ -160,8 +286,6 @@
       }
       return arr;
     }
-
-    // ---- Questions ----
     const questions = [
       {
         type: "mcq",
@@ -251,22 +375,20 @@
         ],
         answer: "Axon terminal"
       },
-      // Image Labels Q9: Muscle classification
       {
         type: "image-labels",
         text: "9. Identify the labelled muscle types in the diagram below:",
-        image: "../assets/images/experiment-5/assessment/Types of Muscles.png", // update path as needed
+        image: "../assets/images/experiment-5/assessment/Types of Muscles.png",
         labels: [
           { name: "1", answer: "Cardiac", options: ["Cardiac", "Skeletal", "Smooth"] },
           { name: "2", answer: "Skeletal", options: ["Cardiac", "Skeletal", "Smooth"] },
           { name: "3", answer: "Smooth", options: ["Cardiac", "Skeletal", "Smooth"] }
         ]
       },
-      // Image Labels Q10: Neuron
       {
         type: "image-labels",
         text: "10. Identify the labelled parts of the neuron in the diagram below:",
-        image: "../assets/images/experiment-5/assessment/neeuron.png", // update path as needed
+        image: "../assets/images/experiment-5/assessment/neeuron.png",
         labels: [
           { name: "1", answer: "Dendrite", options: ["Dendrite", "Nucleus", "Soma/cell body", "Axon", "Node of Ranvier", "Myelin"] },
           { name: "2", answer: "Nucleus", options: ["Dendrite", "Nucleus", "Soma/cell body", "Axon", "Node of Ranvier", "Myelin"] },
@@ -277,13 +399,10 @@
         ]
       }
     ];
-
     questions.forEach(q => {
       if(q.options) shuffleArray(q.options);
       if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
     });
-
-    // ---- Render Questions ----
     function renderQuestions(){
       const qs = document.getElementById('questionsSection');
       if(!qs){
@@ -314,30 +433,23 @@
         qs.innerHTML += html;
       });
     }
-    renderQuestions();
-
-    // ---- Assignment Upload ----
     let uploadedAssignmentPath = null;
     let uploadedAssignmentUrl  = null;
     let uploadingAssignment    = false;
-
     document.getElementById('assignmentFile').addEventListener('change', async (e) => {
       const statusEl = document.getElementById('assignmentStatus');
       const file = e.target.files[0];
       statusEl.textContent = '';
       uploadedAssignmentPath = null;
       uploadedAssignmentUrl  = null;
-
       if(!file) return;
       if(file.type !== 'application/pdf'){
         statusEl.textContent = 'Only PDF files allowed.';
         e.target.value = '';
         return;
       }
-
       uploadingAssignment = true;
       statusEl.textContent = 'Uploading PDF...';
-
       const { data:{ session } } = await sb.auth.getSession();
       if(!session?.user){
         statusEl.textContent = 'Login required before upload.';
@@ -345,10 +457,8 @@
         e.target.value = '';
         return;
       }
-
       const uid = session.user.id;
       const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
-
       const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
         filePath, file, { upsert:true, contentType:'application/pdf' }
       );
@@ -357,15 +467,12 @@
         uploadingAssignment = false;
         return;
       }
-
       const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
       uploadedAssignmentPath = filePath;
       uploadedAssignmentUrl  = urlData?.publicUrl || null;
       uploadingAssignment = false;
       statusEl.textContent = 'PDF uploaded successfully.';
     });
-
-    // ---- Submission ----
     document.getElementById('assessmentForm').onsubmit = async function(e){
       e.preventDefault();
       const errEl = document.getElementById('errorMsg');
@@ -373,16 +480,13 @@
       const submitBtn = document.getElementById('submitBtn');
       errEl.textContent = '';
       resEl.textContent = '';
-
       if(!uploadedAssignmentPath){
         errEl.textContent = uploadingAssignment
           ? 'Please wait: assignment is still uploading...'
           : 'Please upload the assignment PDF before submitting.';
         return;
       }
-
       const form = e.target;
-
       let allAnswered = true;
       const answers = [];
       for(let i=0; i<questions.length; i++){
@@ -401,7 +505,6 @@
           answers.push(labelVals.join('; '));
         }
       }
-
       if(!allAnswered){
         errEl.textContent = 'Please answer all questions.';
         return;
@@ -410,10 +513,7 @@
         errEl.textContent = 'You must agree to the declaration.';
         return;
       }
-
-      // Scoring
-      let marks = 0;
-      let maxMarks = 0;
+      let marks = 0, maxMarks = 0;
       for(let i=0; i<questions.length; i++){
         const q = questions[i];
         if(['mcq','dropdown'].includes(q.type)){
@@ -423,88 +523,3 @@
           maxMarks += q.labels.length;
           const parts = answers[i].split(';').map(s => s.trim());
           q.labels.forEach((label, lid) => {
-            if(parts[lid] && parts[lid] === label.answer) marks++;
-          });
-        }
-      }
-
-      submitBtn.disabled = true;
-      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
-
-      const { data:{ session } } = await sb.auth.getSession();
-      if(!session?.user){
-        alert('Please log in so your result is stored.');
-        window.location.href = '../login_Version4.html';
-        return;
-      }
-      const uid = session.user.id;
-
-      // Breakdown for result page
-      const breakdown = [];
-      for(let i=0; i<questions.length; i++){
-        const q = questions[i];
-        if(['mcq','dropdown'].includes(q.type)){
-          breakdown.push({
-            question: q.text,
-            type: q.type,
-            answer: answers[i],
-            correct: q.answer,
-            isCorrect: answers[i] === q.answer
-          });
-        } else if(q.type === 'image-labels'){
-          const parts = answers[i].split(';').map(s=>s.trim());
-          q.labels.forEach((label, lid) => {
-            breakdown.push({
-              question: `${q.text} (Label ${label.name})`,
-              type: 'image-label',
-              answer: parts[lid],
-              correct: label.answer,
-              isCorrect: parts[lid] === label.answer
-            });
-          });
-        }
-      }
-      breakdown.push({
-        type: 'meta',
-        assignment: {
-          bucket: ASSIGNMENT_BUCKET,
-          path: uploadedAssignmentPath,
-          publicUrl: uploadedAssignmentUrl || null
-        }
-      });
-
-      const durationSec = Math.round((Date.now() - pageStartTime)/1000);
-
-      const row = {
-        user_id: uid,
-        user_name: form.studentName.value.trim(),
-        experiment_id: EXPERIMENT_ID,
-        score: marks,
-        total: maxMarks,
-        submitted_at: new Date().toISOString(),
-        duration_sec: durationSec,
-        breakdown,
-        meta: {
-          email: form.emailId.value.trim(),
-          prn: form.prnNumber.value.trim(),
-          batch: form.batchNumber.value.trim(),
-          school_name: form.schoolName.value.trim(),
-          assessment_title: ASSESSMENT_TITLE
-        },
-        assignment_bucket: ASSIGNMENT_BUCKET,
-        assignment_path: uploadedAssignmentPath
-      };
-
-      const { error } = await sb.from('assessment_results').insert(row);
-      if(error){
-        console.error('Supabase insert error:', error);
-        errEl.textContent = 'Could not save result. Please retry.';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = `../result.html?exp=${encodeURIComponent(EXPERIMENT_ID)}`;
-    };
-  </script>
-</body>
-</html>
