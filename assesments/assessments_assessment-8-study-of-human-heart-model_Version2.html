@@ -5,25 +5,24 @@
   <title>Assessment: Clotting Time by Capillary Glass Tube Method</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #1565c0; margin:0 0 .5rem; }
-    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
-    .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    .question { margin-bottom: 1.5em;}
-    .student-info label { display: block; margin: 0.5em 0 0.2em;}
-    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
-    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f3e5f5; margin:0; }
+    header { text-align:center; padding:2rem 1rem 1rem; }
+    h1 { color:#6a1b9a; margin:0 0 .5rem; }
+    nav a { margin:0 .5rem; text-decoration:none; color:#6a1b9a; font-weight:600; }
+    .container { max-width:800px; margin:2rem auto; background:#fff; border-radius:16px; padding:2rem; box-shadow:0 2px 8px #ce93d8;}
+    .student-info label { display:block; margin:.5em 0 .2em; }
+    .student-info input, .student-info select { width:100%; padding:.55em; margin-bottom:.8em; }
+    .assignment-upload { background:#ede7f6; padding:1em; border-radius:10px; margin:1em 0 2em; }
     .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
-    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
-    .declaration { margin: 2em 0 1em 0; }
-    .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px; cursor:pointer;}
-    .submit-btn:disabled { background: #90caf9; cursor:not-allowed; }
-    .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
-    .error { color: #d32f2f; margin-bottom: 1em;}
-    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
-    label.dropdown-label { display: inline-block; min-width: 120px; }
-    /* Block message */
+    .note { font-size:.75em; color:#6a1b9a; margin-top:.2em; }
+    .question { margin-bottom:1.4em; }
+    img.question-img { max-width:400px; display:block; margin:.4em 0 1em; }
+    label.dropdown-label { display:inline-block; min-width:70px; }
+    .declaration { margin:2em 0 1em; }
+    .submit-btn { padding:.85em 2em; font-size:1.05em; border:none; background:#6a1b9a; color:#fff; border-radius:6px; cursor:pointer; }
+    .submit-btn:disabled { background:#b39ddb; cursor:not-allowed; }
+    .error { color:#d32f2f; margin-top:1em; font-weight:500; }
+    .result { margin-top:1.2em; color:#283593; font-size:1em; font-weight:500; min-height:1.2em; }
     .block-access-msg {
       border-radius:10px;
       background:#ffebee;
@@ -37,7 +36,6 @@
       font-weight:600;
     }
     .block-access-msg a { color:#b71c1c; text-decoration:underline; }
-    /* Admin banner */
     .admin-banner {
       margin:0 auto 14px;
       max-width:800px;
@@ -48,7 +46,7 @@
       padding:10px 12px;
       font-size:.95em;
     }
-    @media (max-width: 600px) { .container { padding: 1rem; } img.question-img { max-width:100%; } }
+    @media (max-width:600px){ .container { padding:1.2rem; } img.question-img { max-width:100%; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
@@ -63,10 +61,8 @@
     </nav>
   </header>
 
-  <!-- Admin preview banner (injected when needed) -->
   <div id="adminBannerMount"></div>
 
-  <!-- Form container (hidden until access is verified) -->
   <div class="container" id="mainContainer" style="display:none;">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
@@ -88,7 +84,6 @@
         <div class="note" id="profileNote"></div>
       </div>
 
-      <!-- Assignment Upload -->
       <div class="assignment-upload">
         <label for="assignmentFile"><b>Upload Assignment (PDF only)*</b></label>
         <input type="file" id="assignmentFile" name="assignmentFile" accept="application/pdf" required>
@@ -106,18 +101,17 @@
         </label>
       </div>
 
-      <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
-      <div class="error" id="errorMsg"></div>
-      <div class="result" id="resultMsg"></div>
+      <button type="submit" id="submitBtn" class="submit-btn">Submit</button>
+      <div id="errorMsg" class="error"></div>
+      <div id="resultMsg" class="result"></div>
     </form>
   </div>
 
-  <!-- Block message container -->
   <div id="blockMsg" style="display:none;"></div>
 
   <script>
     // ---- Supabase Constants & Init ----
-    const DEFAULT_ASSESSMENT_ID = 8; // matches your admin table row for this experiment
+    const DEFAULT_ASSESSMENT_ID = 8;
     const EXPERIMENT_ID = 'assessment-8-clotting-time';
     const ASSESSMENT_TITLE = 'Experiment No. 8 (Clotting Time by Capillary Glass Tube Method)';
     const ASSIGNMENT_BUCKET = 'assignments';
@@ -179,7 +173,6 @@
       const isAdmin = role === 'admin';
 
       if (isAdmin) {
-        // Admin bypass — login is enough
         return { ok:true, uid, isAdmin:true };
       }
 
@@ -219,15 +212,12 @@
         return;
       }
 
-      // 1) Require login; for students also require approved + active. Admin bypasses locks/windows AND missing rows.
       const prof = await checkProfileAccess();
       if (!prof.ok) return;
 
-      // 2) Load assessment row (may be null due to config/RLS; admins still bypass)
       const row = await getAssessmentRowById(ASSESSMENT_ID);
 
       if (prof.isAdmin) {
-        // Admin: always allow, even if row is missing
         const flags = [];
         if (!row) flags.push('not configured');
         else {
@@ -245,7 +235,6 @@
         return;
       }
 
-      // Student path: require row and enforce windows/lock
       if (!row) {
         showBlock('Assessment not available right now. Please try again later.');
         return;
@@ -268,7 +257,6 @@
         return;
       }
 
-      // Allowed -> reveal and continue
       showMain();
       renderQuestions();
       autofillFromProfile();
@@ -294,7 +282,6 @@
         const prnEl = document.getElementById('prnNumber');
         const batchEl = document.getElementById('batchNumber');
         const emailEl = document.getElementById('emailId');
-        const profileNote = document.getElementById('profileNote');
 
         if (studentNameEl && !studentNameEl.value) studentNameEl.value = profile.name || '';
         if (schoolNameEl && !schoolNameEl.value) schoolNameEl.value = profile.school_name || '';
@@ -310,7 +297,6 @@
           batchEl.value = profile.batch;
         }
         if (emailEl && !emailEl.value) emailEl.value = profile.email || session.user.email || '';
-        if (profileNote) profileNote.textContent = '';
       } catch {}
     }
 
@@ -487,7 +473,7 @@
       }
     ];
 
-    // shuffle options to randomize
+    // Shuffle options for MCQs and label options
     questions.forEach(q => {
       if(q.options) shuffleArray(q.options);
       if(q.labels) q.labels.forEach(lab => shuffleArray(lab.options));
@@ -527,62 +513,56 @@
     let uploadedAssignmentUrl  = null;
     let uploadingAssignment    = false;
 
-    document.addEventListener('change', function onDocChange(e){
-      if(!e.target) return;
-      if(e.target.id !== 'assignmentFile') return;
-      (async function handleFileChange(evt){
-        const statusEl = document.getElementById('assignmentStatus');
-        const file = evt.target.files[0];
-        statusEl.textContent = '';
-        uploadedAssignmentPath = null;
-        uploadedAssignmentUrl  = null;
+    document.getElementById('assignmentFile').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('assignmentStatus');
+      const file = e.target.files[0];
+      statusEl.textContent = '';
+      uploadedAssignmentPath = null;
+      uploadedAssignmentUrl  = null;
 
-        if(!file) return;
-        if(file.type !== 'application/pdf'){
-          statusEl.textContent = 'Only PDF files allowed.';
-          evt.target.value = '';
-          return;
-        }
+      if(!file) return;
+      if(file.type !== 'application/pdf'){
+        statusEl.textContent = 'Only PDF files allowed.';
+        e.target.value = '';
+        return;
+      }
 
-        uploadingAssignment = true;
-        statusEl.textContent = 'Uploading PDF...';
+      uploadingAssignment = true;
+      statusEl.textContent = 'Uploading PDF...';
 
-        const { data:{ session } } = await sb.auth.getSession();
-        if(!session?.user){
-          statusEl.textContent = 'Login required before upload.';
-          uploadingAssignment = false;
-          evt.target.value = '';
-          return;
-        }
-
-        const uid = session.user.id;
-        const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
-
-        const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
-          filePath, file, { upsert:true, contentType:'application/pdf' }
-        );
-        if(upErr){
-          statusEl.textContent = 'Upload failed: ' + upErr.message;
-          uploadingAssignment = false;
-          return;
-        }
-
-        const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
-        uploadedAssignmentPath = filePath;
-        uploadedAssignmentUrl  = urlData?.publicUrl || null;
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session?.user){
+        statusEl.textContent = 'Login required before upload.';
         uploadingAssignment = false;
-        statusEl.textContent = 'PDF uploaded successfully.';
-      })(e);
+        e.target.value = '';
+        return;
+      }
+
+      const uid = session.user.id;
+      const filePath = `${uid}/${EXPERIMENT_ID}/${Date.now()}.pdf`;
+
+      const { error: upErr } = await sb.storage.from(ASSIGNMENT_BUCKET).upload(
+        filePath, file, { upsert:true, contentType:'application/pdf' }
+      );
+      if(upErr){
+        statusEl.textContent = 'Upload failed: ' + upErr.message;
+        uploadingAssignment = false;
+        return;
+      }
+
+      const { data: urlData } = sb.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
+      uploadedAssignmentPath = filePath;
+      uploadedAssignmentUrl  = urlData?.publicUrl || null;
+      uploadingAssignment = false;
+      statusEl.textContent = 'PDF uploaded successfully.';
     });
 
     // ---- Submission ----
     document.getElementById('assessmentForm').onsubmit = async function(e){
       e.preventDefault();
       const errEl = document.getElementById('errorMsg');
-      const resEl = document.getElementById('resultMsg');
       const submitBtn = document.getElementById('submitBtn');
       errEl.textContent = '';
-      resEl.textContent = '';
 
       if(!uploadedAssignmentPath){
         errEl.textContent = uploadingAssignment
@@ -601,7 +581,7 @@
           const v = form[`q${i}`]?.value?.trim() || '';
           if(!v) allAnswered = false;
           answers.push(v);
-        } else if(q.type === 'image-labels'){
+        } else if(q.type === "image-labels"){
           const labelVals = [];
           for(let lid=0; lid<q.labels.length; lid++){
             const v = form[`q${i}_label${lid}`]?.value?.trim() || '';
@@ -629,7 +609,7 @@
         if(['mcq','dropdown'].includes(q.type)){
           maxMarks += 1;
           if(answers[i] === q.answer) marks++;
-        } else if(q.type === 'image-labels'){
+        } else if(q.type === "image-labels"){
           maxMarks += q.labels.length;
           const parts = answers[i].split(';').map(s => s.trim());
           q.labels.forEach((label, lid) => {
@@ -639,7 +619,6 @@
       }
 
       submitBtn.disabled = true;
-      resEl.textContent = `Submitting your attempt (${marks}/${maxMarks})...`;
 
       const { data:{ session } } = await sb.auth.getSession();
       if(!session?.user){
@@ -661,7 +640,7 @@
             correct: q.answer,
             isCorrect: answers[i] === q.answer
           });
-        } else if(q.type === 'image-labels'){
+        } else if(q.type === "image-labels"){
           const parts = answers[i].split(';').map(s=>s.trim());
           q.labels.forEach((label, lid) => {
             breakdown.push({
