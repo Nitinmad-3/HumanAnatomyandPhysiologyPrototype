@@ -5,232 +5,460 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Human Anatomy & Physiology Portal</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Fix favicon 404 by providing an inline SVG favicon -->
   <link
     rel="icon"
     href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif">H</text></svg>'
   />
 
   <style>
-    :root{
-      --blue:#1565c0;
-      --blue-600:#1a237e;
-      --ink:#222;
-      --muted:#5b6f99;
-      --chip-bg:#e3f2fd;
-      --chip-bd:#cfe0ff;
-      --card-bg:#f7fbff;
-      --shadow:0 6px 24px rgba(13,37,62,.12);
-      --shadow-soft:0 2px 10px rgba(13,37,62,.10);
+    /* ─── Design Tokens ─────────────────────────────────────── */
+    :root {
+      --blue:        #1565c0;
+      --blue-dark:   #0d47a1;
+      --blue-deeper: #1a237e;
+      --blue-light:  #e3f2fd;
+      --blue-mid:    #bbdefb;
+      --ink:         #1a2233;
+      --ink-soft:    #3a4a6b;
+      --muted:       #6b7da6;
+      --chip-bg:     #e8f1ff;
+      --chip-bd:     #c5d8f8;
+      --card-bg:     #ffffff;
+      --page-bg:     #f0f4fb;
+      --sidebar-w:   240px;
+      --header-h:    64px;
+      --shadow:      0 4px 24px rgba(13,37,80,.13);
+      --shadow-soft: 0 2px 10px rgba(13,37,80,.09);
+      --radius:      14px;
+      --radius-sm:   9px;
     }
+
+    /* ─── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      font-size: 15px;
       color: var(--ink);
-      position: relative;
+      background: var(--page-bg);
       min-height: 100vh;
       overflow-x: hidden;
-      background: #fff;
     }
+    a { text-decoration: none; color: inherit; }
+
+    /* ─── Background wallpaper ──────────────────────────────── */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
       z-index: -1;
-      background: url('wallpaper.jpg') no-repeat center center fixed;
-      background-size: cover;
-      opacity: 1.0;
+      background: url('wallpaper.jpg') no-repeat center center / cover;
+      opacity: 0.08;
       pointer-events: none;
-      filter: saturate(1.05) contrast(1.02);
-    }
-    .overlay {
-      background: rgba(255,255,255,0.90);
-      min-height: 100vh;
-      padding-bottom: 48px;
-    }
-    header {
-      text-align: center;
-      padding: 2rem 1rem 1rem 1rem;
-    }
-    h1 {
-      font-size: 2.2rem;
-      margin: 0.25rem 0 1rem 0;
-      color: var(--blue-600);
-      letter-spacing: 1.2px;
-      text-shadow: 0 1px 8px #cfd8dc;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1.2rem;
-      flex-wrap: wrap;
-    }
-    nav a, nav button {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--blue);
-      text-decoration: none;
-      padding: 0.55em 1.0em;
-      border-radius: 10px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-bd);
-      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
-      cursor: pointer;
-      box-shadow: var(--shadow-soft);
-    }
-    nav a:hover, nav button:hover {
-      background: #dceefd;
-      transform: translateY(-1px);
     }
 
-    /* Modern Profile Dashboard Card */
-    .card {
-      max-width: 920px;
-      margin: 18px auto 12px auto;
-      background: linear-gradient(180deg, #ffffff 0%, var(--card-bg) 100%);
-      border: 1px solid var(--chip-bd);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-    .profile-wrap{
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 16px;
+    /* ═══════════════════════════════════════════════════════════
+       TOP HEADER BAR
+    ═══════════════════════════════════════════════════════════ */
+    .top-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue-dark) 60%, var(--blue) 100%);
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      padding: 0 24px 0 20px;
+      z-index: 200;
+      box-shadow: 0 2px 18px rgba(13,37,80,.22);
     }
-    .avatar {
-      width: 110px;
-      height: 110px;
-      border-radius: 16px;
-      object-fit: cover;
-      background: #f3f6fb;
-      border: 1px solid var(--chip-bd);
-      box-shadow: inset 0 0 0 2px #eef5ff;
+    .top-header__brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
     }
-    .title-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
+    .top-header__logo-icon {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,.2);
     }
-    .name{
-      font-size: 1.35rem;
+    .top-header__title {
+      color: #fff;
+      font-size: 1.1rem;
       font-weight: 700;
-      color: var(--blue-600);
+      letter-spacing: .3px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .top-header__subtitle {
+      color: rgba(255,255,255,.65);
+      font-size: .75rem;
+      font-weight: 400;
       letter-spacing: .2px;
     }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 4px 10px;
-      font-size:.85rem;
-      font-weight:600;
-      border-radius:999px;
-      background: var(--chip-bg);
-      border:1px solid var(--chip-bd);
-      color: var(--blue);
+    .top-header__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
     }
-    .muted{ color: var(--muted); }
-    .meta-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      margin:8px 0 6px 0;
+    .hdr-btn {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: .87rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      white-space: nowrap;
     }
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
+    .hdr-btn:hover { background: rgba(255,255,255,.22); transform: translateY(-1px); }
+    .hdr-btn--accent {
+      background: rgba(255,255,255,.95);
+      color: var(--blue-dark);
+      border-color: transparent;
     }
-    .btn{
-      border:0;
-      border-radius:10px;
-      padding: 10px 14px;
-      font-size:.95rem;
-      font-weight:700;
-      cursor:pointer;
-      transition: transform .04s ease, background .2s ease, box-shadow .2s ease;
+    .hdr-btn--accent:hover { background: #fff; }
+    .hdr-avatar-wrap {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.1);
+      flex-shrink: 0;
+      cursor: pointer;
     }
-    .btn:hover{ transform: translateY(-1px); }
-    .btn-primary{
-      background: var(--blue);
-      color:#fff;
-      box-shadow: var(--shadow-soft);
-    }
-    .btn-ghost{
-      background:#ffffff;
-      color: var(--blue);
-      border:1px solid var(--chip-bd);
-      box-shadow: var(--shadow-soft);
-    }
-    .note{
-      font-size:.95rem;
-      color:#0d47a1;
-      background:#eef6ff;
-      border:1px dashed var(--chip-bd);
-      border-radius:10px;
-      padding:8px 10px;
-      margin-top:8px;
+    .hdr-avatar-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
     }
 
-    /* Chat styles */
-    .chat-card{
-      margin-top:14px;
-      border:1px solid var(--chip-bd);
-      background:#fff;
-      border-radius:14px;
-      box-shadow: var(--shadow-soft);
-      padding:12px;
+    /* ═══════════════════════════════════════════════════════════
+       LAYOUT SHELL  (sidebar + main)
+    ═══════════════════════════════════════════════════════════ */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      padding-top: var(--header-h);
     }
-    .chat-head{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
-    .chat-head .left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .chat-title{ font-weight:800; color:var(--blue-600); }
-    .room-select{ padding:6px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#f9fbff; }
-    .chat-box{
-      margin-top:10px; max-height:280px; overflow:auto; background:#f7f9fe;
-      border:1px solid var(--chip-bd); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:8px;
-    }
-    .chat-line{ display:flex; gap:8px; }
-    .msg{ padding:8px 10px; border-radius:10px; border:1px solid var(--chip-bd); background:#fff; max-width:75%; }
-    .me .msg{ background:#e8f5e9; border-color:#c8e6c9; }
-    .meta{ font-size:11px; color:#6b84c7; margin-top:4px; }
-    .chat-input-row{ display:flex; gap:8px; margin-top:10px; }
-    .chat-input{ flex:1; padding:10px; border-radius:10px; border:1px solid var(--chip-bd); }
-    .chat-send{ padding:10px 14px; border-radius:10px; border:0; background:var(--blue); color:#fff; font-weight:800; }
 
-    .intro {
-      max-width: 920px;
-      margin: 14px auto 0 auto;
-      background: rgba(255,255,255,0.85);
-      border-radius: 16px;
-      padding: 1.2rem 1.4rem;
-      box-shadow: var(--shadow-soft);
+    /* ─── Sidebar ───────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: linear-gradient(180deg, var(--blue-deeper) 0%, #162c6b 100%);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 0 32px 0;
+      box-shadow: 3px 0 20px rgba(13,37,80,.13);
+    }
+    .sidebar-section-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.38);
+      padding: 18px 20px 6px 20px;
+    }
+    .sidebar-section-label:first-child { padding-top: 4px; }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      color: rgba(255,255,255,.75);
+      font-size: .93rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: background .18s, color .18s, border-color .18s;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      background: rgba(255,255,255,.1);
+      color: #fff;
+      border-left-color: #64b5f6;
+    }
+    .sidebar-link .s-icon {
+      font-size: 1.1rem;
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255,255,255,.09);
+      margin: 10px 20px;
+    }
+
+    /* ─── Main Content Area ─────────────────────────────────── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 28px 28px 56px 28px;
+      min-width: 0;
+    }
+
+    /* ─── Page Section Heading ──────────────────────────────── */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .section-heading__icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      background: var(--blue-light);
+      display: flex; align-items: center; justify-content: center;
       font-size: 1.05rem;
       border: 1px solid var(--chip-bd);
+      flex-shrink: 0;
     }
-    .intro ul{ margin: .5rem 0 .25rem 1.2rem; }
-    .intro li{ margin: .15rem 0; }
+    .section-heading__text h2 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--blue-deeper);
+      line-height: 1.25;
+    }
+    .section-heading__text p {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .section-divider {
+      border: 0;
+      border-top: 1.5px solid var(--chip-bd);
+      margin: 0 0 22px 0;
+    }
 
-    /* Efficient Marquee notification bar: two-segment loop (or multi-segment if configured) */
+    /* ─── KPI Stats Row ─────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--chip-bd);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 18px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .kpi-card__accent {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi-card__icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .kpi-card__label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .kpi-card__value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .kpi-card__sub {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    /* ─── Profile Dashboard Card ────────────────────────────── */
+    .profile-card {
+      background: var(--card-bg);
+      border: 1px solid var(--chip-bd);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .profile-card__header {
+      background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue) 100%);
+      padding: 22px 24px 54px 24px;
+      position: relative;
+    }
+    .profile-card__header-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,.6);
+    }
+    .profile-card__header-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+    .profile-card__body {
+      padding: 0 24px 24px 24px;
+    }
+    .profile-card__avatar-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 18px;
+      margin-top: -38px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .profile-card__avatar {
+      width: 80px; height: 80px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: var(--shadow-soft);
+      background: var(--blue-light);
+      flex-shrink: 0;
+    }
+    .profile-card__name-block {
+      padding-bottom: 4px;
+      min-width: 0;
+    }
+    .profile-card__name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--blue-deeper);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .profile-card__message {
+      font-size: .88rem;
+      color: var(--ink-soft);
+      margin-top: 3px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 11px;
+      font-size: .8rem;
+      font-weight: 600;
+      border-radius: 999px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-bd);
+      color: var(--blue-dark);
+    }
+    .chip--admin { background: #fce4ec; border-color: #f8bbd0; color: #b71c1c; }
+    .chip--student { background: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
+    .meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .profile-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 16px;
+      background: #f7faff;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--chip-bd);
+    }
+    .info-item__label {
+      font-size: .73rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .info-item__value {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .btn {
+      border: 0;
+      border-radius: var(--radius-sm);
+      padding: 10px 18px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .08s, box-shadow .15s, background .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn--primary { background: var(--blue); color: #fff; box-shadow: 0 3px 12px rgba(21,101,192,.3); }
+    .btn--primary:hover { background: var(--blue-dark); box-shadow: 0 4px 16px rgba(21,101,192,.4); }
+    .btn--ghost { background: #fff; color: var(--blue); border: 1.5px solid var(--chip-bd); box-shadow: var(--shadow-soft); }
+    .btn--ghost:hover { background: var(--chip-bg); }
+    .btn--danger { background: #c62828; color: #fff; box-shadow: 0 3px 12px rgba(198,40,40,.25); }
+    .status-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--chip-bd);
+      background: #eef6ff;
+      font-size: .9rem;
+      color: #0d47a1;
+      margin-top: 14px;
+    }
+    .status-note--warn { background: #fff8e1; border-color: #ffe082; color: #7b4f00; }
+    .status-note--error { background: #ffebee; border-color: #ffcdd2; color: #b71c1c; }
+    .status-note__icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ─── Notifications Banner ──────────────────────────────── */
+    #home-notifications { margin-bottom: 20px; }
     .marquee-notification {
       position: relative;
       overflow: hidden;
       background: #f0f6ff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(13,37,62,.10);
-      border: 1px solid #cfe0ff;
-      margin: 10px auto;
-      max-width: 920px;
-      height: 38px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--chip-bd);
+      margin-bottom: 8px;
+      height: 40px;
       display: flex;
       align-items: center;
-      padding: 0;
     }
     .marquee-track {
       display: inline-flex;
@@ -240,13 +468,12 @@
       animation-name: marquee;
       animation-timing-function: linear;
       animation-iteration-count: infinite;
-      /* Set via inline style: --scroll-distance and animation-duration */
     }
     .marquee-segment {
       display: inline-flex;
       align-items: center;
       gap: .5rem;
-      padding-right: 2rem; /* visual gap between loops */
+      padding-right: 2rem;
     }
     @keyframes marquee {
       from { transform: translateX(0); }
@@ -256,196 +483,490 @@
     @media (prefers-reduced-motion: reduce) {
       .marquee-track { animation: none !important; transform: none !important; }
     }
+
+    /* ─── Feature Highlights Grid ───────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--chip-bd);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .feature-card__icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--blue-light);
+      border: 1px solid var(--chip-bd);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .feature-card__title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-deeper);
+    }
+    .feature-card__desc {
+      font-size: .86rem;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+    .feature-card__link {
+      margin-top: auto;
+      font-size: .84rem;
+      font-weight: 700;
+      color: var(--blue);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .feature-card__link:hover { text-decoration: underline; }
+
+    /* ─── Chat card ─────────────────────────────────────────── */
+    .chat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--chip-bd);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 16px;
+      margin-top: 24px;
+    }
+    .chat-head { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+    .chat-head .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .chat-title { font-weight: 800; color: var(--blue-deeper); font-size: 1rem; }
+    .room-select {
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--chip-bd);
+      background: #f5f8ff;
+      font-size: .87rem;
+      color: var(--ink);
+    }
+    .chat-box {
+      margin-top: 12px;
+      max-height: 260px;
+      overflow: auto;
+      background: #f7f9fe;
+      border: 1px solid var(--chip-bd);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chat-line { display: flex; gap: 8px; }
+    .msg {
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--chip-bd);
+      background: #fff;
+      max-width: 75%;
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+    .me .msg { background: #e8f5e9; border-color: #c8e6c9; }
+    .meta { font-size: 11px; color: #6b84c7; margin-top: 4px; }
+    .chat-input-row { display: flex; gap: 10px; margin-top: 10px; }
+    .chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--chip-bd);
+      font-size: .92rem;
+      background: #f9fbff;
+    }
+    .chat-input:focus { outline: 2px solid var(--blue-mid); }
+    .chat-send {
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      border: 0;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 800;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .chat-send:hover { background: var(--blue-dark); }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 16px 12px 48px 12px; }
+      .top-header__title { font-size: .95rem; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .profile-card__avatar-row { flex-direction: column; align-items: flex-start; }
+      .action-row { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+    }
+
+    /* ─── Utility ───────────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-24 { margin-bottom: 24px; }
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <header>
-      <h1>Human Anatomy & Physiology Experiments Portal</h1>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="experiments.html">Experiments</a>
-        <a id="assessment-tab" href="assessments.html">Assessments</a>
-        <a id="results-tab" href="result.html" style="display:none;">Results</a>
-        <a href="profile.html" id="profile-tab" style="display:none;">Profile</a>
-        <a href="references.html">References</a>
-        <a href="admin_portal.html" id="admin-portal-link" style="display:none;">Admin Portal</a>
-        <a id="login-btn" href="login_Version4.html" style="display:inline;">Login</a>
-        <button id="logout-btn" style="display:none;">Logout</button>
-      </nav>
-    </header>
 
-    <!-- Notifications Banner (JS will render marquee banners here) -->
-    <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
+  <!-- ══════════════════════════════════════════════════════
+       TOP HEADER
+  ══════════════════════════════════════════════════════ -->
+  <header class="top-header" role="banner">
+    <div class="top-header__brand">
+      <div class="top-header__logo-icon" aria-hidden="true">🫀</div>
+      <div>
+        <div class="top-header__title">Anatomy &amp; Physiology Portal</div>
+        <div class="top-header__subtitle">Learning Management System</div>
+      </div>
+    </div>
 
-    <!-- Unified Profile + Dashboard card (modern, no avatar upload) -->
-    <section id="profile-dashboard-card" class="card" style="display:none;">
-      <div class="profile-wrap">
-        <img id="pc-avatar" class="avatar" alt="Profile avatar" />
+    <div class="top-header__actions" role="navigation" aria-label="Primary actions">
+      <!-- Shown to guests -->
+      <a id="login-btn" href="login_Version4.html" class="hdr-btn hdr-btn--accent">⟶ Login</a>
+
+      <!-- Shown when logged in -->
+      <a href="profile.html"        id="profile-tab"      class="hdr-btn hidden">👤 Profile</a>
+      <a href="admin_portal.html"   id="admin-portal-link" class="hdr-btn hidden">⚙️ Admin Portal</a>
+      <button id="logout-btn"       class="hdr-btn hidden">Logout</button>
+
+      <!-- Tiny avatar mirror in header -->
+      <a href="profile.html" class="hdr-avatar-wrap hidden" id="hdr-avatar-link" aria-label="My profile">
+        <img id="hdr-avatar-img" alt="Avatar" />
+      </a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════
+       LAYOUT  (sidebar + main)
+  ══════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar" role="navigation" aria-label="Site navigation">
+
+      <div class="sidebar-section-label">Main</div>
+      <a href="index.html"       class="sidebar-link active"><span class="s-icon">🏠</span> Dashboard</a>
+      <a href="experiments.html" class="sidebar-link"><span class="s-icon">🔬</span> Experiments</a>
+
+      <div class="sidebar-section-label">Learning</div>
+      <a href="assessments.html" class="sidebar-link" id="sb-assessment"><span class="s-icon">📝</span> Assessments</a>
+      <a href="result.html"      class="sidebar-link hidden" id="sb-results"><span class="s-icon">📊</span> My Results</a>
+
+      <div class="sidebar-section-label">Resources</div>
+      <a href="references.html"  class="sidebar-link"><span class="s-icon">📚</span> References</a>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Account</div>
+      <a href="profile.html"     class="sidebar-link hidden" id="sb-profile"><span class="s-icon">👤</span> My Profile</a>
+      <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main-content" role="main">
+
+      <!-- ── 1. PAGE TITLE ROW ── -->
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
         <div>
-          <div class="title-row">
-            <span id="pc-name" class="name">Welcome</span>
-            <span id="pc-role" class="chip">Role</span>
-          </div>
-          <div id="pc-message" class="muted" style="margin-top:4px;">Loading…</div>
-          <div id="pc-meta" class="meta-row" style="display:none;">
-            <span id="pc-prn" class="chip">PRN: —</span>
-            <span id="pc-batch" class="chip">Batch: —</span>
-          </div>
-          <div class="actions">
-            <a href="profile.html" class="btn btn-ghost" id="pc-update-profile">Update your profile</a>
-            <a href="assessments.html" class="btn btn-primary" id="pc-start-assessments">Go to Assessments</a>
-            <a href="result.html" class="btn btn-ghost" id="pc-view-results">View Results</a>
-            <a href="admin_portal.html" class="btn btn-primary" id="pc-admin-portal" style="display:none;">Open Admin Portal</a>
-          </div>
-          <div id="pc-note" class="note" style="display:none;"></div>
-
-          <!-- Student Chat (disabled by feature flag in JS) -->
-          <div id="chat-section" class="chat-card" style="display:none;">
-            <div class="chat-head">
-              <div class="left">
-                <div class="chat-title">Messages</div>
-                <select id="chat-room" class="room-select" aria-label="Select chat audience">
-                  <option value="global">Global (everyone)</option>
-                  <option value="dm">Admin (private)</option>
-                </select>
-              </div>
-              <div id="chat-status" class="muted">—</div>
-            </div>
-            <div id="chat-box" class="chat-box" aria-live="polite"></div>
-            <div class="chat-input-row">
-              <input id="chat-input" class="chat-input" placeholder="Type a message…" />
-              <button id="chat-send" class="chat-send">Send</button>
-            </div>
-            <div id="chat-setup-hint" class="muted" style="margin-top:6px; display:none;">
-              Chat backend is not set up yet. Ask admin to run setup_portal.sql (portal_chat).
-            </div>
-          </div>
+          <h1 style="font-size:1.5rem; font-weight:800; color:var(--blue-deeper); line-height:1.2;">
+            Dashboard
+          </h1>
+          <p class="muted" style="font-size:.88rem; margin-top:3px;">
+            Human Anatomy &amp; Physiology Experiments — Learning Portal
+          </p>
+        </div>
+        <div style="font-size:.82rem; color:var(--muted); background:var(--chip-bg); border:1px solid var(--chip-bd); border-radius:var(--radius-sm); padding:6px 12px;" id="date-badge">
+          <!-- filled by JS -->
         </div>
       </div>
-    </section>
 
-    <!-- Welcome/Intro -->
-    <div class="intro">
-      <p>
-        Welcome to the Human Anatomy & Physiology Experiments Portal!
-      </p>
-      <ul>
-        <li><b>Experiments</b> – browse all practical experiments with direct links to their contents.</li>
-        <li><b>Assessments</b> – find and answer experiment-specific questions.</li>
-        <li><b>References</b> – access textbooks and websites for further learning.</li>
-      </ul>
-      <p class="muted" style="margin:.4rem 0 0 0;">
-        Tip: If an assessment is not visible, your admin may not have released it yet or it may be outside its time window.
-      </p>
-    </div>
-  </div>
+      <!-- ── 2. NOTIFICATIONS BANNER ── -->
+      <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- ── 3. KPI STATS ROW ── -->
+      <section aria-labelledby="kpi-heading" class="mb-24">
+        <h2 id="kpi-heading" class="hidden">Quick Statistics</h2>
+        <div class="kpi-grid">
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#1565c0,#42a5f5);"></div>
+            <div class="kpi-card__icon" style="background:#e3f2fd;">🔬</div>
+            <div class="kpi-card__label">Experiments</div>
+            <div class="kpi-card__value">12</div>
+            <div class="kpi-card__sub">Available practicals</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#00897b,#4db6ac);"></div>
+            <div class="kpi-card__icon" style="background:#e0f2f1;">📝</div>
+            <div class="kpi-card__label">Assessments</div>
+            <div class="kpi-card__value" id="kpi-assessments">—</div>
+            <div class="kpi-card__sub">Released to you</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#7b1fa2,#ba68c8);"></div>
+            <div class="kpi-card__icon" style="background:#f3e5f5;">📊</div>
+            <div class="kpi-card__label">My Attempts</div>
+            <div class="kpi-card__value" id="kpi-attempts">—</div>
+            <div class="kpi-card__sub">Submissions recorded</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#e65100,#ffa726);"></div>
+            <div class="kpi-card__icon" style="background:#fff3e0;">🔔</div>
+            <div class="kpi-card__label">Notifications</div>
+            <div class="kpi-card__value" id="kpi-notifs">—</div>
+            <div class="kpi-card__sub">Active announcements</div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── 4. PROFILE DASHBOARD CARD ── -->
+      <section id="profile-dashboard-card" aria-label="Your profile" class="hidden mb-24">
+        <div class="section-heading">
+          <div class="section-heading__icon">👤</div>
+          <div class="section-heading__text">
+            <h2>My Profile</h2>
+            <p>Your account details and quick actions</p>
+          </div>
+        </div>
+        <hr class="section-divider" />
+
+        <div class="profile-card">
+          <!-- Card header band -->
+          <div class="profile-card__header">
+            <div class="profile-card__header-label">Logged in as</div>
+            <div class="profile-card__header-title" id="pc-header-role">Student</div>
+          </div>
+
+          <!-- Card body -->
+          <div class="profile-card__body">
+            <!-- Avatar + name row -->
+            <div class="profile-card__avatar-row">
+              <img id="pc-avatar" class="profile-card__avatar" alt="Profile avatar" />
+              <div class="profile-card__name-block">
+                <div class="profile-card__name" id="pc-name">Welcome</div>
+                <div class="profile-card__message muted" id="pc-message">Loading…</div>
+                <div class="meta-chips mt-8" id="pc-chips">
+                  <span id="pc-role" class="chip">Role</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info grid (PRN / Batch) -->
+            <div class="profile-info-grid" id="pc-meta" style="display:none;">
+              <div>
+                <div class="info-item__label">PRN</div>
+                <div class="info-item__value" id="pc-prn">—</div>
+              </div>
+              <div>
+                <div class="info-item__label">Batch</div>
+                <div class="info-item__value" id="pc-batch">—</div>
+              </div>
+              <div>
+                <div class="info-item__label">Programme</div>
+                <div class="info-item__value">B.Sc. Nursing</div>
+              </div>
+              <div>
+                <div class="info-item__label">Portal</div>
+                <div class="info-item__value">Anatomy &amp; Physiology</div>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="action-row">
+              <a href="profile.html"       class="btn btn--ghost"    id="pc-update-profile">✏️ Edit Profile</a>
+              <a href="assessments.html"   class="btn btn--primary"  id="pc-start-assessments">📝 Go to Assessments</a>
+              <a href="result.html"        class="btn btn--ghost"    id="pc-view-results">📊 View Results</a>
+              <a href="admin_portal.html"  class="btn btn--primary"  id="pc-admin-portal" style="display:none;">⚙️ Admin Portal</a>
+            </div>
+
+            <!-- Status note (approval / completion) -->
+            <div id="pc-note" class="status-note hidden">
+              <span class="status-note__icon">ℹ️</span>
+              <span id="pc-note-text"></span>
+            </div>
+
+            <!-- Student Chat -->
+            <div id="chat-section" class="chat-card hidden">
+              <div class="chat-head">
+                <div class="left">
+                  <span class="chat-title">💬 Messages</span>
+                  <select id="chat-room" class="room-select" aria-label="Select chat audience">
+                    <option value="global">Global (everyone)</option>
+                    <option value="dm">Admin (private)</option>
+                  </select>
+                </div>
+                <span id="chat-status" class="muted" style="font-size:.82rem;">—</span>
+              </div>
+              <div id="chat-box" class="chat-box" aria-live="polite"></div>
+              <div class="chat-input-row">
+                <input id="chat-input" class="chat-input" placeholder="Type a message…" />
+                <button id="chat-send" class="chat-send">Send</button>
+              </div>
+              <div id="chat-setup-hint" class="muted hidden" style="margin-top:6px; font-size:.82rem;">
+                Chat backend is not set up yet. Ask admin to run setup_portal.sql (portal_chat).
+              </div>
+            </div>
+
+          </div><!-- /.profile-card__body -->
+        </div><!-- /.profile-card -->
+      </section>
+
+      <!-- ── 5. PORTAL FEATURES ── -->
+      <section aria-labelledby="features-heading" class="mb-24">
+        <div class="section-heading">
+          <div class="section-heading__icon">🧭</div>
+          <div class="section-heading__text">
+            <h2 id="features-heading">Portal Features</h2>
+            <p>Everything available in your learning portal</p>
+          </div>
+        </div>
+        <hr class="section-divider" />
+
+        <div class="features-grid">
+
+          <div class="feature-card">
+            <div class="feature-card__icon">🔬</div>
+            <div class="feature-card__title">Experiments</div>
+            <div class="feature-card__desc">
+              Browse all anatomy &amp; physiology practicals. Each experiment includes objectives, procedure, and results.
+            </div>
+            <a href="experiments.html" class="feature-card__link">Open Experiments →</a>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon">📝</div>
+            <div class="feature-card__title">Assessments</div>
+            <div class="feature-card__desc">
+              Attempt experiment-specific quizzes and MCQs. Assessments are released by your admin within a time window.
+            </div>
+            <a href="assessments.html" class="feature-card__link" id="feat-assessment-link">Go to Assessments →</a>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon">📊</div>
+            <div class="feature-card__title">Results</div>
+            <div class="feature-card__desc">
+              Track your submission history, scores, and performance across all attempted assessments.
+            </div>
+            <a href="result.html" class="feature-card__link" id="feat-results-link">View Results →</a>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon">📚</div>
+            <div class="feature-card__title">References</div>
+            <div class="feature-card__desc">
+              Access recommended textbooks, journal articles, and curated websites for deeper learning.
+            </div>
+            <a href="references.html" class="feature-card__link">Browse References →</a>
+          </div>
+
+        </div>
+
+        <!-- Info tip -->
+        <div class="status-note mt-16" style="margin-top:16px;">
+          <span class="status-note__icon">💡</span>
+          <span>If an assessment is not visible, your admin may not have released it yet or it may be outside its scheduled time window.</span>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- /.layout -->
+
+
+  <!-- ══════════��═══════════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════════════════════ -->
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
+  <!-- ── Marquee / Notification renderer ── -->
   <script>
     (function () {
-      // CONFIG: Choose how the marquee renders
-      // 'infinite' (recommended): 2 segments + infinite loop (smooth, minimal DOM)
-      // 'repeat': physically repeat the message REPEAT_COUNT times (heavier DOM)
-      const MARQUEE_MODE = 'repeat'; // 'infinite' | 'repeat'
-      const MARQUEE_REPEAT_COUNT = 50; // used when MARQUEE_MODE='repeat' (clamped to [2..50])
-      const PX_PER_SEC = 100; // scroll speed in pixels per second (adjust to taste)
-      const DURATION_MIN = 12; // seconds
-      const DURATION_MAX = 40; // seconds
+      const MARQUEE_MODE       = 'repeat';
+      const MARQUEE_REPEAT_COUNT = 50;
+      const PX_PER_SEC         = 100;
+      const DURATION_MIN       = 12;
+      const DURATION_MAX       = 40;
 
-      // Reusable hidden measurer to avoid repeated DOM churn
       const __measure = document.createElement('div');
-      __measure.style.cssText = 'position:absolute; left:-99999px; top:-99999px; visibility:hidden; white-space:nowrap;';
-
+      __measure.style.cssText = 'position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:nowrap;';
       document.addEventListener('DOMContentLoaded', () => {
         if (!document.body.contains(__measure)) document.body.appendChild(__measure);
       });
 
-      // Safely escape notification text
       function escapeHtml(str) {
         return String(str || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
-
       function segmentHTML(color, sev, messageText) {
-        return `<strong style="color:${color}; text-transform:uppercase;">${sev}</strong>
-                <span style="margin-left:.5rem; color:#123;">${messageText}</span>`;
+        return `<strong style="color:${color};text-transform:uppercase;">${sev}</strong>
+                <span style="margin-left:.5rem;color:#123;">${messageText}</span>`;
       }
-
       function renderNotification(n) {
         let color = '#1565c0';
         const sev = (n.severity || 'info').toLowerCase();
-        if (sev === 'danger') color = '#c62828';
+        if (sev === 'danger')  color = '#c62828';
         else if (sev === 'warning') color = '#ffb300';
-
         const messageText = escapeHtml(n.message || '');
         const segment = segmentHTML(color, sev, messageText);
 
-        // Ensure measurer is attached
         if (document.body && !document.body.contains(__measure)) {
           try { document.body.appendChild(__measure); } catch (_) {}
         }
-        __measure.innerHTML = `<div class="marquee-segment" style="font: inherit;">${segment}</div>`;
-
+        __measure.innerHTML = `<div class="marquee-segment" style="font:inherit;">${segment}</div>`;
         const segmentWidth = Math.max(__measure.firstChild?.scrollWidth || 0, 1);
-        const gapPx = 32; // matches padding-right in .marquee-segment
-
-        // Distance to scroll for one full cycle = width of one segment + gap
+        const gapPx = 32;
         const distance = segmentWidth + gapPx;
-
-        // Compute duration based on speed, clamped
         const duration = Math.min(DURATION_MAX, Math.max(DURATION_MIN, distance / PX_PER_SEC));
 
         if (MARQUEE_MODE === 'repeat') {
           const count = Math.max(2, Math.min(Number(MARQUEE_REPEAT_COUNT) || 2, 50));
           let segmentsHTML = '';
-          for (let i = 0; i < count; i++) {
-            // aria-hidden on duplicates to avoid verbose SR experience
-            segmentsHTML += `<div class="marquee-segment" ${i ? 'aria-hidden="true"' : ''}>${segment}</div>`;
-          }
-          return `
-            <div class="marquee-notification" style="border-left:6px solid ${color};" data-mode="repeat" data-count="${count}">
-              <div class="marquee-track" style="--scroll-distance:${distance}px; animation-duration:${duration}s;">
-                ${segmentsHTML}
-              </div>
-            </div>
-          `;
+          for (let i = 0; i < count; i++)
+            segmentsHTML += `<div class="marquee-segment"${i ? ' aria-hidden="true"' : ''}>${segment}</div>`;
+          return `<div class="marquee-notification" style="border-left:5px solid ${color};">
+            <div class="marquee-track" style="--scroll-distance:${distance}px;animation-duration:${duration}s;">${segmentsHTML}</div>
+          </div>`;
         }
-
-        // Default: infinite (two segments) — minimal DOM, loops forever
-        return `
-          <div class="marquee-notification" style="border-left:6px solid ${color};" data-mode="infinite">
-            <div class="marquee-track" style="--scroll-distance:${distance}px; animation-duration:${duration}s;">
-              <div class="marquee-segment">${segment}</div>
-              <div class="marquee-segment" aria-hidden="true">${segment}</div>
-            </div>
+        return `<div class="marquee-notification" style="border-left:5px solid ${color};">
+          <div class="marquee-track" style="--scroll-distance:${distance}px;animation-duration:${duration}s;">
+            <div class="marquee-segment">${segment}</div>
+            <div class="marquee-segment" aria-hidden="true">${segment}</div>
           </div>
-        `;
+        </div>`;
       }
-
       function isWithinWindow(n, now) {
-        const sOk = !n.starts_at || new Date(n.starts_at) <= now;
-        const eOk = !n.ends_at || new Date(n.ends_at) >= now;
-        return sOk && eOk;
+        return (!n.starts_at || new Date(n.starts_at) <= now)
+            && (!n.ends_at   || new Date(n.ends_at)   >= now);
       }
-
-      // Avoid unnecessary DOM writes if unchanged
       let __lastNotifHTML = '';
       async function loadHomeNotifications(sb) {
         const container = document.getElementById('home-notifications');
         if (!container) return;
-
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) { container.innerHTML = ''; __lastNotifHTML = ''; return; }
         } catch (_) {}
-
         const now = new Date();
         const { data, error } = await sb
           .from('portal_notifications')
@@ -453,102 +974,120 @@
           .eq('active', true)
           .order('created_at', { ascending: false })
           .limit(25);
-
         if (error) { console.warn('home_notifications load error:', error); return; }
         const rows = (data || []).filter(n => isWithinWindow(n, now));
-
+        // Update KPI badge
+        const kpiNotifs = document.getElementById('kpi-notifs');
+        if (kpiNotifs) kpiNotifs.textContent = rows.length;
         const html = rows.map(renderNotification).join('');
-        if (html !== __lastNotifHTML) {
-          container.innerHTML = html;
-          __lastNotifHTML = html;
-        }
+        if (html !== __lastNotifHTML) { container.innerHTML = html; __lastNotifHTML = html; }
       }
       window.__loadHomeNotifications = loadHomeNotifications;
     })();
   </script>
 
+  <!-- ── Main App Logic ── -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (!window.supabase) {
-        console.error('Supabase SDK failed to load.');
-        return;
+
+      // ── Date badge ──
+      const dateBadge = document.getElementById('date-badge');
+      if (dateBadge) {
+        const now = new Date();
+        dateBadge.textContent = now.toLocaleDateString('en-IN', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
       }
+
+      if (!window.supabase) { console.error('Supabase SDK failed to load.'); return; }
       const sb = window.sb || (window.sb = window.supabase.createClient(
         'https://hunlistfklwvpivfjmbk.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
       ));
 
-      const ENABLE_CHAT = false;
+      const ENABLE_CHAT   = false;
       const AVATAR_BUCKET = 'Avatar';
 
-      const loginBtn = document.getElementById('login-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-      const profileTab = document.getElementById('profile-tab');
-      const assessmentTab = document.getElementById('assessment-tab');
-      const resultsTab = document.getElementById('results-tab');
+      // ── DOM refs ──
+      const loginBtn        = document.getElementById('login-btn');
+      const logoutBtn       = document.getElementById('logout-btn');
+      const profileTab      = document.getElementById('profile-tab');
+      const resultsTab      = document.getElementById('sb-results');
+      const sbProfile       = document.getElementById('sb-profile');
+      const sbAdmin         = document.getElementById('sb-admin');
       const adminPortalLink = document.getElementById('admin-portal-link');
-      const profileCard = document.getElementById('profile-dashboard-card');
-      const pcAvatar = document.getElementById('pc-avatar');
-      const pcName = document.getElementById('pc-name');
-      const pcRole = document.getElementById('pc-role');
-      const pcMessage = document.getElementById('pc-message');
-      const pcMeta = document.getElementById('pc-meta');
-      const pcPRN = document.getElementById('pc-prn');
-      const pcBatch = document.getElementById('pc-batch');
-      const pcAdminBtn = document.getElementById('pc-admin-portal');
-      const pcNote = document.getElementById('pc-note');
-      const chatSection = document.getElementById('chat-section');
-      const chatRoomSel = document.getElementById('chat-room');
-      const chatBox = document.getElementById('chat-box');
-      const chatInput = document.getElementById('chat-input');
-      const chatSend = document.getElementById('chat-send');
-      const chatStatus = document.getElementById('chat-status');
-      const chatSetupHint = document.getElementById('chat-setup-hint');
+      const profileCard     = document.getElementById('profile-dashboard-card');
+      const pcAvatar        = document.getElementById('pc-avatar');
+      const hdrAvatarImg    = document.getElementById('hdr-avatar-img');
+      const hdrAvatarLink   = document.getElementById('hdr-avatar-link');
+      const pcName          = document.getElementById('pc-name');
+      const pcRole          = document.getElementById('pc-role');
+      const pcHeaderRole    = document.getElementById('pc-header-role');
+      const pcMessage       = document.getElementById('pc-message');
+      const pcMeta          = document.getElementById('pc-meta');
+      const pcPRN           = document.getElementById('pc-prn');
+      const pcBatch         = document.getElementById('pc-batch');
+      const pcAdminBtn      = document.getElementById('pc-admin-portal');
+      const pcNote          = document.getElementById('pc-note');
+      const pcNoteText      = document.getElementById('pc-note-text');
+      const chatSection     = document.getElementById('chat-section');
+      const chatRoomSel     = document.getElementById('chat-room');
+      const chatBox         = document.getElementById('chat-box');
+      const chatInput       = document.getElementById('chat-input');
+      const chatSend        = document.getElementById('chat-send');
+      const chatStatus      = document.getElementById('chat-status');
+      const chatSetupHint   = document.getElementById('chat-setup-hint');
       const pcStartAssessments = document.getElementById('pc-start-assessments');
-      const pcViewResults = document.getElementById('pc-view-results');
+      const pcViewResults   = document.getElementById('pc-view-results');
+      const sbAssessment    = document.getElementById('sb-assessment');
+      const kpiAssessments  = document.getElementById('kpi-assessments');
+      const kpiAttempts     = document.getElementById('kpi-attempts');
 
       let currentUser = null;
       let currentRole = 'unknown';
       let dmRoom = null;
       let chatSubscription = null;
+      let avatarRefreshTimerId = null;
 
+      // ── Avatar helpers ──
       async function setSignedAvatar(path) {
-        if (!pcAvatar) return;
-        if (!path) {
-          pcAvatar.removeAttribute('src');
-          pcAvatar.alt = 'No avatar';
-          return;
-        }
+        if (!path) return;
         try {
           const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
           if (error) { console.warn('avatar signedUrl error', error); return; }
-          pcAvatar.src = data.signedUrl;
-        } catch (err) {
-          console.warn('avatar error', err);
-        }
+          if (pcAvatar)    pcAvatar.src    = data.signedUrl;
+          if (hdrAvatarImg) hdrAvatarImg.src = data.signedUrl;
+        } catch (err) { console.warn('avatar error', err); }
       }
-      let avatarRefreshTimerId = null;
       function startAvatarAutoRefresh(path) {
         if (avatarRefreshTimerId) clearInterval(avatarRefreshTimerId);
         if (!path) return;
         avatarRefreshTimerId = setInterval(() => setSignedAvatar(path), 50 * 1000);
       }
 
+      // ── Nav state ──
       function setNav(loggedIn) {
         if (loggedIn) {
-          if (loginBtn) loginBtn.style.display = 'none';
-          if (logoutBtn) logoutBtn.style.display = 'inline';
-          if (profileTab) profileTab.style.display = 'inline';
-          if (resultsTab) resultsTab.style.display = 'inline';
+          if (loginBtn)       loginBtn.classList.add('hidden');
+          if (logoutBtn)      logoutBtn.classList.remove('hidden');
+          if (profileTab)     profileTab.classList.remove('hidden');
+          if (sbProfile)      sbProfile.classList.remove('hidden');
+          if (resultsTab)     resultsTab.classList.remove('hidden');
+          if (hdrAvatarLink)  hdrAvatarLink.classList.remove('hidden');
         } else {
-          if (logoutBtn) logoutBtn.style.display = 'none';
-          if (loginBtn) { loginBtn.style.display = 'inline'; loginBtn.href = 'login_Version4.html'; }
-          if (profileTab) profileTab.style.display = 'none';
-          if (resultsTab) resultsTab.style.display = 'none';
-          if (adminPortalLink) adminPortalLink.style.display = 'none';
-          if (profileCard) profileCard.style.display = 'none';
-          if (chatSection) chatSection.style.display = 'none';
+          if (logoutBtn)      logoutBtn.classList.add('hidden');
+          if (loginBtn)       { loginBtn.classList.remove('hidden'); loginBtn.href = 'login_Version4.html'; }
+          if (profileTab)     profileTab.classList.add('hidden');
+          if (sbProfile)      sbProfile.classList.add('hidden');
+          if (resultsTab)     resultsTab.classList.add('hidden');
+          if (adminPortalLink) adminPortalLink.classList.add('hidden');
+          if (sbAdmin)        sbAdmin.classList.add('hidden');
+          if (profileCard)    profileCard.classList.add('hidden');
+          if (chatSection)    chatSection.classList.add('hidden');
+          if (hdrAvatarLink)  hdrAvatarLink.classList.add('hidden');
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
+          if (kpiAssessments) kpiAssessments.textContent = '—';
+          if (kpiAttempts)    kpiAttempts.textContent    = '—';
         }
       }
 
@@ -558,95 +1097,83 @@
         return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
-      // Approval/Active helpers and link protection
-      async function getApprovalStatus(sb) {
+      async function getApprovalStatus() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session?.user) return { loggedIn: false };
         const { data: p, error } = await sb
-          .from('profiles')
-          .select('role, approved, active')
-          .eq('id', session.user.id)
-          .maybeSingle();
+          .from('profiles').select('role, approved, active').eq('id', session.user.id).maybeSingle();
         if (error) console.warn('approval status fetch error', error);
         return {
           loggedIn: true,
           role: (p?.role || '').toLowerCase(),
           approved: !!p?.approved,
-          active: !!p?.active
+          active:   !!p?.active
         };
       }
 
       function protectLinkApproved(el, allowedRoles = ['student','admin']) {
         if (!el) return;
         el.addEventListener('click', async (e) => {
-          const st = await getApprovalStatus(sb);
-          if (!st.loggedIn) {
-            e.preventDefault();
-            window.location.href = 'login_Version4.html';
-            return;
-          }
-          if (!allowedRoles.includes(st.role)) {
-            e.preventDefault();
-            alert('You do not have permission to access this page.');
-            return;
-          }
-          if (!st.active) {
-            e.preventDefault();
-            alert('Your account is deactivated. Please contact admin.');
-            return;
-          }
-          if (!st.approved && st.role !== 'admin') {
-            e.preventDefault();
-            alert('Your account is awaiting admin approval.');
-            return;
-          }
+          const st = await getApprovalStatus();
+          if (!st.loggedIn) { e.preventDefault(); window.location.href = 'login_Version4.html'; return; }
+          if (!allowedRoles.includes(st.role)) { e.preventDefault(); alert('You do not have permission to access this page.'); return; }
+          if (!st.active) { e.preventDefault(); alert('Your account is deactivated. Please contact admin.'); return; }
+          if (!st.approved && st.role !== 'admin') { e.preventDefault(); alert('Your account is awaiting admin approval.'); return; }
         });
       }
 
-      function renderMsg(m){
-        const me = m.sender_id === currentUser?.id;
+      // ── KPI counters ──
+      async function loadKPIs(userId, role) {
+        // Assessments count
+        try {
+          const { count } = await sb.from('assessments')
+            .select('id', { count: 'exact', head: true })
+            .eq('released', true);
+          if (kpiAssessments) kpiAssessments.textContent = count ?? '—';
+        } catch (_) {}
+        // Attempts count
+        try {
+          const { count } = await sb.from('submissions')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId);
+          if (kpiAttempts) kpiAttempts.textContent = count ?? '—';
+        } catch (_) {}
+      }
+
+      // ── Chat ──
+      function renderMsg(m) {
+        const me   = m.sender_id === currentUser?.id;
         const line = document.createElement('div');
         line.className = 'chat-line ' + (me ? 'me' : 'them');
         const bubble = document.createElement('div');
         bubble.className = 'msg';
         const who = m.sender_name || (me ? 'You' : (m.role === 'admin' ? 'Admin' : 'User'));
-        bubble.innerHTML = '<div style="font-size:12px; color:#0d47a1; font-weight:700;">'+who+'</div>'
-          + (m.message || '').replace(/</g,'&lt;')
-          + '<div class="meta">'+new Date(m.created_at).toLocaleString()+'</div>';
+        bubble.innerHTML = '<div style="font-size:12px;color:#0d47a1;font-weight:700;">' + who + '</div>'
+          + (m.message || '').replace(/</g, '&lt;')
+          + '<div class="meta">' + new Date(m.created_at).toLocaleString() + '</div>';
         line.appendChild(bubble);
         chatBox.appendChild(line);
       }
-
-      async function loadChat(room){
+      async function loadChat(room) {
         if (!ENABLE_CHAT) return;
         chatBox.innerHTML = '';
         chatStatus.textContent = 'Loading…';
-        try{
+        try {
           const { data, error } = await sb.from('portal_chat')
             .select('id,room,sender_id,sender_name,role,message,created_at')
-            .eq('room', room)
-            .order('created_at', { ascending:true })
-            .limit(200);
-          if(error){
-            chatSetupHint.style.display='block';
-            chatStatus.textContent='Unavailable';
-            return;
-          }
-          chatSetupHint.style.display='none';
-          (data||[]).forEach(renderMsg);
+            .eq('room', room).order('created_at', { ascending: true }).limit(200);
+          if (error) { chatSetupHint.classList.remove('hidden'); chatStatus.textContent = 'Unavailable'; return; }
+          chatSetupHint.classList.add('hidden');
+          (data || []).forEach(renderMsg);
           chatBox.scrollTop = chatBox.scrollHeight;
           chatStatus.textContent = 'Live';
-        }catch(e){
-          chatSetupHint.style.display='block';
-          chatStatus.textContent = 'Unavailable';
-        }
+        } catch (e) { chatSetupHint.classList.remove('hidden'); chatStatus.textContent = 'Unavailable'; }
       }
-
-      function subscribeChat(room){
+      function subscribeChat(room) {
         if (!ENABLE_CHAT) return null;
-        if(chatSubscription){ sb.removeChannel(chatSubscription); chatSubscription = null; }
-        chatSubscription = sb.channel('portal_chat_room_'+room)
-          .on('postgres_changes', { event:'INSERT', schema:'public', table:'portal_chat', filter: 'room=eq.'+room }, payload => {
+        if (chatSubscription) { sb.removeChannel(chatSubscription); chatSubscription = null; }
+        chatSubscription = sb.channel('portal_chat_room_' + room)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'portal_chat', filter: 'room=eq.' + room }, payload => {
             renderMsg(payload.new);
             chatBox.scrollTop = chatBox.scrollHeight;
           })
@@ -654,129 +1181,132 @@
             chatStatus.textContent = status === 'SUBSCRIBED' ? 'Live' : ('Status: ' + status);
           });
       }
-
-      async function sendChat(){
+      async function sendChat() {
         if (!ENABLE_CHAT) return;
         const txt = (chatInput.value || '').trim();
-        if(!txt) return;
+        if (!txt) return;
         const roomSel = chatRoomSel.value;
         const room = roomSel === 'dm' ? ('dm:' + currentUser.id) : 'global';
         chatInput.value = '';
-        const { data:prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
+        const { data: prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
         const senderName = prof?.name || currentUser.email || 'User';
         const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
-        const { error } = await sb.from('portal_chat').insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
-        if(error){
-          chatSetupHint.style.display='block';
-          alert('Send failed: ' + error.message);
-        }
+        const { error } = await sb.from('portal_chat')
+          .insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
+        if (error) { chatSetupHint.classList.remove('hidden'); alert('Send failed: ' + error.message); }
       }
-
-      async function initChat(){
-        if (!ENABLE_CHAT) { if (chatSection) chatSection.style.display='none'; return; }
-        if(!currentUser){ chatSection.style.display='none'; return; }
+      async function initChat() {
+        if (!ENABLE_CHAT) { if (chatSection) chatSection.classList.add('hidden'); return; }
+        if (!currentUser) { chatSection.classList.add('hidden'); return; }
         dmRoom = 'dm:' + currentUser.id;
-        chatSection.style.display='block';
-        const roomSel = chatRoomSel.value;
-        const room = roomSel === 'dm' ? dmRoom : 'global';
+        chatSection.classList.remove('hidden');
+        const room = chatRoomSel.value === 'dm' ? dmRoom : 'global';
         await loadChat(room);
         subscribeChat(room);
-
-        chatRoomSel.onchange = async ()=>{
+        chatRoomSel.onchange = async () => {
           const nextRoom = chatRoomSel.value === 'dm' ? dmRoom : 'global';
-          await loadChat(nextRoom);
-          subscribeChat(nextRoom);
+          await loadChat(nextRoom); subscribeChat(nextRoom);
         };
         chatSend.onclick = sendChat;
-        chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
+        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
       }
 
-      function pad(n){ return String(n).padStart(2,'0'); }
-
+      // ── Main UI refresh ──
       async function refreshUI() {
         try {
-          const { data: { session} } = await sb.auth.getSession();
+          const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) {
-            currentUser = null;
-            currentRole = 'unknown';
+            currentUser = null; currentRole = 'unknown';
             setNav(false);
             if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
             return;
           }
           setNav(true);
           currentUser = session.user;
+
           const { data: profile, error: profErr } = await sb
             .from('profiles')
             .select('name, role, prn, batch, avatar_path, approved, active')
             .eq('id', currentUser.id)
             .maybeSingle();
           if (profErr) console.warn('Profile fetch error:', profErr);
-          currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
 
+          currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
           const approved = !!profile?.approved;
-          const active = !!profile?.active;
-          const isAdmin = currentRole === 'admin';
+          const active   = !!profile?.active;
+          const isAdmin  = currentRole === 'admin';
           const isApprovedActive = (approved && active) || isAdmin;
 
-          // Admin UI bits
+          // ── Admin UI ──
           if (isAdmin) {
-            if (adminPortalLink) adminPortalLink.style.display = 'inline';
-            if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
+            if (adminPortalLink) adminPortalLink.classList.remove('hidden');
+            if (sbAdmin)         sbAdmin.classList.remove('hidden');
+            if (pcAdminBtn)      pcAdminBtn.style.display = 'inline-flex';
           } else {
-            if (adminPortalLink) adminPortalLink.style.display = 'none';
-            if (pcAdminBtn) pcAdminBtn.style.display = 'none';
+            if (adminPortalLink) adminPortalLink.classList.add('hidden');
+            if (sbAdmin)         sbAdmin.classList.add('hidden');
+            if (pcAdminBtn)      pcAdminBtn.style.display = 'none';
           }
 
-          // Show profile card
-          if (profileCard) profileCard.style.display = 'block';
-          pcName.textContent = ('Welcome ' + (profile?.name ? profile.name : '')).trim() || 'Welcome';
-          pcRole.textContent = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Role: Unknown');
+          // ── Profile card ──
+          if (profileCard) profileCard.classList.remove('hidden');
+
+          const displayName = profile?.name ? profile.name : (currentUser.email || '');
+          pcName.textContent = ('Welcome, ' + displayName).trim();
+
+          const roleLabel = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Unknown Role');
+          pcRole.textContent = roleLabel;
+          pcRole.className   = 'chip ' + (isAdmin ? 'chip--admin' : 'chip--student');
+          if (pcHeaderRole) pcHeaderRole.textContent = roleLabel;
 
           // Student meta
           if (currentRole === 'student') {
-            const showPRN = !!(profile?.prn && profile.prn.trim());
-            const showBatch = !!(profile?.batch && profile.batch.trim());
-            pcPRN.textContent = 'PRN: ' + (showPRN ? profile.prn : '—');
-            pcBatch.textContent = 'Batch: ' + (showBatch ? profile.batch : '—');
-            pcMeta.style.display = (showPRN || showBatch) ? 'flex' : 'none';
+            const showPRN   = !!(profile?.prn   && profile.prn.trim());
+            const showBatch = !!(profile?.batch  && profile.batch.trim());
+            if (pcPRN)   pcPRN.textContent   = showPRN   ? profile.prn   : '—';
+            if (pcBatch) pcBatch.textContent  = showBatch ? profile.batch : '—';
+            if (pcMeta)  pcMeta.style.display = (showPRN || showBatch) ? 'grid' : 'none';
           } else {
-            pcMeta.style.display = 'none';
+            if (pcMeta) pcMeta.style.display = 'none';
           }
 
           // Message
           if (isAdmin) {
-            pcMessage.textContent = 'You have admin access. Use the Admin Portal for releases, deadlines, notifications, and communication.';
+            pcMessage.textContent = 'Admin access. Manage releases, deadlines, notifications, and students from the Admin Portal.';
           } else if (currentRole === 'student') {
-            pcMessage.textContent = 'Access your assessments and track your progress. Ensure your profile is up to date.';
+            pcMessage.textContent = 'Access your assessments and track your progress. Keep your profile up to date.';
           } else {
-            pcMessage.textContent = 'Set up your profile to get the best experience.';
+            pcMessage.textContent = 'Complete your profile to unlock all portal features.';
           }
 
           // Gated nav + buttons
-          if (assessmentTab) assessmentTab.style.display = isApprovedActive ? 'inline' : 'none';
-          if (resultsTab) resultsTab.style.display = isApprovedActive ? 'inline' : 'none';
-          if (pcStartAssessments) pcStartAssessments.style.display = isApprovedActive ? 'inline-flex' : 'none';
-          if (pcViewResults) pcViewResults.style.display = isApprovedActive ? 'inline-flex' : 'none';
+          const showGated = isApprovedActive;
+          if (sbAssessment)       sbAssessment.style.opacity     = showGated ? '1' : '0.5';
+          if (resultsTab)         resultsTab.style.opacity        = showGated ? '1' : '0.5';
+          if (pcStartAssessments) pcStartAssessments.style.display = showGated ? 'inline-flex' : 'none';
+          if (pcViewResults)      pcViewResults.style.display     = showGated ? 'inline-flex' : 'none';
 
-          // Friendly banners: deactivated > pending > incomplete profile
+          // Status notes
           if (!active && !isAdmin) {
-            pcNote.style.display = 'block';
-            pcNote.textContent = 'Your account is deactivated. Please contact an administrator.';
+            pcNote.classList.remove('hidden');
+            pcNote.className = 'status-note status-note--error mt-16';
+            pcNoteText.textContent = 'Your account is deactivated. Please contact an administrator.';
           } else if (!approved && !isAdmin) {
-            pcNote.style.display = 'block';
-            pcNote.textContent = 'Your account is awaiting admin approval.';
+            pcNote.classList.remove('hidden');
+            pcNote.className = 'status-note status-note--warn mt-16';
+            pcNoteText.textContent = 'Your account is pending admin approval. Some features are restricted.';
           } else {
-            const baseComplete = !!(profile?.name && profile?.role);
+            const baseComplete    = !!(profile?.name && profile?.role);
             const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
-            const adminComplete = baseComplete;
-            const isComplete = isAdmin ? adminComplete : (currentRole === 'student' ? studentComplete : baseComplete);
+            const isComplete      = isAdmin ? baseComplete : (currentRole === 'student' ? studentComplete : baseComplete);
             if (!isComplete) {
-              pcNote.style.display = 'block';
-              pcNote.textContent = currentRole === 'student'
-                ? 'Your profile looks incomplete. Please add your PRN and Batch.'
+              pcNote.classList.remove('hidden');
+              pcNote.className = 'status-note mt-16';
+              pcNoteText.textContent = currentRole === 'student'
+                ? 'Your profile is incomplete — please add your PRN and Batch for full access.'
                 : 'Please complete your profile details for a better experience.';
             } else {
-              pcNote.style.display = 'none';
+              pcNote.classList.add('hidden');
             }
           }
 
@@ -785,76 +1315,60 @@
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
 
+          // KPIs
+          await loadKPIs(currentUser.id, currentRole);
+
           // Chat
           await initChat();
 
           // Notifications
           if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
+
         } catch (e) {
           console.error('refreshUI error:', e);
         }
       }
 
-      refreshUI();
-      if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
-
-      sb.auth.onAuthStateChange((_event, _session) => {
-        refreshUI();
-        if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
-      });
-      window.addEventListener('focus', () => {
-        refreshUI();
-        if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
-      });
-
-      function protectLink(el, requireAdmin=false){
-        if(!el) return;
+      // ── Link protection ──
+      function protectLink(el, requireAdmin = false) {
+        if (!el) return;
         el.addEventListener('click', async (e) => {
           const { data: { session } } = await sb.auth.getSession();
-          if (!session?.user) {
-            e.preventDefault();
-            window.location.href = 'login_Version4.html';
-            return;
-          }
+          if (!session?.user) { e.preventDefault(); window.location.href = 'login_Version4.html'; return; }
           if (requireAdmin) {
             const role = await getUserRole(session.user.id);
-            if (role !== 'admin') {
-              e.preventDefault();
-              alert('Admin only.');
-            }
+            if (role !== 'admin') { e.preventDefault(); alert('Admin only.'); }
           }
         });
       }
 
-      // Keep admin-only protection for Admin Portal
       protectLink(adminPortalLink, true);
       protectLink(document.getElementById('pc-admin-portal'), true);
-
-      // Gate Assessments/Results by approval/active
-      protectLinkApproved(assessmentTab, ['student','admin']);
-      protectLinkApproved(resultsTab, ['student','admin']);
+      protectLinkApproved(sbAssessment, ['student','admin']);
+      protectLinkApproved(resultsTab,   ['student','admin']);
       protectLinkApproved(pcStartAssessments, ['student','admin']);
-      protectLinkApproved(pcViewResults, ['student','admin']);
+      protectLinkApproved(pcViewResults,      ['student','admin']);
 
+      // ── Logout ──
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
           e.preventDefault();
-          try { await sb.auth.signOut({ scope: 'global' }); } catch (err) { /* ignore */ }
-          try { await sb.auth.signOut({ scope: 'local'  }); } catch (err) { /* ignore */ }
+          try { await sb.auth.signOut({ scope: 'global' }); } catch (_) {}
+          try { await sb.auth.signOut({ scope: 'local'  }); } catch (_) {}
           try {
-            for (const k of Object.keys(localStorage)) {
-              const key = k.toLowerCase();
-              if (key.includes('supabase') || key.startsWith('sb-')) localStorage.removeItem(k);
-            }
-            for (const k of Object.keys(sessionStorage)) {
-              const key = k.toLowerCase();
-              if (key.includes('supabase') || key.startsWith('sb-')) sessionStorage.removeItem(k);
-            }
-          } catch (e2) { /* ignore */ }
-          try { indexedDB.deleteDatabase('supabase-auth'); } catch (e3) { /* ignore */ }
+            for (const k of Object.keys(localStorage))   { if (k.toLowerCase().includes('supabase') || k.startsWith('sb-')) localStorage.removeItem(k); }
+            for (const k of Object.keys(sessionStorage)) { if (k.toLowerCase().includes('supabase') || k.startsWith('sb-')) sessionStorage.removeItem(k); }
+          } catch (_) {}
+          try { indexedDB.deleteDatabase('supabase-auth'); } catch (_) {}
           window.location.replace('index.html');
         });
       }
+
+      // ── Bootstrap ──
+      refreshUI();
+      if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
+      sb.auth.onAuthStateChange(() => { refreshUI(); if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb); });
+      window.addEventListener('focus',   () => { refreshUI(); if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb); });
     });
   </script>
 </body>
