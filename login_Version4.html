@@ -6,79 +6,39 @@
   <link rel="stylesheet" href="style.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4c3; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #33691e; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;}
-    nav a, nav button { color: #558b2f; font-weight: bold; text-decoration: none; background: #c5e1a5; padding: 0.6em 1.2em; border-radius: 4px; border: none; cursor: pointer; }
-    nav a:hover, nav button:hover { background: #aed581; }
-
-    .login-container {
-      max-width: 430px;
-      margin: 3rem auto 0 auto;
-      background: #fff;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 12px #c5e1a5;
-      font-size: 1.04rem;
-    }
-    .login-container h2 {
-      color: #33691e;
-      text-align: center;
-      margin: 0 0 1rem 0;
-      letter-spacing: 0.2px;
-    }
-
-    .tabbar {
-      display:flex; gap:6px; background:#f3f8e7; padding:4px; border-radius:10px; margin-bottom: 1rem; border:1px solid #d9ebc2;
-    }
-    .tabbar button {
-      flex:1; padding:.6rem .8rem; border-radius:8px; border:0; cursor:pointer; font-weight:800; color:#2e7d32; background:transparent;
-    }
-    .tabbar button.active { background:#cfe7b0; }
-
-    .login-form label, .signup-form label { display:block; margin-bottom: .35em; color:#558b2f; font-weight:700; letter-spacing:.2px; }
-    .login-form input, .signup-form input {
-      width:100%; padding:.7em; margin-bottom: .9em; border:1px solid #aed581; border-radius:6px; background:#f1f8e9; font-size:1em; box-sizing:border-box; transition: border .2s;
-    }
-    .login-form input:focus, .signup-form input:focus { border: 1.5px solid #33691e; outline:none; }
-    .btn-wide { width:100%; padding:.85em; background:#558b2f; color:#fff; border:none; border-radius:6px; font-size:1.05em; font-weight:800; cursor:pointer; transition: background .2s; margin:.1em 0 .8em 0; }
-    .btn-wide:hover { background:#33691e; }
-    .link-btn { background:transparent; border:0; color:#2e7d32; cursor:pointer; font-weight:700; padding:0; }
-    .row-inline { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
-
-    .error-message, .success-message {
-      color:#fff; font-weight:700; text-align:center; padding:.7em 1em; margin:.6em 0; border-radius:6px; display:none;
-    }
-    .error-message { background:#c62828;}
-    .success-message { background:#33691e;}
-
-    .hint { color:#6b8f47; font-size:.95rem; }
-    .muted { color:#6b8f47; font-size:.9rem; }
-    .hidden { display:none; }
-
-    @media (max-width: 600px) {
-      .login-container { padding: 1.2rem; }
-      nav { flex-direction: column; gap: 1rem; }
-      .row-inline { flex-direction:column; align-items:stretch; }
-    }
+    .auth-page { padding-top: calc(var(--nav-h) + 32px); }
+    .row-inline { display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap; }
+    @media (max-width:480px) { .row-inline { flex-direction:column;align-items:stretch; } }
   </style>
 </head>
-<body>
-  <header>
-    <h1>Login / Sign up</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="experiments.html">Experiments</a>
-      <a id="assessment-tab" href="assessments.html">Assessments</a>
-      <a href="references.html">References</a>
-      <a id="login-btn" href="login_Version4.html">Login</a>
-      <button id="logout-btn" style="display:none;">Logout</button>
-    </nav>
-  </header>
+<body class="auth-page">
 
-  <div class="login-container">
-    <h2>Welcome</h2>
+  <!-- ── SITE NAVIGATION ── -->
+  <nav class="site-nav" id="site-nav">
+    <a href="index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
+      </div>
+    </a>
+    <div class="site-nav__links">
+      <a href="index.html"       class="site-nav__link">🏠 Home</a>
+      <a href="experiments.html" class="site-nav__link">🔬 Experiments</a>
+      <a href="assessments.html" class="site-nav__link" id="assessment-tab">📝 Assessments</a>
+      <a href="references.html"  class="site-nav__link">📚 References</a>
+    </div>
+    <div class="site-nav__actions">
+      <a id="login-btn" href="login_Version4.html" class="nav-btn nav-btn--accent active">Sign In</a>
+      <button id="logout-btn" class="nav-btn hidden">Logout</button>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+  <div class="auth-card">
+    <div class="auth-card__icon" aria-hidden="true">🔐</div>
+    <div class="auth-card__title">Welcome Back</div>
+    <div class="auth-card__sub">Sign in to your account or create a new one</div>
 
     <!-- Already signed in view -->
     <div id="already-signed-in" class="hidden">
@@ -90,7 +50,7 @@
       <div class="hint">
         Continue sends you to your dashboard if approved, or to Profile to finish setup. If your account is pending approval, an admin must approve before you can access Assessments/Results.
       </div>
-      <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #e9efd9;" />
+      <hr class="divider" />
     </div>
 
     <!-- Tab bar -->
@@ -105,37 +65,61 @@
 
     <!-- Login form -->
     <form id="login-form" class="login-form" autocomplete="on">
-      <label for="login-email">Email</label>
-      <input type="email" id="login-email" name="email" placeholder="you@example.com" required />
-      <label for="login-password">Password</label>
-      <input type="password" id="login-password" name="password" placeholder="Password" required />
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email</label>
+        <input class="form-input" type="email" id="login-email" name="email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <input class="form-input" type="password" id="login-password" name="password" placeholder="Password" required />
+      </div>
       <button type="submit" id="login-submit" class="btn-wide">Sign in</button>
       <div class="row-inline">
         <button id="forgot-btn" type="button" class="link-btn">Forgot password?</button>
-        <span class="muted">No account? <button type="button" id="switch-to-signup" class="link-btn">Create one</button></span>
+        <span class="hint">No account? <button type="button" id="switch-to-signup" class="link-btn">Create one</button></span>
       </div>
     </form>
 
     <!-- Signup form -->
     <form id="signup-form" class="signup-form hidden" autocomplete="on">
-      <label for="signup-name">Full Name</label>
-      <input type="text" id="signup-name" name="name" placeholder="Your full name" maxlength="100" required />
-      <label for="signup-email">Email</label>
-      <input type="email" id="signup-email" name="email" placeholder="you@example.com" required />
-      <label for="signup-password">Password</label>
-      <input type="password" id="signup-password" name="password" placeholder="At least 6 characters" minlength="6" required />
-      <label for="signup-password2">Confirm Password</label>
-      <input type="password" id="signup-password2" name="password2" placeholder="Re-enter password" minlength="6" required />
+      <div class="form-group">
+        <label class="form-label" for="signup-name">Full Name</label>
+        <input class="form-input" type="text" id="signup-name" name="name" placeholder="Your full name" maxlength="100" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-email">Email</label>
+        <input class="form-input" type="email" id="signup-email" name="email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-password">Password</label>
+        <input class="form-input" type="password" id="signup-password" name="password" placeholder="At least 6 characters" minlength="6" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-password2">Confirm Password</label>
+        <input class="form-input" type="password" id="signup-password2" name="password2" placeholder="Re-enter password" minlength="6" required />
+      </div>
       <button type="submit" id="signup-submit" class="btn-wide">Create account</button>
-      <div class="muted">
+      <div class="hint" style="margin-top:8px;">
         After creating your account, please check your email to verify. Once verified, sign in and complete your Profile. Admin will approve your account before you can access Assessments/Results.
       </div>
-      <div class="row-inline" style="margin-top:.6rem;">
-        <span class="muted">Already have an account?</span>
+      <div class="row-inline" style="margin-top:.75rem;">
+        <span class="hint">Already have an account?</span>
         <button type="button" id="switch-to-login" class="link-btn">Sign in</button>
       </div>
     </form>
   </div>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function(){
+      const t = document.getElementById('nav-toggle');
+      const n = document.getElementById('site-nav');
+      if (t && n) {
+        t.addEventListener('click', () => n.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => { if (!n.contains(e.target)) n.classList.remove('site-nav--open'); });
+      }
+    })();
+  </script>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>

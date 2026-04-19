@@ -4,39 +4,70 @@
   <meta charset="UTF-8">
   <title>Assessment: Determination of Blood Pressure</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="../style.css">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #1565c0; }
-    nav a { margin:0 .5rem; text-decoration:none; color:#1565c0; font-weight:600; }
-    .container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9;}
-    .question { margin-bottom: 1.5em;}
-    .student-info label { display: block; margin: 0.5em 0 0.2em;}
-    .student-info input, .student-info select { width: 100%; padding: 0.5em; margin-bottom: 1em;}
-    .assignment-upload { background:#e1f5fe; padding:1em; border-radius:10px; margin:1em 0 2em; }
-    .assignment-status { font-size:.9em; margin-top:.4em; color:#388e3c; }
-    .note { font-size:.75em; color:#1565c0; margin-top:.2em; }
-    .declaration { margin: 2em 0 1em 0; }
-    .submit-btn { padding: 0.8em 2em; font-size: 1.1em; border: none; background: #1565c0; color: #fff; border-radius: 5px;}
-    .submit-btn:disabled { background: #90caf9; }
-    .result { font-size: 1.3em; color: #388e3c; margin-top: 2em;}
-    .error { color: #d32f2f; margin-bottom: 1em;}
-    img.question-img { max-width: 400px; display: block; margin-bottom: 1em; }
-    label.dropdown-label { display: inline-block; min-width: 80px; }
-    @media (max-width: 600px) { .container { padding: 1rem; } }
+    body { padding-top: var(--nav-h); }
+    .container { max-width:800px; margin:24px auto 48px; background:var(--card-bg); border-radius:var(--radius); padding:1.75rem 2rem; box-shadow:var(--shadow-sm); border:1px solid var(--border); }
+    .student-info label { display:block; margin:.5em 0 .2em; font-weight:600; color:var(--blue-dark); font-size:.9rem; }
+    .student-info input, .student-info select { width:100%; padding:.55em; margin-bottom:.8em; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:#f9fbff; font-size:.95rem; font-family:var(--font); }
+    .student-info input:focus, .student-info select:focus { outline:none; border-color:var(--blue); }
+    .assignment-upload { background:var(--blue-light); padding:1em; border-radius:var(--radius-sm); border:1px solid var(--blue-mid); margin:1em 0 2em; }
+    .assignment-status { font-size:.9em; margin-top:.4em; color:#1b5e20; }
+    .note { font-size:.8em; color:var(--muted); margin-top:.2em; }
+    .question { margin-bottom:1.4em; font-size:.95rem; color:var(--ink); }
+    img.question-img { max-width:400px; display:block; margin:.4em 0 1em; border-radius:8px; box-shadow:var(--shadow-sm); }
+    label.dropdown-label { display:inline-block; min-width:70px; }
+    .declaration { margin:2em 0 1em; font-size:.9rem; }
+    .submit-btn { padding:.85em 2em; font-size:1em; border:none; background:var(--blue); color:#fff; border-radius:var(--radius-sm); cursor:pointer; font-weight:700; transition:background var(--trans); }
+    .submit-btn:hover { background:var(--blue-dark); }
+    .submit-btn:disabled { background:var(--blue-mid); cursor:not-allowed; }
+    .error { color:#c62828; margin-top:1em; font-weight:500; font-size:.9rem; }
+    .result { margin-top:1.2em; color:var(--blue-deeper); font-size:1em; font-weight:600; min-height:1.2em; }
+    .block-access-msg { border-radius:var(--radius-sm); background:#ffebee; color:#b71c1c; border:1px solid #ffcdd2; font-size:1em; margin:24px auto; padding:1.25em 1.5em; text-align:center; max-width:800px; font-weight:600; }
+    .block-access-msg a { color:#b71c1c; text-decoration:underline; }
+    .admin-banner { margin:0 auto 14px; max-width:800px; background:#fff8e1; color:#8d6e63; border:1px solid #ffe0b2; border-radius:var(--radius-sm); padding:10px 12px; font-size:.9em; }
+    @media (max-width:600px) { .container { padding:1.2rem 1rem; } img.question-img { max-width:100%; } }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
 </head>
 <body>
-  <header>
-    <h1>Assessment: Determination of Blood Pressure</h1>
-    <nav>
-      <a href="../index.html">Home</a>
-      <a href="../experiments.html">Experiments</a>
-      <a href="../assessments.html">Assessments</a>
-      <a href="../references.html">References</a>
-    </nav>
-  </header>
+
+  <!-- SITE NAVIGATION -->
+  <nav class="site-nav" id="site-nav">
+    <a href="../index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
+      </div>
+    </a>
+    <div class="site-nav__links">
+      <a href="../index.html"       class="site-nav__link">🏠 Home</a>
+      <a href="../experiments.html" class="site-nav__link">🔬 Experiments</a>
+      <a href="../assessments.html" class="site-nav__link active">📝 Assessments</a>
+      <a href="../references.html"  class="site-nav__link">📚 References</a>
+    </div>
+    <div class="site-nav__actions">
+      <a href="../login_Version4.html" class="nav-btn nav-btn--accent">Sign In</a>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+  <!-- Admin preview banner -->
+  <div id="adminBannerMount"></div>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function(){
+      const t = document.getElementById('nav-toggle');
+      const n = document.getElementById('site-nav');
+      if (t && n) {
+        t.addEventListener('click', () => n.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => { if (!n.contains(e.target)) n.classList.remove('site-nav--open'); });
+      }
+    })();
+  </script>
   <div class="container">
     <form id="assessmentForm" autocomplete="off">
       <div class="student-info">
