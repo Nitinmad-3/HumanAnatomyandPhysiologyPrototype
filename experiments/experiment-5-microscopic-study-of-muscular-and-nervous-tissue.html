@@ -4,73 +4,57 @@
   <meta charset="UTF-8">
   <title>Experiment 5: Microscopic Study of Muscular and Nervous Tissue</title>
   <link rel="stylesheet" href="../style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      background:
-        linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
-        url('../assets/images/experiment-5/background.jpg') no-repeat center center fixed;
-      background-size: cover;
-      min-height: 100vh;
-      margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
+    .exp-container { max-width:820px; margin:0 auto 48px; padding:calc(var(--nav-h) + 24px) 16px 48px; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url('../assets/images/experiment-5/background.jpg') no-repeat center center / cover;
+      opacity: 0.07;
+      pointer-events: none;
     }
-    .exp-container {
-      max-width: 800px;
-      margin: 3rem auto 2rem auto;
-      background: rgba(255,255,255,0.96);
-      border-radius: 16px;
-      box-shadow: 0 2px 12px #90caf9;
-      padding: 2rem 2.5rem;
-    }
-    h1, h2, h3 {
-      color: #1a237e;
-      text-align: center;
-    }
-    nav {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    nav a {
-      color: #1565c0;
-      text-decoration: none;
-      margin: 0 1.1em;
-      font-weight: 500;
-      font-size: 1.08em;
-      transition: color 0.17s;
-    }
-    nav a:hover {
-      color: #512da8;
-      text-decoration: underline;
-    }
-    details {
-      margin-bottom: 1.5rem;
-      background: rgba(187, 222, 251, 0.35);
-      border-radius: 8px;
-      padding: 1em;
-    }
-    img {
-      display: block;
-      max-width: 90%;
-      margin: 18px auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-    @media (max-width: 600px) {
-      .exp-container { padding: 1rem; }
-      h1 { font-size: 1.4rem; }
-      nav a { font-size: 1em; margin: 0 0.6em; }
-    }
+    details { margin-bottom:1.25rem; background:#f5f9ff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:1em; }
+    details summary { font-weight:700; color:var(--blue-deeper); cursor:pointer; }
+    details[open] summary { margin-bottom:.75em; }
+    .exp-container h1 { font-size:1.5rem; font-weight:800; color:var(--blue-deeper); text-align:center; margin-bottom:20px; }
+    .exp-container h2 { font-size:1.1rem; font-weight:700; color:var(--blue-dark); margin:18px 0 8px; }
+    .exp-container h3 { font-size:1rem; font-weight:700; color:var(--blue); margin:14px 0 6px; }
+    .exp-container img { display:block; max-width:90%; margin:16px auto; border-radius:12px; box-shadow:var(--shadow-sm); }
+    .exp-container table { width:100%; border-collapse:collapse; font-size:.9rem; margin:10px 0; }
+    .exp-container th, .exp-container td { border:1px solid var(--border); padding:8px 10px; text-align:left; }
+    .exp-container th { background:var(--blue-light); color:var(--blue-deeper); font-weight:700; }
+    .exp-container ul, .exp-container ol { padding-left:1.5em; line-height:1.7; }
+    @media (max-width:600px) { .exp-container h1 { font-size:1.25rem; } }
   </style>
 </head>
 <body>
-  <div class="exp-container">
+
+  <!-- SITE NAVIGATION -->
+  <nav class="site-nav" id="site-nav">
+    <a href="../index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
+      </div>
+    </a>
+    <div class="site-nav__links">
+      <a href="../index.html"       class="site-nav__link">🏠 Home</a>
+      <a href="../experiments.html" class="site-nav__link active">🔬 Experiments</a>
+      <a href="../assessments.html" class="site-nav__link">📝 Assessments</a>
+      <a href="../references.html"  class="site-nav__link">📚 References</a>
+    </div>
+    <div class="site-nav__actions">
+      <a href="../login_Version4.html" class="nav-btn nav-btn--accent">Sign In</a>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+<div class="exp-container">
     <h1 id="experiment-5-microscopic-study-of-muscular-and-nervous-tissue">Experiment 5: Microscopic Study of Muscular and Nervous Tissue</h1>
-    <nav>
-      <a href="../index.html">Home</a>
-      <a href="../experiments.html">Experiments</a>
-      <a href="../assessments.html">Assessments</a>
-      <a href="../references.html">References</a>
-    </nav>
 
     <details open>
       <summary><strong>AIM</strong></summary>
@@ -182,5 +166,19 @@
       The microscopic study of muscular and nervous tissues was completed.
     </details>
   </div>
+</body>
+</html>
+
+
+  <script>
+    (function(){
+      const t = document.getElementById('nav-toggle');
+      const n = document.getElementById('site-nav');
+      if (t && n) {
+        t.addEventListener('click', () => n.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => { if (!n.contains(e.target)) n.classList.remove('site-nav--open'); });
+      }
+    })();
+  </script>
 </body>
 </html>

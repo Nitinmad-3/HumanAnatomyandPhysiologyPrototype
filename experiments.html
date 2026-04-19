@@ -2,51 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Experiments | Human Anatomy & Physiology</title>
+  <title>Experiments | Human Anatomy &amp; Physiology</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e3f2fd; margin: 0;}
-    header { text-align: center; padding: 2rem 1rem 1rem 1rem;}
-    h1 { color: #1a237e; }
-    nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;}
-    nav a { color: #1565c0; font-weight: bold; text-decoration: none; background: #bbdefb; padding: 0.6em 1.2em; border-radius: 4px; }
-    nav a:hover { background: #90caf9; }
-    .exp-list { max-width: 700px; margin: auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px #90caf9; }
-    .exp-list ul { list-style: none; padding: 0; }
-    .exp-list li { margin-bottom: 1.25em; }
-    .exp-list a { color: #1976d2; text-decoration: none; font-size: 1.08em; font-weight: bold;}
-    .exp-list a:hover { text-decoration: underline; }
-    @media (max-width: 600px) { .exp-list { padding: 1rem; } nav { flex-direction: column; gap: 1rem; } }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-  <header>
-    <h1>Experiments</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="experiments.html">Experiments</a>
-      <a href="assessments.html">Assessments</a>
-      <a href="references.html">References</a>
-    </nav>
-  </header>
-  <div class="exp-list">
-    <ul>
-      <li><a href="experiments/experiment-1-study-of-compound-microscope.html">1. Study of Compound Microscope</a></li>
-      <li><a href="experiments/experiment-2-identification-of-axial-bones.html">2. Identification of Axial Bones</a></li>
-      <li><a href="experiments/experiment-3-identification-of-appendicular-bones.html">3. Identification of Appendicular Bones</a></li>
-      <li><a href="experiments/experiment-4-microscopic-study-of-epithelial-and-connective-tissue.html">4. Microscopic Study of Epithelial and Connective Tissue</a></li>
-      <li><a href="experiments/experiment-5-microscopic-study-of-muscular-and-nervous-tissue.html">5. Microscopic Study of Muscular and Nervous Tissue</a></li>
-      <li><a href="experiments/experiment-6-determination-of-blood-group.html">6. Determination of Blood Group</a></li>
-      <li><a href="experiments/experiment-7-determination-of-bleeding-time.html">7. Determination of Bleeding Time</a></li>
-      <li><a href="experiments/experiment-8-determination-of-clotting-time.html">8. Determination of Clotting Time</a></li>
-      <li><a href="experiments/experiment-9-estimation-of-haemoglobin.html">9. Estimation of Haemoglobin</a></li>
-      <li><a href="experiments/experiment-10-introduction-to-hemocytometry.html">10. Introduction to Hemocytometry</a></li>
-      <li><a href="experiments/experiment-11-enumeration-of-total-rbc-count.html">11. Enumeration of Total RBC Count</a></li>
-      <li><a href="experiments/experiment-12-enumeration-of-total-wbc-count.html">12. Enumeration of Total WBC Count</a></li>
-      <li><a href="experiments/experiment-13-determination-of-heart-rate-and-pulse-rate.html">13. Determination of Heart Rate and Pulse Rate</a></li>
-      <li><a href="experiments/experiment-14-determination-of-blood-pressure.html">14. Determination of Blood Pressure</a></li>
-      <li><a href="experiments/experiment-15-determination-of-esr.html">15. Determination of Erythrocyte Sedimentation Rate (ESR)</a></li>
-    </ul>
+
+  <!-- ── SITE NAVIGATION ── -->
+  <nav class="site-nav" id="site-nav">
+    <a href="index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
+      </div>
+    </a>
+    <div class="site-nav__links">
+      <a href="index.html"       class="site-nav__link">🏠 Home</a>
+      <a href="experiments.html" class="site-nav__link active">🔬 Experiments</a>
+      <a href="assessments.html" class="site-nav__link">📝 Assessments</a>
+      <a href="references.html"  class="site-nav__link">📚 References</a>
+    </div>
+    <div class="site-nav__actions">
+      <a href="login_Version4.html" class="nav-btn nav-btn--accent">Sign In</a>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+  <div class="page-wrapper">
+    <div class="page-content--narrow">
+      <h1 class="page-title">🔬 Experiments</h1>
+      <p class="page-subtitle">Browse all practicals — click any experiment to view the full procedure, images, and details.</p>
+
+      <div class="exp-list-grid">
+        <a href="experiments/experiment-1-study-of-compound-microscope.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 1</div>
+          <div class="exp-list-title">Study of Compound Microscope</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-2-identification-of-axial-bones.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 2</div>
+          <div class="exp-list-title">Identification of Axial Bones</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-3-identification-of-appendicular-bones.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 3</div>
+          <div class="exp-list-title">Identification of Appendicular Bones</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-4-microscopic-study-of-epithelial-and-connective-tissue.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 4</div>
+          <div class="exp-list-title">Microscopic Study of Epithelial and Connective Tissue</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-5-microscopic-study-of-muscular-and-nervous-tissue.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 5</div>
+          <div class="exp-list-title">Microscopic Study of Muscular and Nervous Tissue</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-6-determination-of-blood-group.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 6</div>
+          <div class="exp-list-title">Determination of Blood Group</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-7-determination-of-bleeding-time.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 7</div>
+          <div class="exp-list-title">Determination of Bleeding Time</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-8-determination-of-clotting-time.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 8</div>
+          <div class="exp-list-title">Determination of Clotting Time</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-9-estimation-of-haemoglobin.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 9</div>
+          <div class="exp-list-title">Estimation of Haemoglobin</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-10-introduction-to-hemocytometry.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 10</div>
+          <div class="exp-list-title">Introduction to Hemocytometry</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-11-enumeration-of-total-rbc-count.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 11</div>
+          <div class="exp-list-title">Enumeration of Total RBC Count</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-12-enumeration-of-total-wbc-count.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 12</div>
+          <div class="exp-list-title">Enumeration of Total WBC Count</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-13-determination-of-heart-rate-and-pulse-rate.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 13</div>
+          <div class="exp-list-title">Determination of Heart Rate and Pulse Rate</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-14-determination-of-blood-pressure.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 14</div>
+          <div class="exp-list-title">Determination of Blood Pressure</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+        <a href="experiments/experiment-15-determination-of-esr.html" class="exp-list-card">
+          <div class="exp-list-num">Experiment 15</div>
+          <div class="exp-list-title">Determination of Erythrocyte Sedimentation Rate (ESR)</div>
+          <div class="exp-list-arrow">View →</div>
+        </a>
+      </div>
+    </div>
   </div>
+
+  <script>
+    (function(){
+      const t = document.getElementById('nav-toggle');
+      const n = document.getElementById('site-nav');
+      if (t && n) {
+        t.addEventListener('click', () => n.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => { if (!n.contains(e.target)) n.classList.remove('site-nav--open'); });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -2,32 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Portal | Human Anatomy & Physiology Portal</title>
+  <title>Admin Portal | Human Anatomy &amp; Physiology Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* Base */
     :root{
-      --th-bg:#f0f6ff;
-      --th-fg:#1565c0;
-      --th-pad-y:8px;
-      --th-pad-x:6px;
-
-      /* Actions header/body grid sizing (space-optimized) */
-      --grid-col-min:120px;
-      --grid-gap-x:8px;
-      --grid-gap-y:2px;
-
-      /* Make Actions header text look like normal th labels */
-      --head-font-size:14px;
-      --head-font-weight:700;
+      --th-bg:#f0f6ff; --th-fg:#1565c0;
+      --th-pad-y:8px; --th-pad-x:6px;
+      --grid-col-min:120px; --grid-gap-x:8px; --grid-gap-y:2px;
+      --head-font-size:14px; --head-font-weight:700;
     }
     *{ box-sizing:border-box; }
-    body { font-family:'Segoe UI',Arial,sans-serif; margin:0; color:#222; background:#f6f9ff; }
-    header { padding:1rem; background:#e3f2fd; border-bottom:1px solid #cfe0ff; }
-    header .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    header a { color:#1565c0; text-decoration:none; font-weight:600; }
-    h1 { margin:0; font-size:1.4rem; color:#0d47a1; }
+    body { font-family:'Segoe UI',Arial,sans-serif; margin:0; padding-top:var(--nav-h); color:#222; background:#f6f9ff; }
     main { max-width:1100px; margin:18px auto; padding:0 12px 24px; display:flex; flex-direction:column; gap:14px; }
     .panel { background:#fff; border:1px solid #cfe0ff; border-radius:10px; padding:14px; }
     .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
@@ -50,8 +36,6 @@
     .pill.error { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
     .pill.info { background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb; }
     textarea { min-height:80px; }
-
-    /* Users Tables */
     table { width:100%; border-collapse:collapse; table-layout:auto; }
     th, td { border-bottom:1px dashed #cfe0ff; padding:var(--th-pad-y) var(--th-pad-x); text-align:left; font-size:14px; vertical-align:top; }
     th { background:var(--th-bg); color:var(--th-fg); white-space:nowrap; }
@@ -62,82 +46,73 @@
     .chip.pending { background:#fff8e1; color:#e65100; }
     .chip.active { background:#e3f2fd; color:#1565c0; }
     .chip.inactive { background:#ffebee; color:#c62828; }
-
-    /* Assessments table */
     .assess-table { width:100%; border-collapse:collapse; margin-top:8px; }
     .assess-table th, .assess-table td { border-bottom:1px dashed #cfe0ff; padding:var(--th-pad-y) var(--th-pad-x); text-align:left; font-size:14px; }
     .assess-table th { background:var(--th-bg); color:var(--th-fg); }
     .btn.all { font-size:15px; font-weight:600; margin:0 8px 8px 0; }
-
-    /* Actions header ribbon (now styled like normal th text) */
-    .actions-th { min-width: 460px; padding-top:var(--th-pad-y); padding-bottom:var(--th-pad-y); }
-    .actions-head-grid {
-      display:grid;
-      gap:var(--grid-gap-y) var(--grid-gap-x);
-      align-items:center;
-    }
-    .actions-head-grid.cols-4 { grid-template-columns: repeat(4, minmax(var(--grid-col-min), 1fr)); }
-    .actions-head-grid.cols-5 { grid-template-columns: repeat(5, minmax(var(--grid-col-min), 1fr)); }
-    .head-pill {
-      /* Match th style (no teal pill) */
-      background:transparent;
-      color:var(--th-fg);
-      border:0;
-      border-radius:0;
-      padding:0;
-      text-align:center;
-      font-weight:var(--head-font-weight);
-      font-size:var(--head-font-size);
-      line-height:1.1;
-      white-space:nowrap;
-    }
-
-    /* Actions body grid (aligns with header ribbon) */
-    .actions-cell { min-width: 460px; }
-    .actions-cell .action-grid {
-      display:grid;
-      gap:var(--grid-gap-y) var(--grid-gap-x);
-      align-items:start;
-    }
-    .actions-cell .action-grid.cols-4 { grid-template-columns: repeat(4, minmax(var(--grid-col-min), 1fr)); }
-    .actions-cell .action-grid.cols-5 { grid-template-columns: repeat(5, minmax(var(--grid-col-min), 1fr)); }
-    .actions-cell .action-buttons {
-      display:flex;
-      justify-content:center;
-      flex-wrap:wrap;
-      gap:6px;
-      padding-top:2px;
-      border-right:1px solid #d4e4ff;
-      min-height:30px;
-    }
+    .actions-th { min-width:460px; padding-top:var(--th-pad-y); padding-bottom:var(--th-pad-y); }
+    .actions-head-grid { display:grid; gap:var(--grid-gap-y) var(--grid-gap-x); align-items:center; }
+    .actions-head-grid.cols-4 { grid-template-columns:repeat(4,minmax(var(--grid-col-min),1fr)); }
+    .actions-head-grid.cols-5 { grid-template-columns:repeat(5,minmax(var(--grid-col-min),1fr)); }
+    .head-pill { font-size:var(--head-font-size); font-weight:var(--head-font-weight); color:var(--th-fg); }
+    .actions-cell { vertical-align:top; padding:var(--th-pad-y) var(--th-pad-x); min-width:460px; }
+    .actions-cell .action-grid { display:grid; gap:var(--grid-gap-y) var(--grid-gap-x); align-items:start; }
+    .actions-cell .action-grid.cols-4 { grid-template-columns:repeat(4,minmax(var(--grid-col-min),1fr)); }
+    .actions-cell .action-grid.cols-5 { grid-template-columns:repeat(5,minmax(var(--grid-col-min),1fr)); }
+    .actions-cell .action-buttons { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; padding-top:2px; border-right:1px solid #d4e4ff; min-height:30px; }
     .actions-cell .action-buttons:last-child { border-right:0; }
-
-    /* Responsive */
-    @media (max-width: 900px) {
-      .actions-th, .actions-cell { min-width: 0; }
+    .section-title { color:var(--blue-deeper); font-size:1rem; font-weight:800; margin:0 0 10px; }
+    @media (max-width:900px) {
+      .actions-th, .actions-cell { min-width:0; }
       .actions-head-grid.cols-4, .actions-head-grid.cols-5,
-      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 {
-        grid-template-columns: repeat(2, minmax(var(--grid-col-min), 1fr));
-      }
+      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 { grid-template-columns:repeat(2,minmax(var(--grid-col-min),1fr)); }
     }
-    @media (max-width: 520px) {
+    @media (max-width:520px) {
       .actions-head-grid.cols-4, .actions-head-grid.cols-5,
-      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 {
-        grid-template-columns: 1fr;
-      }
+      .actions-cell .action-grid.cols-4, .actions-cell .action-grid.cols-5 { grid-template-columns:1fr; }
       .actions-cell .action-buttons { border-right:0; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="row">
-      <a href="index.html">← Home</a>
-      <h1>Admin Portal</h1>
-      <span id="role-badge" class="badge">Checking role…</span>
-      <span id="status" class="muted" role="status" aria-live="polite" style="margin-left:auto">Initializing…</span>
+
+  <!-- SITE NAVIGATION -->
+  <nav class="site-nav" id="site-nav">
+    <a href="index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Admin Portal</div>
+      </div>
+    </a>
+    <div class="site-nav__links">
+      <a href="index.html"       class="site-nav__link">🏠 Home</a>
+      <a href="experiments.html" class="site-nav__link">🔬 Experiments</a>
+      <a href="assessments.html" class="site-nav__link">📝 Assessments</a>
+      <a href="result.html"      class="site-nav__link">📊 Results</a>
+      <a href="references.html"  class="site-nav__link">📚 References</a>
     </div>
-  </header>
+    <div class="site-nav__actions">
+      <span id="role-badge" class="chip" style="font-size:.78rem;">Checking role…</span>
+      <span id="status" class="muted" style="font-size:.8rem;" role="status" aria-live="polite">Initializing…</span>
+      <button id="logout-btn" class="nav-btn">Logout</button>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function(){
+      const t = document.getElementById('nav-toggle');
+      const n = document.getElementById('site-nav');
+      if (t && n) {
+        t.addEventListener('click', () => n.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => { if (!n.contains(e.target)) n.classList.remove('site-nav--open'); });
+      }
+    })();
+  </script>
+
+
 
   <main>
     <!-- Users: Pending Approval + Approved Students -->
