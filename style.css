@@ -2923,3 +2923,45 @@ tbody tr:hover {
   </div><!-- /.layout -->
    
 }
+
+/* =========================
+   HOME PAGE (index.html) ONLY — Button visibility fix
+   ========================= */
+
+.page-home .hero-buttons {
+  display: flex !important;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.page-home .btn-hero {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  font-weight: 800;
+  text-decoration: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.page-home .btn-hero.primary {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
+  color: #fff !important;
+}
+
+.page-home .btn-hero.secondary {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff !important;
+}
+
+.page-home .btn-hero:hover {
+  transform: translateY(-3px);
+}
