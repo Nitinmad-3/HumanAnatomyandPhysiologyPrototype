@@ -225,9 +225,8 @@
       <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
     </aside>
 
-    <!-- ── MAIN CONTENT ── -->
-    <main class="main-content" role="main">
-
+<main class="main-content" role="main">
+  
       <!-- ── 1. PAGE TITLE ROW ── -->
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
         <div>
@@ -246,105 +245,50 @@
       <!-- ── 2. NOTIFICATIONS BANNER ── -->
       <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
 
-      <!-- ── 3. KPI STATS ROW ── -->
-      <section aria-labelledby="kpi-heading" class="mb-24">
-        <h2 id="kpi-heading" class="hidden">Quick Statistics</h2>
-        <div class="kpi-grid">
+      <!-- ── 3. KPI STATS ROW (CENTERED) ── -->
+      <div style="max-width: 900px; margin: 0 auto; padding: 0 20px;">
+        <section aria-labelledby="kpi-heading" class="mb-24">
+          <h2 id="kpi-heading" class="hidden">Quick Statistics</h2>
+          <div class="kpi-grid">
 
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#1565c0,#42a5f5);"></div>
-            <div class="kpi-card__icon" style="background:#e3f2fd;">🧪</div>
-            <div class="kpi-card__label">Experiments</div>
-            <div class="kpi-card__value">12</div>
-            <div class="kpi-card__sub">Available practicals</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#00897b,#4db6ac);"></div>
-            <div class="kpi-card__icon" style="background:#e0f2f1;">📋</div>
-            <div class="kpi-card__label">Assessments</div>
-            <div class="kpi-card__value" id="kpi-assessments">—</div>
-            <div class="kpi-card__sub">Released to you</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#7b1fa2,#ba68c8);"></div>
-            <div class="kpi-card__icon" style="background:#f3e5f5;">📊</div>
-            <div class="kpi-card__label">My Attempts</div>
-            <div class="kpi-card__value" id="kpi-attempts">—</div>
-            <div class="kpi-card__sub">Submissions recorded</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#e65100,#ffa726);"></div>
-            <div class="kpi-card__icon" style="background:#fff3e0;">🔔</div>
-            <div class="kpi-card__label">Notifications</div>
-            <div class="kpi-card__value" id="kpi-notifs">—</div>
-            <div class="kpi-card__sub">Active announcements</div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ── 4. PORTAL FEATURES ── -->
-      <section aria-labelledby="features-heading" class="mb-24">
-        <div class="section-heading">
-          <div class="section-heading__icon">🧭</div>
-          <div class="section-heading__text">
-            <h2 id="features-heading">Portal Features</h2>
-            <p>Everything available in your learning portal</p>
-          </div>
-        </div>
-        <hr class="section-divider" />
-
-        <div class="features-grid">
-
-          <div class="feature-card">
-            <div class="feature-card__icon">🧪</div>
-            <div class="feature-card__title">Experiments</div>
-            <div class="feature-card__desc">
-              Browse all anatomy &amp; physiology practicals. Each experiment includes objectives, procedure, and results.
+            <div class="kpi-card">
+              <div class="kpi-card__accent" style="background:linear-gradient(90deg,#1565c0,#42a5f5);"></div>
+              <div class="kpi-card__icon" style="background:#e3f2fd;">🧪</div>
+              <div class="kpi-card__label">Experiments</div>
+              <div class="kpi-card__value">12</div>
+              <div class="kpi-card__sub">Available practicals</div>
             </div>
-            <a href="experiments.html" class="feature-card__link">Open Experiments →</a>
-          </div>
 
-          <div class="feature-card">
-            <div class="feature-card__icon">📋</div>
-            <div class="feature-card__title">Assessments</div>
-            <div class="feature-card__desc">
-              Attempt experiment-specific quizzes and MCQs. Assessments are released by your admin within a time window.
+            <div class="kpi-card">
+              <div class="kpi-card__accent" style="background:linear-gradient(90deg,#00897b,#4db6ac);"></div>
+              <div class="kpi-card__icon" style="background:#e0f2f1;">📋</div>
+              <div class="kpi-card__label">Assessments</div>
+              <div class="kpi-card__value" id="kpi-assessments">—</div>
+              <div class="kpi-card__sub">Released to you</div>
             </div>
-            <a href="assessments.html" class="feature-card__link" id="feat-assessment-link">Go to Assessments →</a>
-          </div>
 
-          <div class="feature-card">
-            <div class="feature-card__icon">📊</div>
-            <div class="feature-card__title">Results</div>
-            <div class="feature-card__desc">
-              Track your submission history, scores, and performance across all attempted assessments.
+            <div class="kpi-card">
+              <div class="kpi-card__accent" style="background:linear-gradient(90deg,#7b1fa2,#ba68c8);"></div>
+              <div class="kpi-card__icon" style="background:#f3e5f5;">📊</div>
+              <div class="kpi-card__label">My Attempts</div>
+              <div class="kpi-card__value" id="kpi-attempts">—</div>
+              <div class="kpi-card__sub">Submissions recorded</div>
             </div>
-            <a href="result.html" class="feature-card__link" id="feat-results-link">View Results →</a>
-          </div>
 
-          <div class="feature-card">
-            <div class="feature-card__icon">📖</div>
-            <div class="feature-card__title">References</div>
-            <div class="feature-card__desc">
-              Access recommended textbooks, journal articles, and curated websites for deeper learning.
+            <div class="kpi-card">
+              <div class="kpi-card__accent" style="background:linear-gradient(90deg,#e65100,#ffa726);"></div>
+              <div class="kpi-card__icon" style="background:#fff3e0;">🔔</div>
+              <div class="kpi-card__label">Notifications</div>
+              <div class="kpi-card__value" id="kpi-notifs">—</div>
+              <div class="kpi-card__sub">Active announcements</div>
             </div>
-            <a href="references.html" class="feature-card__link">Browse References →</a>
+
           </div>
+        </section>
+      </div>
 
-        </div>
-
-        <div class="status-note mt-16" style="margin-top:16px;">
-          <span class="status-note__icon">💡</span>
-          <span>If an assessment is not visible, your admin may not have released it yet or it may be outside its scheduled time window.</span>
-        </div>
-      </section>
-
-      <!-- ── 5. PROFILE DASHBOARD CARD ── -->
-      <section id="profile-dashboard-card" aria-label="Your profile" class="hidden mb-24" style="margin-top: 48px;">
+      <!-- ── 4. PROFILE DASHBOARD CARD ── -->
+      <section id="profile-dashboard-card" aria-label="Your profile" class="hidden mb-24" style="margin-top: 48px; max-width: 900px; margin-left: auto; margin-right: auto; padding: 0 20px;">
         <div class="section-heading">
           <div class="section-heading__icon">👤</div>
           <div class="section-heading__text">
@@ -392,44 +336,19 @@
             </div>
 
             <div class="action-row">
-              <a href="profile.html"       class="btn btn--ghost"    id="pc-update-profile">✏️ Edit Profile</a>
-              <a href="assessments.html"   class="btn btn--primary"  id="pc-start-assessments">📋 Go to Assessments</a>
-              <a href="result.html"        class="btn btn--ghost"    id="pc-view-results">📊 View Results</a>
-              <a href="admin_portal.html"  class="btn btn--primary"  id="pc-admin-portal" style="display:none;">⚙️ Admin Portal</a>
+              <a href="index.html#profile" class="btn btn--ghost" id="pc-update-profile">✏️ Edit Profile</a>
+              <a href="assessments.html" class="btn btn--primary" id="pc-start-assessments">📋 Go to Assessments</a>
+              <a href="result.html" class="btn btn--ghost" id="pc-view-results">📊 View Results</a>
+              <a href="admin_portal.html" class="btn btn--primary" id="pc-admin-portal" style="display:none;">⚙️ Admin Portal</a>
             </div>
 
             <div id="pc-note" class="status-note hidden">
               <span class="status-note__icon">ℹ️</span>
               <span id="pc-note-text"></span>
             </div>
-
-            <div id="chat-section" class="chat-card hidden">
-              <div class="chat-head">
-                <div class="left">
-                  <span class="chat-title">💬 Messages</span>
-                  <select id="chat-room" class="room-select" aria-label="Select chat audience">
-                    <option value="global">Global (everyone)</option>
-                    <option value="dm">Admin (private)</option>
-                  </select>
-                </div>
-                <span id="chat-status" class="muted" style="font-size:.82rem;">—</span>
-              </div>
-              <div id="chat-box" class="chat-box" aria-live="polite"></div>
-              <div class="chat-input-row">
-                <input id="chat-input" class="chat-input" placeholder="Type a message…" />
-                <button id="chat-send" class="chat-send">Send</button>
-              </div>
-              <div id="chat-setup-hint" class="muted hidden" style="margin-top:6px; font-size:.82rem;">
-                Chat backend is not set up yet. Ask admin to run setup_portal.sql (portal_chat).
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
-
-    </main>
-  </div>
 
   <!-- ══════════════════════════════════════════════════════
        FOOTER
