@@ -90,6 +90,770 @@
        LAYOUT  (sidebar + main)
   ══════════════════════════════════════════════════════ -->
   <div class="layout">
+
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Anatomy & Physiology Portal</title>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="%23fff" font-weight="bold">H</text></svg>'
+  />
+
+  <style>
+    body::before { content:""; position:fixed; inset:0; z-index:-1; background:url('wallpaper.jpg') no-repeat center center/cover; opacity:.06; pointer-events:none; }
+    
+    .hero-section {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: var(--nav-h);
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #1565c0 100%);
+      margin-bottom: 40px;
+    }
+
+    .hero-background { position: absolute; inset: 0; z-index: 0; }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #fff;
+      max-width: 900px;
+      padding: 0 24px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 3vw, 1.2rem);
+      opacity: 0.95;
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+
+    .scroll-indicator { animation: bounce 2s infinite; font-size: 1.5rem; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    .section-divider { border: 0; border-top: 1.5px solid var(--border); margin: 40px 0 20px; }
+
+    /* ════════════════════════════════════════════════════════
+       MOVEABLE SIDEBAR WITH MAT GLASS FINISH
+       ════════════════════════════════════════════════════════ */
+
+    /* Sidebar Toggle Button (Three Dots) */
+    .sidebar-toggle-btn {
+      display: none;
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      background: rgba(21, 101, 192, 0.9);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 999;
+      font-size: 24px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: rgba(13, 71, 161, 0.95);
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(21, 101, 192, 0.4);
+    }
+
+    /* Sidebar - Mat Glass Finish */
+    .sidebar {
+      position: fixed;
+      left: -300px;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      padding-top: var(--nav-h, 70px);
+      overflow-y: auto;
+      z-index: 998;
+      transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      
+      /* Mat Glass Effect */
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Sidebar OPEN State */
+    .sidebar.sidebar--open {
+      left: 0;
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Sidebar Links Styling */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--ink, #1a237e);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-left: 3px solid transparent;
+      transition: all 0.3s ease;
+      margin: 4px 8px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .sidebar-link:hover {
+      background: rgba(21, 101, 192, 0.08);
+      border-left-color: #1565c0;
+      color: #1565c0;
+      transform: translateX(4px);
+    }
+
+    .sidebar-link.active {
+      background: linear-gradient(90deg, rgba(21, 101, 192, 0.12), rgba(21, 101, 192, 0.05));
+      border-left-color: #1565c0;
+      color: #0d47a1;
+    }
+
+    /* Sidebar Icons */
+    .s-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar Section Labels */
+    .sidebar-section-label {
+      display: block;
+      padding: 12px 16px 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(26, 35, 126, 0.5);
+      margin-top: 12px;
+    }
+
+    .sidebar-section-label:first-child {
+      margin-top: 0;
+    }
+
+    /* Sidebar Divider */
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(0, 0, 0, 0.08);
+      margin: 12px 0;
+    }
+
+    /* Overlay (when sidebar is open on mobile) */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 997;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Mobile Layout */
+    @media (max-width: 768px) {
+      .sidebar-toggle-btn {
+        display: flex;
+      }
+
+      .sidebar {
+        width: 260px;
+      }
+    }
+
+    /* Scrollbar Styling for Sidebar */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(21, 101, 192, 0.3);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(21, 101, 192, 0.5);
+    }
+
+    .sidebar-link.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── SITE NAVIGATION ── -->
+  <nav class="site-nav" id="site-nav">
+    <a href="index.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
+      <div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
+      </div>
+    </a>
+
+    <div class="site-nav__links">
+      <a href="index.html"        class="site-nav__link active">🏠 Home</a>
+      <a href="index.html#dashboard"   class="site-nav__link">📊 Dashboard</a>
+      <a href="experiments.html" class="site-nav__link">🧪 Experiments</a>
+      <a href="assessments.html" class="site-nav__link">📋 Assessments</a>
+      <a href="references.html"  class="site-nav__link">📖 References</a>
+    </div>
+
+    <div class="site-nav__actions">
+      <a id="login-btn" href="login_Version4.html" class="nav-btn nav-btn--accent">Sign In</a>
+      <a href="profile.html"       id="profile-tab"       class="nav-btn hidden">👤 Profile</a>
+      <a href="admin_portal.html"  id="admin-portal-link" class="nav-btn hidden">⚙️ Admin</a>
+      <button id="logout-btn" class="nav-btn hidden">Logout</button>
+      <a href="profile.html" class="hdr-avatar-wrap hidden" id="hdr-avatar-link" aria-label="My profile">
+        <img id="hdr-avatar-img" alt="Avatar" />
+      </a>
+    </div>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════
+       SIDEBAR WITH MAT GLASS FINISH
+  ══════════════════════════════════════════════════════ -->
+  
+  <!-- Sidebar Toggle Button (Three Dots) -->
+  <button class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Toggle sidebar">⋯</button>
+
+  <!-- Sidebar Overlay (closes sidebar on click) -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Site navigation">
+
+    <div class="sidebar-section-label">Main</div>
+    <a href="index.html" class="sidebar-link active"><span class="s-icon">🏠</span> Home</a>
+    <a href="index.html#dashboard" class="sidebar-link"><span class="s-icon">📊</span> Dashboard</a>
+    <a href="experiments.html" class="sidebar-link"><span class="s-icon">🧪</span> Experiments</a>
+
+    <div class="sidebar-section-label">Learning</div>
+    <a href="assessments.html" class="sidebar-link"><span class="s-icon">📋</span> Assessments</a>
+    <a href="result.html" class="sidebar-link"><span class="s-icon">📊</span> My Results</a>
+
+    <div class="sidebar-section-label">Resources</div>
+    <a href="references.html" class="sidebar-link"><span class="s-icon">📖</span> References</a>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section-label">Account</div>
+    <a href="profile.html" class="sidebar-link hidden" id="sb-profile"><span class="s-icon">👤</span> My Profile</a>
+    <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO SECTION
+  ══════════════════════════════════════════════════════ -->
+  <section class="hero-section" id="hero-section">
+    <div class="hero-background"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Master Human Anatomy</h1>
+      <p class="hero-subtitle">Interactive Learning Portal for Medical Students</p>
+      <div class="scroll-indicator">⬇️</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       DASHBOARD SECTION
+  ══════════════════════════════════════════════════════ -->
+  <main class="main-content" id="dashboard" role="main">
+
+    <!-- ── 1. PAGE TITLE ROW ── -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; max-width: 900px; margin-left: auto; margin-right: auto; padding: 0 20px;">
+      <div>
+        <h1 style="font-size:1.5rem; font-weight:800; color:var(--blue-deeper, #0d47a1); line-height:1.2;">
+          Dashboard
+        </h1>
+        <p class="muted" style="font-size:.88rem; margin-top:3px;">
+          Human Anatomy &amp; Physiology Experiments — Learning Portal
+        </p>
+      </div>
+      <div style="font-size:.82rem; color:var(--muted, #6b7da6); background:var(--chip-bg, #f5f8ff); border:1px solid var(--chip-bd, #dde4f0); border-radius:var(--radius-sm, 6px); padding:6px 12px;" id="date-badge">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ── 2. NOTIFICATIONS BANNER ── -->
+    <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ── 3. KPI STATS ROW (CENTERED) ── -->
+    <div style="max-width: 900px; margin: 0 auto; padding: 0 20px;">
+      <section aria-labelledby="kpi-heading" class="mb-24">
+        <h2 id="kpi-heading" class="hidden">Quick Statistics</h2>
+        <div class="kpi-grid">
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#1565c0,#42a5f5);"></div>
+            <div class="kpi-card__icon" style="background:#e3f2fd;">🧪</div>
+            <div class="kpi-card__label">Experiments</div>
+            <div class="kpi-card__value">12</div>
+            <div class="kpi-card__sub">Available practicals</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#00897b,#4db6ac);"></div>
+            <div class="kpi-card__icon" style="background:#e0f2f1;">📋</div>
+            <div class="kpi-card__label">Assessments</div>
+            <div class="kpi-card__value" id="kpi-assessments">—</div>
+            <div class="kpi-card__sub">Released to you</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#7b1fa2,#ba68c8);"></div>
+            <div class="kpi-card__icon" style="background:#f3e5f5;">📊</div>
+            <div class="kpi-card__label">My Attempts</div>
+            <div class="kpi-card__value" id="kpi-attempts">—</div>
+            <div class="kpi-card__sub">Submissions recorded</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#e65100,#ffa726);"></div>
+            <div class="kpi-card__icon" style="background:#fff3e0;">🔔</div>
+            <div class="kpi-card__label">Notifications</div>
+            <div class="kpi-card__value" id="kpi-notifs">—</div>
+            <div class="kpi-card__sub">Active announcements</div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+    <!-- ── 4. PROFILE DASHBOARD CARD ── -->
+    <section id="profile-dashboard-card" aria-label="Your profile" class="hidden mb-24" style="margin-top: 48px; max-width: 900px; margin-left: auto; margin-right: auto; padding: 0 20px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <div style="width:34px; height:34px; border-radius:9px; background:var(--blue-light, #e3f2fd); border:1px solid var(--blue-mid, #bbdefb); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">👤</div>
+        <div>
+          <h2 style="font-size:1.05rem; font-weight:700; color:var(--blue-deeper, #0d47a1);">My Profile</h2>
+          <p style="font-size:.82rem; color:var(--muted, #6b7da6); margin-top:1px;">Your account details and quick actions</p>
+        </div>
+      </div>
+      <hr class="section-divider" />
+
+      <div style="background:var(--card-bg, #fff); border:1px solid var(--border, #dde4f0); border-radius:var(--radius, 12px); box-shadow:var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.08)); overflow:hidden;">
+        <div style="background:linear-gradient(135deg,var(--blue-deeper, #0d47a1) 0%,var(--blue, #1565c0) 100%); padding:20px 24px 50px;">
+          <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.55);">Logged in as</div>
+          <div style="font-size:1.05rem; font-weight:700; color:#fff; margin-top:4px;" id="pc-header-role">Student</div>
+        </div>
+
+        <div style="padding:0 24px 22px;">
+          <div style="display:flex; align-items:flex-end; gap:16px; margin-top:-34px; margin-bottom:14px; flex-wrap:wrap;">
+            <img id="pc-avatar" style="width:74px; height:74px; border-radius:13px; object-fit:cover; border:3px solid #fff; box-shadow:var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.08)); background:var(--blue-light, #e3f2fd); flex-shrink:0;" alt="Profile avatar" />
+            <div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--blue-deeper, #0d47a1);" id="pc-name">Welcome</div>
+              <div class="muted" style="font-size:.86rem; color:var(--ink-soft, #546e7a); margin-top:3px;" id="pc-message">Loading…</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;" id="pc-chips">
+                <span id="pc-role" style="background:rgba(21, 101, 192, 0.1); color:#1565c0; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Role</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; padding:14px 16px; background:#f7faff; border-radius:var(--radius-sm, 6px); border:1px solid var(--border, #dde4f0);" id="pc-meta" style="display:none;">
+            <div>
+              <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted, #6b7da6); margin-bottom:2px;">PRN</div>
+              <div style="font-size:.92rem; font-weight:600; color:var(--ink, #1a237e);" id="pc-prn">—</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted, #6b7da6); margin-bottom:2px;">Batch</div>
+              <div style="font-size:.92rem; font-weight:600; color:var(--ink, #1a237e);" id="pc-batch">—</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted, #6b7da6); margin-bottom:2px;">Programme</div>
+              <div style="font-size:.92rem; font-weight:600; color:var(--ink, #1a237e);">B.Sc. Nursing</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted, #6b7da6); margin-bottom:2px;">Portal</div>
+              <div style="font-size:.92rem; font-weight:600; color:var(--ink, #1a237e);">Anatomy &amp; Physiology</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+            <a href="profile.html" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:8px; border:1.5px solid var(--border, #dde4f0); background:#fff; color:var(--ink, #1a237e); text-decoration:none; font-weight:600; cursor:pointer; transition:all 0.3s ease;" id="pc-update-profile">✏️ Edit Profile</a>
+            <a href="assessments.html" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:8px; background:linear-gradient(135deg,#1565c0,#42a5f5); color:#fff; text-decoration:none; font-weight:600; cursor:pointer; transition:all 0.3s ease;" id="pc-start-assessments">📋 Go to Assessments</a>
+            <a href="result.html" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:8px; border:1.5px solid var(--border, #dde4f0); background:#fff; color:var(--ink, #1a237e); text-decoration:none; font-weight:600; cursor:pointer; transition:all 0.3s ease;" id="pc-view-results">📊 View Results</a>
+            <a href="admin_portal.html" style="display:none; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:8px; background:linear-gradient(135deg,#1565c0,#42a5f5); color:#fff; text-decoration:none; font-weight:600; cursor:pointer; transition:all 0.3s ease;" id="pc-admin-portal">⚙️ Admin Portal</a>
+          </div>
+
+          <div id="pc-note" class="status-note hidden" style="display:none; margin-top:16px; padding:12px 16px; background:#fff3cd; border:1px solid #ffc107; border-radius:8px; color:#856404; font-size:0.9rem;">
+            <span style="margin-right:8px;">ℹ️</span>
+            <span id="pc-note-text"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>About Portal</h3>
+        <p>An interactive learning management system designed for Human Anatomy & Physiology studies.</p>
+      </div>
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="experiments.html">Experiments</a></li>
+          <li><a href="assessments.html">Assessments</a></li>
+          <li><a href="result.html">Results</a></li>
+          <li><a href="references.html">References</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Contact Admin</a></li>
+          <li><a href="#">Report Issue</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Feedback</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Human Anatomy & Physiology Portal. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════════════════════ -->
+
+  <!-- Sidebar Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+
+      // Toggle sidebar on button click
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('sidebar--open');
+          overlay.classList.toggle('active');
+        });
+      }
+
+      // Close sidebar when clicking overlay
+      if (overlay) {
+        overlay.addEventListener('click', () => {
+          sidebar.classList.remove('sidebar--open');
+          overlay.classList.remove('active');
+        });
+      }
+
+      // Close sidebar when clicking a link
+      const sidebarLinks = document.querySelectorAll('.sidebar-link');
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          sidebar.classList.remove('sidebar--open');
+          overlay.classList.remove('active');
+        });
+      });
+
+      // Close sidebar on ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          sidebar.classList.remove('sidebar--open');
+          overlay.classList.remove('active');
+        }
+      });
+    });
+  </script>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function(){
+      const toggle = document.getElementById('nav-toggle');
+      const nav    = document.getElementById('site-nav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', () => nav.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => {
+          if (!nav.contains(e.target)) nav.classList.remove('site-nav--open');
+        });
+      }
+    })();
+  </script>
+
+  <!-- Date Badge -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const dateBadge = document.getElementById('date-badge');
+      if (dateBadge) {
+        const now = new Date();
+        dateBadge.textContent = now.toLocaleDateString('en-IN', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      }
+    });
+  </script>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
+  <!-- ── Main App Logic ── -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.supabase) { console.error('Supabase SDK failed to load.'); return; }
+      const sb = window.sb || (window.sb = window.supabase.createClient(
+        'https://hunlistfklwvpivfjmbk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktX7B7pT_qR9s8mK-nL2oP3jQ'
+      ));
+
+      const AVATAR_BUCKET = 'Avatar';
+
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const profileTab = document.getElementById('profile-tab');
+      const adminPortalLink = document.getElementById('admin-portal-link');
+      const sbProfile = document.getElementById('sb-profile');
+      const sbAdmin = document.getElementById('sb-admin');
+      const profileCard = document.getElementById('profile-dashboard-card');
+      const pcAvatar = document.getElementById('pc-avatar');
+      const hdrAvatarImg = document.getElementById('hdr-avatar-img');
+      const hdrAvatarLink = document.getElementById('hdr-avatar-link');
+      const pcName = document.getElementById('pc-name');
+      const pcRole = document.getElementById('pc-role');
+      const pcHeaderRole = document.getElementById('pc-header-role');
+      const pcMessage = document.getElementById('pc-message');
+      const pcMeta = document.getElementById('pc-meta');
+      const pcPRN = document.getElementById('pc-prn');
+      const pcBatch = document.getElementById('pc-batch');
+      const pcAdminBtn = document.getElementById('pc-admin-portal');
+      const pcNote = document.getElementById('pc-note');
+      const pcNoteText = document.getElementById('pc-note-text');
+      const kpiAssessments = document.getElementById('kpi-assessments');
+      const kpiAttempts = document.getElementById('kpi-attempts');
+
+      let currentUser = null;
+      let avatarRefreshTimerId = null;
+
+      async function setSignedAvatar(path) {
+        if (!path) return;
+        try {
+          const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
+          if (error) { console.warn('avatar signedUrl error', error); return; }
+          if (pcAvatar) pcAvatar.src = data.signedUrl;
+          if (hdrAvatarImg) hdrAvatarImg.src = data.signedUrl;
+        } catch (err) { console.warn('avatar error', err); }
+      }
+      function startAvatarAutoRefresh(path) {
+        if (avatarRefreshTimerId) clearInterval(avatarRefreshTimerId);
+        if (!path) return;
+        avatarRefreshTimerId = setInterval(() => setSignedAvatar(path), 50 * 1000);
+      }
+
+      function setNav(loggedIn) {
+        if (loggedIn) {
+          if (loginBtn) loginBtn.classList.add('hidden');
+          if (logoutBtn) logoutBtn.classList.remove('hidden');
+          if (profileTab) profileTab.classList.remove('hidden');
+          if (sbProfile) sbProfile.classList.remove('hidden');
+          if (hdrAvatarLink) hdrAvatarLink.classList.remove('hidden');
+        } else {
+          if (logoutBtn) logoutBtn.classList.add('hidden');
+          if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.href = 'login_Version4.html'; }
+          if (profileTab) profileTab.classList.add('hidden');
+          if (sbProfile) sbProfile.classList.add('hidden');
+          if (adminPortalLink) adminPortalLink.classList.add('hidden');
+          if (sbAdmin) sbAdmin.classList.add('hidden');
+          if (profileCard) profileCard.classList.add('hidden');
+          if (hdrAvatarLink) hdrAvatarLink.classList.add('hidden');
+          if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
+          if (kpiAssessments) kpiAssessments.textContent = '—';
+          if (kpiAttempts) kpiAttempts.textContent = '—';
+        }
+      }
+
+      async function getUserRole(userId) {
+        const { data, error } = await sb.from('profiles').select('role').eq('id', userId).maybeSingle();
+        if (error) console.warn('Role fetch error:', error);
+        return (data?.role || 'unknown').toString().trim().toLowerCase();
+      }
+
+      async function loadKPIs(userId) {
+        try {
+          const { count } = await sb.from('assessments').select('id', { count: 'exact', head: true }).eq('released', true);
+          if (kpiAssessments) kpiAssessments.textContent = count ?? '—';
+        } catch (_) {}
+        try {
+          const { count } = await sb.from('submissions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+          if (kpiAttempts) kpiAttempts.textContent = count ?? '—';
+        } catch (_) {}
+      }
+
+      async function refreshUI() {
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) { currentUser = null; setNav(false); return; }
+          setNav(true);
+          currentUser = session.user;
+
+          const { data: profile, error: profErr } = await sb.from('profiles').select('name, role, prn, batch, avatar_path, approved, active').eq('id', currentUser.id).maybeSingle();
+          if (profErr) console.warn('Profile fetch error:', profErr);
+
+          const role = (profile?.role || 'unknown').toString().trim().toLowerCase();
+          const approved = !!profile?.approved;
+          const active = !!profile?.active;
+          const isAdmin = role === 'admin';
+
+          if (isAdmin) {
+            if (adminPortalLink) adminPortalLink.classList.remove('hidden');
+            if (sbAdmin) sbAdmin.classList.remove('hidden');
+            if (pcAdminBtn) pcAdminBtn.style.display = 'inline-flex';
+          } else {
+            if (adminPortalLink) adminPortalLink.classList.add('hidden');
+            if (sbAdmin) sbAdmin.classList.add('hidden');
+            if (pcAdminBtn) pcAdminBtn.style.display = 'none';
+          }
+
+          if (profileCard) profileCard.classList.remove('hidden');
+
+          const displayName = profile?.name ? profile.name : (currentUser.email || '');
+          pcName.textContent = ('Welcome, ' + displayName).trim();
+
+          const roleLabel = isAdmin ? 'Admin' : (role === 'student' ? 'Student' : 'Unknown Role');
+          pcRole.textContent = roleLabel;
+          if (pcHeaderRole) pcHeaderRole.textContent = roleLabel;
+
+          if (role === 'student') {
+            const showPRN = !!(profile?.prn && profile.prn.trim());
+            const showBatch = !!(profile?.batch && profile.batch.trim());
+            if (pcPRN) pcPRN.textContent = showPRN ? profile.prn : '—';
+            if (pcBatch) pcBatch.textContent = showBatch ? profile.batch : '—';
+            if (pcMeta) pcMeta.style.display = (showPRN || showBatch) ? 'grid' : 'none';
+          } else {
+            if (pcMeta) pcMeta.style.display = 'none';
+          }
+
+          if (isAdmin) {
+            pcMessage.textContent = 'Admin access. Manage releases, deadlines, notifications, and students from the Admin Portal.';
+          } else if (role === 'student') {
+            pcMessage.textContent = 'Access your assessments and track your progress. Keep your profile up to date.';
+          } else {
+            pcMessage.textContent = 'Complete your profile to unlock all portal features.';
+          }
+
+          if (!active && !isAdmin) {
+            pcNote.classList.remove('hidden');
+            pcNote.style.display = 'block';
+            pcNoteText.textContent = 'Your account is deactivated. Please contact an administrator.';
+          } else if (!approved && !isAdmin) {
+            pcNote.classList.remove('hidden');
+            pcNote.style.display = 'block';
+            pcNoteText.textContent = 'Your account is pending admin approval. Some features are restricted.';
+          } else {
+            const baseComplete = !!(profile?.name && profile?.role);
+            const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
+            const isComplete = isAdmin ? baseComplete : (role === 'student' ? studentComplete : baseComplete);
+            if (!isComplete) {
+              pcNote.classList.remove('hidden');
+              pcNote.style.display = 'block';
+              pcNoteText.textContent = role === 'student' ? 'Your profile is incomplete — please add your PRN and Batch for full access.' : 'Please complete your profile details for a better experience.';
+            } else {
+              pcNote.classList.add('hidden');
+              pcNote.style.display = 'none';
+            }
+          }
+
+          const avatarPath = profile?.avatar_path || null;
+          await setSignedAvatar(avatarPath);
+          startAvatarAutoRefresh(avatarPath);
+
+          await loadKPIs(currentUser.id);
+
+        } catch (e) {
+          console.error('refreshUI error:', e);
+        }
+      }
+
+      function protectLink(el, requireAdmin = false) {
+        if (!el) return;
+        el.addEventListener('click', async (e) => {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session?.user) { e.preventDefault(); window.location.href = 'login_Version4.html'; return; }
+          if (requireAdmin) {
+            const role = await getUserRole(session.user.id);
+            if (role !== 'admin') { e.preventDefault(); alert('Admin only.'); }
+          }
+        });
+      }
+
+      protectLink(adminPortalLink, true);
+      protectLink(pcAdminBtn, true);
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await sb.auth.signOut({ scope: 'global' }); } catch (_) {}
+          try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}
+          try {
+            for (const k of Object.keys(localStorage)) { if (k.toLowerCase().includes('supabase') || k.startsWith('sb-')) localStorage.removeItem(k); }
+            for (const k of Object.keys(sessionStorage)) { if (k.toLowerCase().includes('supabase') || k.startsWith('sb-')) sessionStorage.removeItem(k); }
+          } catch (_) {}
+          try { indexedDB.deleteDatabase('supabase-auth'); } catch (_) {}
+          window.location.replace('index.html');
+        });
+      }
+
+      refreshUI();
+      sb.auth.onAuthStateChange(() => { refreshUI(); });
+      window.addEventListener('focus', () => { refreshUI(); });
+    });
+  </script>
+</body>
+</html>
+
     
       <!-- ── MAIN CONTENT ── -->
     <main class="main-content" role="main">
