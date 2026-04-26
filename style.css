@@ -1054,7 +1054,7 @@ tbody tr:hover {
   background: #f8faff;
 }
 
-.table-wrap {z
+.table-wrap {
   overflow: auto;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -2706,13 +2706,5 @@ tbody tr:hover {
 
   a {
     text-decoration: underline;
-
-
-     /* Hide old index.html sections */
-.hero-section { display: none !important; }
-.kpi-grid { display: none !important; }
-.features-grid { display: none !important; }
-
-
-
-
+  }
+}
