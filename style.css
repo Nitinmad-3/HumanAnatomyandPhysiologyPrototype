@@ -2709,54 +2709,11 @@ tbody tr:hover {
   }
 }
 
-//* FORCE SIDEBAR FIX */
-.sidebar {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100vh;
-  background: white;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 9999;
-  overflow-y: auto;
-}
-
-/* OPEN */
-.sidebar.open {
-  transform: translateX(0);
-}
-
-/* MAIN SHIFT */
-.main-content {
-  transition: margin-left 0.3s ease;
-}
-
-.main-content.move {
-  margin-left: 260px;
-}
-
-/* OVERLAY */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  z-index: 9998;
-}
-
-#overlay.show {
-  display: block;
-}
-/* ===== HAMBURGER BUTTON (VISIBLE) ===== */
+/* ===== HAMBURGER BUTTON LEFT ===== */
 .site-nav__toggle {
   display: block !important;
   position: absolute;
-  right: 20px;
+  left: 20px;
   top: 15px;
   font-size: 26px;
   background: none;
@@ -2766,13 +2723,18 @@ tbody tr:hover {
   z-index: 5000;
 }
 
+/* PUSH BRAND RIGHT (avoid overlap) */
+.site-nav__brand {
+  margin-left: 60px;
+}
+
 /* NAV ABOVE EVERYTHING */
 .site-nav {
   position: relative;
   z-index: 4000;
 }
 
-/* ===== SIDEBAR SLIDE ===== */
+/* ===== SIDEBAR ===== */
 .sidebar {
   position: fixed !important;
   top: 0;
@@ -2786,12 +2748,12 @@ tbody tr:hover {
   overflow-y: auto;
 }
 
-/* OPEN STATE */
+/* OPEN */
 .sidebar.open {
   transform: translateX(0);
 }
 
-/* MOVE CONTENT */
+/* CONTENT SHIFT */
 .main-content {
   transition: margin-left 0.3s ease;
 }
@@ -2800,7 +2762,7 @@ tbody tr:hover {
   margin-left: 260px;
 }
 
-/* OVERLAY */
+/* ===== OVERLAY ===== */
 #overlay {
   position: fixed;
   top: 0;
