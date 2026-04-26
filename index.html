@@ -233,6 +233,49 @@
       <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
     </aside>
 
+    <aside class="sidebar" role="navigation" aria-label="Site navigation">
+  <div class="sidebar-section-label">Main</div>
+  <a href="index.html" class="sidebar-link active"><span class="s-icon">🏠</span> Dashboard</a>
+  <a href="experiments.html" class="sidebar-link"><span class="s-icon">🧪</span> Experiments</a>
+  <a href="assessments.html" class="sidebar-link"><span class="s-icon">📝</span> Assessments</a>
+  <a href="references.html" class="sidebar-link"><span class="s-icon">📚</span> References</a>
+</aside>
+    
+    <script>
+  (function () {
+    const toggleBtn = document.getElementById('nav-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const layout = document.querySelector('.layout');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (!toggleBtn || !sidebar || !overlay) return;
+
+    function openSidebar() {
+      sidebar.classList.add('sidebar--open');
+      layout.classList.add('shifted');
+      overlay.classList.add('active');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('sidebar--open');
+      layout.classList.remove('shifted');
+      overlay.classList.remove('active');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.contains('sidebar--open') ? closeSidebar() : openSidebar();
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    sidebar.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        closeSidebar();
+      });
+    });
+  })();
+</script>
+
     <!-- ── MAIN CONTENT ── -->
     <main class="main-content" role="main">
 
