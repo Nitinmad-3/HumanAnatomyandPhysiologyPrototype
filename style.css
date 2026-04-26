@@ -2707,10 +2707,10 @@ tbody tr:hover {
   a {
     text-decoration: underline;
   }
+}
 
-   <style>
-    /* ── Wallpaper overlay ── */
-    body::before {
+ /* ── Wallpaper overlay ── */
+ body::before {
       content: "";
       position: fixed;
       inset: 0;
@@ -2965,7 +2965,6 @@ tbody tr:hover {
         justify-content: center;
       }
     }
-  </style>
-</head>
-   
-}
+
+
+
