@@ -2707,4 +2707,265 @@ tbody tr:hover {
   a {
     text-decoration: underline;
   }
+
+   <style>
+    /* ── Wallpaper overlay ── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url('wallpaper.jpg') no-repeat center center/cover;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+
+    /* ── KPI element aliases ── */
+    .kpi-card__accent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .kpi-card__label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-card__value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+      margin: 4px 0;
+    }
+
+    .kpi-card__sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    /* ── Section heading ── */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-heading__icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--blue-light);
+      border: 1px solid var(--blue-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .section-heading__text h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--blue-deeper);
+      margin: 0;
+    }
+
+    .section-heading__text p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .section-divider {
+      border: 0;
+      border-top: 1.5px solid var(--border);
+      margin: 0 0 20px;
+    }
+
+    /* ── Profile card ── */
+    .profile-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .profile-card__header {
+      background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue) 100%);
+      padding: 20px 24px 50px;
+    }
+
+    .profile-card__header-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .profile-card__header-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 4px;
+    }
+
+    .profile-card__body {
+      padding: 0 24px 22px;
+    }
+
+    .profile-card__avatar-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      margin-top: -34px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .profile-card__avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 13px;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: var(--shadow-sm);
+      background: var(--blue-light);
+      flex-shrink: 0;
+    }
+
+    .profile-card__name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--blue-deeper);
+    }
+
+    .profile-card__message {
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+      margin-top: 3px;
+    }
+
+    .meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .profile-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      padding: 14px 16px;
+      background: #f7faff;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .info-item__label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .info-item__value {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .status-note__icon {
+      flex-shrink: 0;
+      font-size: 1rem;
+      margin-top: 1px;
+    }
+
+    /* ── Chat extras ── */
+    .chat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      margin-top: 22px;
+    }
+
+    .chat-head .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chat-title {
+      font-weight: 700;
+      color: var(--blue-deeper);
+      font-size: 0.95rem;
+    }
+
+    .room-select {
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: #f5f8ff;
+      font-size: 0.83rem;
+      color: var(--ink);
+      font-family: var(--font);
+    }
+
+    .meta {
+      font-size: 0.7rem;
+      color: #6b84c7;
+      margin-top: 3px;
+    }
+
+    @media (max-width: 520px) {
+      .profile-card__avatar-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .action-row {
+        flex-direction: column;
+      }
+
+      .action-row .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+   
 }
