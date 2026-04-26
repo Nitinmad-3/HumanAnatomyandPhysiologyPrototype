@@ -7,12 +7,149 @@
   <link rel="stylesheet" href="style.css" />
   <link
     rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="%23fff" font-weight="bold">H</text></svg>'
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fi[...]
   />
 
   <style>
     /* ── Wallpaper overlay ── */
     body::before { content:""; position:fixed; inset:0; z-index:-1; background:url('wallpaper.jpg') no-repeat center center/cover; opacity:.06; pointer-events:none; }
+    
+    /* ════════════════════════════════════════════════════════
+       MOVEABLE SIDEBAR STYLES
+    ════════════════════════════════════════════════════════ */
+    
+    .sidebar-toggle-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 48px;
+      height: 48px;
+      background: #1565c0;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 999;
+      font-size: 24px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #0d47a1;
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4);
+    }
+
+    .sliding-sidebar {
+      position: fixed;
+      left: -300px;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+      z-index: 998;
+      transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
+      padding-top: 20px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sliding-sidebar.open {
+      left: 0;
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 997;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-left-color: #64b5f6;
+      transform: translateX(5px);
+    }
+
+    .sidebar-item.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-left-color: #64b5f6;
+    }
+
+    .sidebar-icon {
+      font-size: 1.3rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .sidebar-section-title {
+      padding: 12px 20px 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 16px;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 12px 0;
+    }
+
+    .sliding-sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sliding-sidebar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sliding-sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .sliding-sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-toggle-btn {
+        display: flex;
+      }
+    }
     
     /* ── Hero Section Styles ── */
     .hero-section {
@@ -143,7 +280,7 @@
     
     /* ── Section heading ── */
     .section-heading { display:flex;align-items:center;gap:10px;margin-bottom:14px; }
-    .section-heading__icon { width:34px;height:34px;border-radius:9px;background:var(--blue-light);border:1px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:1.2rem; }
+    .section-heading__icon { width:34px;height:34px;border-radius:9px;background:var(--blue-light);border:1px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
     .section-heading__text h2 { font-size:1.05rem;font-weight:700;color:var(--blue-deeper); }
     .section-heading__text p { font-size:.82rem;color:var(--muted);margin-top:1px; }
     .section-divider { border:0;border-top:1.5px solid var(--border);margin:0 0 20px; }
@@ -159,7 +296,7 @@
     .profile-card__name { font-size:1.2rem;font-weight:800;color:var(--blue-deeper); }
     .profile-card__message { font-size:.86rem;color:var(--ink-soft);margin-top:3px; }
     .meta-chips { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px; }
-    .profile-info-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 16px;background:#f7faff;border-radius:var(--radius-sm);border:1px solid var(--border); }
+    .profile-info-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 16px;background:#f7faff;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:12px; }
     .info-item__label { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px; }
     .info-item__value { font-size:.92rem;font-weight:600;color:var(--ink); }
     .action-row { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px; }
@@ -180,6 +317,51 @@
   </style>
 </head>
 <body>
+
+  <!-- ══════════════════════════════════════════════════════
+       MOVEABLE SIDEBAR WITH THREE-DOT BUTTON
+  ══════════════════════════════════════════════════════ -->
+  
+  <!-- Three Dot Toggle Button -->
+  <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle sidebar menu">⋯</button>
+
+  <!-- Sidebar Overlay (Click to Close) -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Sliding Sidebar -->
+  <aside class="sliding-sidebar" id="sliding-sidebar" role="navigation" aria-label="Quick navigation menu">
+    
+    <div class="sidebar-section-title">Navigation</div>
+    <a href="index.html" class="sidebar-item active" data-link="home">
+      <span class="sidebar-icon">🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="experiments.html" class="sidebar-item" data-link="experiments">
+      <span class="sidebar-icon">🧪</span>
+      <span>Experiments</span>
+    </a>
+    <a href="assessments.html" class="sidebar-item" data-link="assessments">
+      <span class="sidebar-icon">📋</span>
+      <span>Assessments</span>
+    </a>
+    <a href="references.html" class="sidebar-item" data-link="references">
+      <span class="sidebar-icon">📖</span>
+      <span>References</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section-title">Account</div>
+    <a href="profile.html" class="sidebar-item" data-link="profile">
+      <span class="sidebar-icon">👤</span>
+      <span>Profile</span>
+    </a>
+    <a href="admin_portal.html" class="sidebar-item" data-link="admin">
+      <span class="sidebar-icon">⚙️</span>
+      <span>Admin Portal</span>
+    </a>
+
+  </aside>
 
   <!-- ── SITE NAVIGATION ── -->
   <nav class="site-nav" id="site-nav">
@@ -468,6 +650,48 @@
         });
       }
     })();
+  </script>
+
+  <!-- SLIDING SIDEBAR TOGGLE SCRIPT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('sidebar-toggle-btn');
+      const sidebar = document.getElementById('sliding-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+
+      // Open/Close sidebar when clicking three-dot button
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('open');
+          overlay.classList.toggle('active');
+        });
+      }
+
+      // Close sidebar when clicking overlay
+      if (overlay) {
+        overlay.addEventListener('click', () => {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('active');
+        });
+      }
+
+      // Close sidebar when clicking on a link
+      const sidebarItems = document.querySelectorAll('.sidebar-item');
+      sidebarItems.forEach(item => {
+        item.addEventListener('click', () => {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('active');
+        });
+      });
+
+      // Close sidebar on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('active');
+        }
+      });
+    });
   </script>
 
   <!-- Supabase SDK -->
