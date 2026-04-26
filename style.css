@@ -2777,3 +2777,48 @@ tbody tr:hover {
 #overlay.show {
   display: block;
 }
+
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: linear-gradient(180deg, var(--blue-deeper) 0%, #162c6b 100%);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  z-index: 300;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0 32px 0;
+  box-shadow: 3px 0 20px rgba(13,37,80,.13);
+
+  /* slide logic */
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.sidebar--open {
+  transform: translateX(0);
+}
+
+.layout.shifted .main-content {
+  margin-left: var(--sidebar-w);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s ease;
+  z-index: 250;
+}
+
+.sidebar-overlay.active {
+  background: rgba(0,0,0,0.35);
+  opacity: 1;
+  pointer-events: auto;
+}
