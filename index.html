@@ -7,1177 +7,320 @@
   <link rel="stylesheet" href="style.css" />
   <link
     rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif">H</text></svg>'
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="%231565c0"/><text x="32" y="39" font-size="28" text-anchor="middle" fill="%23fff" font-weight="bold">H</text></svg>'
   />
 
   <style>
-    /* ─── Design Tokens ─────────────────────────────────────── */
-    :root {
-      <style>
-    /* ── Wallpaper overlay ── */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      background: url('wallpaper.jpg') no-repeat center center/cover;
-      opacity: 0.06;
-      pointer-events: none;
+    body::before { content:""; position:fixed; inset:0; z-index:-1; background:url('wallpaper.jpg') no-repeat center center/cover; opacity:.06; pointer-events:none; }
+    
+    .hero-section {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: var(--nav-h);
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #1565c0 100%);
+      margin-bottom: 40px;
     }
 
-    /* ── KPI element aliases ── */
-    .kpi-card__accent {
+    .hero-background { position: absolute; inset: 0; z-index: 0; }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #fff;
+      max-width: 900px;
+      padding: 0 24px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 3vw, 1.2rem);
+      opacity: 0.95;
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+
+    .scroll-indicator { animation: bounce 2s infinite; font-size: 1.5rem; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    /* ── 4 BUTTONS GRID (2x2) ── */
+    .home-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 700px;
+      margin: 0 auto;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+
+    .home-button-card {
+      background: #fff;
+      border: 1.5px solid #dde4f0;
+      border-radius: 14px;
+      padding: 28px 24px;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(13,37,80,.08);
+    }
+
+    .home-button-card::before {
+      content: '';
       position: absolute;
       top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      border-radius: var(--radius) var(--radius) 0 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.6s ease;
+      z-index: 0;
     }
 
-    .kpi-card__icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
+    .home-button-card:hover::before { left: 100%; }
+
+    .home-button-card > * { position: relative; z-index: 1; }
+
+    .home-button-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 28px rgba(13,37,80,.15);
+      border-color: #bbdefb;
     }
 
-    .kpi-card__label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .kpi-card__value {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--ink);
-      line-height: 1;
-      margin: 4px 0;
-    }
-
-    .kpi-card__sub {
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-
-    /* ── Section heading ── */
-    .section-heading {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .section-heading__icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--blue-light);
-      border: 1px solid var(--blue-mid);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-
-    .section-heading__text h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--blue-deeper);
-      margin: 0;
-    }
-
-    .section-heading__text p {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .section-divider {
-      border: 0;
-      border-top: 1.5px solid var(--border);
-      margin: 0 0 20px;
-    }
-
-    /* ── Profile card ── */
-    .profile-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
-
-    .profile-card__header {
-      background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue) 100%);
-      padding: 20px 24px 50px;
-    }
-
-    .profile-card__header-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.55);
-    }
-
-    .profile-card__header-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #fff;
-      margin-top: 4px;
-    }
-
-    .profile-card__body {
-      padding: 0 24px 22px;
-    }
-
-    .profile-card__avatar-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 16px;
-      margin-top: -34px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .profile-card__avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 13px;
-      object-fit: cover;
-      border: 3px solid #fff;
-      box-shadow: var(--shadow-sm);
-      background: var(--blue-light);
-      flex-shrink: 0;
-    }
-
-    .profile-card__name {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--blue-deeper);
-    }
-
-    .profile-card__message {
-      font-size: 0.86rem;
-      color: var(--ink-soft);
-      margin-top: 3px;
-    }
-
-    .meta-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .profile-info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-      padding: 14px 16px;
-      background: #f7faff;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .info-item__label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .info-item__value {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--ink);
-    }
-
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .status-note__icon {
-      flex-shrink: 0;
-      font-size: 1rem;
-      margin-top: 1px;
-    }
-
-    /* ── Chat extras ── */
-    .chat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      padding: 16px;
-      margin-top: 22px;
-    }
-
-    .chat-head .left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .chat-title {
-      font-weight: 700;
-      color: var(--blue-deeper);
-      font-size: 0.95rem;
-    }
-
-    .room-select {
-      padding: 5px 10px;
-      border-radius: var(--radius-sm);
-      border: 1.5px solid var(--border);
-      background: #f5f8ff;
-      font-size: 0.83rem;
-      color: var(--ink);
-      font-family: var(--font);
-    }
-
-    .meta {
-      font-size: 0.7rem;
-      color: #6b84c7;
-      margin-top: 3px;
-    }
-
-    @media (max-width: 520px) {
-      .profile-card__avatar-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .action-row {
-        flex-direction: column;
-      }
-
-      .action-row .btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-  
-
-    /* ═══════════════════════════════════════════════════════════
-       LAYOUT SHELL  (sidebar + main)
-    ═══════════════════════════════════════════════════════════ */
-    .layout {
-      display: flex;
-      min-height: 100vh;
-      padding-top: var(--header-h);
-    }
-
-    /* ─── Sidebar ───────────────────────────────────────────── */
-    .sidebar {
-      width: var(--sidebar-w);
-      min-width: var(--sidebar-w);
-      background: linear-gradient(180deg, var(--blue-deeper) 0%, #162c6b 100%);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: var(--header-h);
-      left: 0;
-      bottom: 0;
-      z-index: 100;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 20px 0 32px 0;
-      box-shadow: 3px 0 20px rgba(13,37,80,.13);
-    }
-    .sidebar-section-label {
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.38);
-      padding: 18px 20px 6px 20px;
-    }
-    .sidebar-section-label:first-child { padding-top: 4px; }
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 20px;
-      color: rgba(255,255,255,.75);
-      font-size: .93rem;
-      font-weight: 500;
-      border-left: 3px solid transparent;
-      transition: background .18s, color .18s, border-color .18s;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .sidebar-link:hover,
-    .sidebar-link.active {
-      background: rgba(255,255,255,.1);
-      color: #fff;
-      border-left-color: #64b5f6;
-    }
-    .sidebar-link .s-icon {
-      font-size: 1.1rem;
-      width: 22px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .sidebar-divider {
-      height: 1px;
-      background: rgba(255,255,255,.09);
-      margin: 10px 20px;
-    }
-
-    /* ─── Main Content Area ─────────────────────────────────── */
-    .main-content {
-      margin-left: var(--sidebar-w);
-      flex: 1;
-      padding: 28px 28px 56px 28px;
-      min-width: 0;
-    }
-
-    /* ─── Page Section Heading ──────────────────────────────── */
-    .section-heading {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .section-heading__icon {
-      width: 34px; height: 34px;
-      border-radius: 9px;
-      background: var(--blue-light);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.05rem;
-      border: 1px solid var(--chip-bd);
-      flex-shrink: 0;
-    }
-    .section-heading__text h2 {
-      font-size: 1.08rem;
-      font-weight: 700;
-      color: var(--blue-deeper);
-      line-height: 1.25;
-    }
-    .section-heading__text p {
-      font-size: .82rem;
-      color: var(--muted);
-      margin-top: 1px;
-    }
-    .section-divider {
-      border: 0;
-      border-top: 1.5px solid var(--chip-bd);
-      margin: 0 0 22px 0;
-    }
-
-    /* ─── KPI Stats Row ─────────────────────────────────────── */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .kpi-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      border: 1px solid var(--chip-bd);
-      box-shadow: var(--shadow-soft);
-      padding: 18px 18px 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      overflow: hidden;
-      transition: transform .12s, box-shadow .12s;
-    }
-    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .kpi-card__accent {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-    .kpi-card__icon {
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-    }
-    .kpi-card__label {
-      font-size: .8rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-    .kpi-card__value {
-      font-size: 1.65rem;
-      font-weight: 800;
-      color: var(--ink);
-      line-height: 1;
-    }
-    .kpi-card__sub {
-      font-size: .78rem;
-      color: var(--muted);
-    }
-
-    /* ─── Profile Dashboard Card ────────────────────────────── */
-    .profile-card {
-      background: var(--card-bg);
-      border: 1px solid var(--chip-bd);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-bottom: 28px;
-    }
-    .profile-card__header {
-      background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue) 100%);
-      padding: 22px 24px 54px 24px;
-      position: relative;
-    }
-    .profile-card__header-label {
-      font-size: .75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255,255,255,.6);
-    }
-    .profile-card__header-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
-      margin-top: 2px;
-    }
-    .profile-card__body {
-      padding: 0 24px 24px 24px;
-    }
-    .profile-card__avatar-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 18px;
-      margin-top: -38px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    .profile-card__avatar {
-      width: 80px; height: 80px;
+    .home-button-icon {
+      width: 56px;
+      height: 56px;
       border-radius: 14px;
-      object-fit: cover;
-      border: 3px solid #fff;
-      box-shadow: var(--shadow-soft);
-      background: var(--blue-light);
-      flex-shrink: 0;
-    }
-    .profile-card__name-block {
-      padding-bottom: 4px;
-      min-width: 0;
-    }
-    .profile-card__name {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--blue-deeper);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .profile-card__message {
-      font-size: .88rem;
-      color: var(--ink-soft);
-      margin-top: 3px;
-    }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 11px;
-      font-size: .8rem;
-      font-weight: 600;
-      border-radius: 999px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-bd);
-      color: var(--blue-dark);
-    }
-    .chip--admin { background: #fce4ec; border-color: #f8bbd0; color: #b71c1c; }
-    .chip--student { background: #e8f5e9; border-color: #c8e6c9; color: #1b5e20; }
-    .meta-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 10px 0;
-    }
-    .profile-info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-      padding: 16px;
-      background: #f7faff;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--chip-bd);
-    }
-    .info-item__label {
-      font-size: .73rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      color: var(--muted);
-      margin-bottom: 3px;
-    }
-    .info-item__value {
-      font-size: .95rem;
-      font-weight: 600;
-      color: var(--ink);
-    }
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 4px;
-    }
-    .btn {
-      border: 0;
-      border-radius: var(--radius-sm);
-      padding: 10px 18px;
-      font-size: .9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .08s, box-shadow .15s, background .15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn--primary { background: var(--blue); color: #fff; box-shadow: 0 3px 12px rgba(21,101,192,.3); }
-    .btn--primary:hover { background: var(--blue-dark); box-shadow: 0 4px 16px rgba(21,101,192,.4); }
-    .btn--ghost { background: #fff; color: var(--blue); border: 1.5px solid var(--chip-bd); box-shadow: var(--shadow-soft); }
-    .btn--ghost:hover { background: var(--chip-bg); }
-    .btn--danger { background: #c62828; color: #fff; box-shadow: 0 3px 12px rgba(198,40,40,.25); }
-    .status-note {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--chip-bd);
-      background: #eef6ff;
-      font-size: .9rem;
-      color: #0d47a1;
-      margin-top: 14px;
-    }
-    .status-note--warn { background: #fff8e1; border-color: #ffe082; color: #7b4f00; }
-    .status-note--error { background: #ffebee; border-color: #ffcdd2; color: #b71c1c; }
-    .status-note__icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
-
-    /* ─── Notifications Banner ──────────────────────────────── */
-    #home-notifications { margin-bottom: 20px; }
-    .marquee-notification {
-      position: relative;
-      overflow: hidden;
-      background: #f0f6ff;
-      border-radius: var(--radius-sm);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid var(--chip-bd);
-      margin-bottom: 8px;
-      height: 40px;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border: 1px solid #bbdefb;
       display: flex;
       align-items: center;
-    }
-    .marquee-track {
-      display: inline-flex;
-      align-items: center;
-      white-space: nowrap;
-      will-change: transform;
-      animation-name: marquee;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
-    .marquee-segment {
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
-      padding-right: 2rem;
-    }
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(calc(-1 * var(--scroll-distance, 0px))); }
-    }
-    .marquee-notification:hover .marquee-track { animation-play-state: paused; }
-    @media (prefers-reduced-motion: reduce) {
-      .marquee-track { animation: none !important; transform: none !important; }
+      justify-content: center;
+      font-size: 2rem;
+      transition: all 0.3s ease;
     }
 
-    /* ─── Feature Highlights Grid ───────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+    .home-button-card:hover .home-button-icon {
+      transform: scale(1.15) rotate(-5deg);
+      box-shadow: 0 8px 16px rgba(21, 101, 192, 0.2);
     }
-    .feature-card {
-      background: var(--card-bg);
-      border: 1px solid var(--chip-bd);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: transform .12s, box-shadow .12s;
-    }
-    .feature-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .feature-card__icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: var(--blue-light);
-      border: 1px solid var(--chip-bd);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem;
-    }
-    .feature-card__title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--blue-deeper);
-    }
-    .feature-card__desc {
-      font-size: .86rem;
-      color: var(--ink-soft);
-      line-height: 1.55;
-    }
-    .feature-card__link {
-      margin-top: auto;
-      font-size: .84rem;
-      font-weight: 700;
-      color: var(--blue);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .feature-card__link:hover { text-decoration: underline; }
 
-    /* ─── Chat card ─────────────────────────────────────────── */
-    .chat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--chip-bd);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      padding: 16px;
-      margin-top: 24px;
+    .home-button-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a237e;
     }
-    .chat-head { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
-    .chat-head .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .chat-title { font-weight: 800; color: var(--blue-deeper); font-size: 1rem; }
-    .room-select {
-      padding: 6px 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--chip-bd);
-      background: #f5f8ff;
-      font-size: .87rem;
-      color: var(--ink);
-    }
-    .chat-box {
-      margin-top: 12px;
-      max-height: 260px;
-      overflow: auto;
-      background: #f7f9fe;
-      border: 1px solid var(--chip-bd);
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .chat-line { display: flex; gap: 8px; }
-    .msg {
-      padding: 9px 12px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--chip-bd);
-      background: #fff;
-      max-width: 75%;
-      font-size: .9rem;
-      line-height: 1.45;
-    }
-    .me .msg { background: #e8f5e9; border-color: #c8e6c9; }
-    .meta { font-size: 11px; color: #6b84c7; margin-top: 4px; }
-    .chat-input-row { display: flex; gap: 10px; margin-top: 10px; }
-    .chat-input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--chip-bd);
-      font-size: .92rem;
-      background: #f9fbff;
-    }
-    .chat-input:focus { outline: 2px solid var(--blue-mid); }
-    .chat-send {
-      padding: 10px 18px;
-      border-radius: var(--radius-sm);
-      border: 0;
-      background: var(--blue);
-      color: #fff;
-      font-weight: 800;
-      font-size: .9rem;
-      cursor: pointer;
-      transition: background .15s;
-    }
-    .chat-send:hover { background: var(--blue-dark); }
 
-    /* ─── Responsive ─────────────────────────────────────────── */
-    @media (max-width: 900px) {
-      :root { --sidebar-w: 0px; }
-      .sidebar { display: none; }
-      .main-content { margin-left: 0; padding: 16px 12px 48px 12px; }
-      .top-header__title { font-size: .95rem; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .home-button-desc {
+      font-size: 0.85rem;
+      color: #6b7da6;
+      line-height: 1.4;
     }
+
+    @media (max-width: 768px) {
+      .home-buttons-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .home-button-card {
+        padding: 20px 18px;
+      }
+    }
+
     @media (max-width: 520px) {
-      .kpi-grid { grid-template-columns: 1fr 1fr; }
-      .profile-card__avatar-row { flex-direction: column; align-items: flex-start; }
-      .action-row { flex-direction: column; }
-      .btn { width: 100%; justify-content: center; }
+      .hero-title { font-size: clamp(1.5rem, 5vw, 2.2rem); }
+      .home-buttons-grid { grid-template-columns: 1fr; gap: 12px; }
+      .home-button-card { padding: 18px 14px; }
+      .home-button-icon { width: 48px; height: 48px; font-size: 1.8rem; }
+      .home-button-title { font-size: 1rem; }
     }
 
-    /* ─── Utility ───────────────────────────────────────────── */
-    .hidden { display: none !important; }
-    .muted { color: var(--muted); }
-    .mt-8 { margin-top: 8px; }
-    .mt-16 { margin-top: 16px; }
-    .mb-24 { margin-bottom: 24px; }
+    .section-divider { border: 0; border-top: 1.5px solid var(--border); margin: 40px 0 20px; }
   </style>
 </head>
 <body>
 
-  <!-- ══════════════════════════════════════════════════════
-       TOP HEADER
-  ══════════════════════════════════════════════════════ -->
-  <header class="top-header" role="banner">
-    <div class="top-header__brand">
-      <div class="top-header__logo-icon" aria-hidden="true">🫀</div>
+  <!-- ── SITE NAVIGATION ── -->
+  <nav class="site-nav" id="site-nav">
+    <a href="home.html" class="site-nav__brand">
+      <div class="site-nav__logo" aria-hidden="true">🫀</div>
       <div>
-        <div class="top-header__title">Anatomy &amp; Physiology Portal</div>
-        <div class="top-header__subtitle">Learning Management System</div>
+        <div class="site-nav__title">Anatomy &amp; Physiology Portal</div>
+        <div class="site-nav__subtitle">Learning Management System</div>
       </div>
+    </a>
+
+    <div class="site-nav__links">
+      <a href="home.html"        class="site-nav__link active">🏠 Home</a>
+      <a href="dashboard.html"   class="site-nav__link">📊 Dashboard</a>
+      <a href="experiments.html" class="site-nav__link">🧪 Experiments</a>
+      <a href="assessments.html" class="site-nav__link">📋 Assessments</a>
+      <a href="references.html"  class="site-nav__link">📖 References</a>
     </div>
 
-    <div class="top-header__actions" role="navigation" aria-label="Primary actions">
-      <!-- Shown to guests -->
-      <a id="login-btn" href="login_Version4.html" class="hdr-btn hdr-btn--accent">⟶ Login</a>
-
-      <!-- Shown when logged in -->
-      <a href="profile.html"        id="profile-tab"      class="hdr-btn hidden">👤 Profile</a>
-      <a href="admin_portal.html"   id="admin-portal-link" class="hdr-btn hidden">⚙️ Admin Portal</a>
-      <button id="logout-btn"       class="hdr-btn hidden">Logout</button>
-
-      <!-- Tiny avatar mirror in header -->
+    <div class="site-nav__actions">
+      <a id="login-btn" href="login_Version4.html" class="nav-btn nav-btn--accent">Sign In</a>
+      <a href="profile.html"       id="profile-tab"       class="nav-btn hidden">👤 Profile</a>
+      <a href="admin_portal.html"  id="admin-portal-link" class="nav-btn hidden">⚙️ Admin</a>
+      <button id="logout-btn" class="nav-btn hidden">Logout</button>
       <a href="profile.html" class="hdr-avatar-wrap hidden" id="hdr-avatar-link" aria-label="My profile">
         <img id="hdr-avatar-img" alt="Avatar" />
       </a>
     </div>
-  </header>
+    <button class="site-nav__toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </nav>
 
   <!-- ══════════════════════════════════════════════════════
-       LAYOUT  (sidebar + main)
+       HERO SECTION WITH 4 BUTTONS (2x2 GRID)
   ══════════════════════════════════════════════════════ -->
-  <div class="layout">
+  <section class="hero-section" id="hero-section">
+    <div class="hero-background"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Master Human Anatomy</h1>
+      <p class="hero-subtitle">Interactive Learning Portal for Medical Students</p>
 
-    <!-- ── SIDEBAR ── -->
-    <aside class="sidebar" role="navigation" aria-label="Site navigation">
+      <!-- ── 4 BUTTONS GRID (2x2) ── -->
+      <div class="home-buttons-grid">
+        
+        <!-- Button 1: Experiments -->
+        <a href="experiments.html" class="home-button-card">
+          <div class="home-button-icon">🧪</div>
+          <div class="home-button-title">Experiments</div>
+          <div class="home-button-desc">Browse all anatomy practicals with detailed procedures</div>
+        </a>
 
-      <div class="sidebar-section-label">Main</div>
-      <a href="index.html"       class="sidebar-link active"><span class="s-icon">🏠</span> Dashboard</a>
-      <a href="experiments.html" class="sidebar-link"><span class="s-icon">🔬</span> Experiments</a>
+        <!-- Button 2: Assessments -->
+        <a href="assessments.html" class="home-button-card">
+          <div class="home-button-icon">📋</div>
+          <div class="home-button-title">Assessments</div>
+          <div class="home-button-desc">Take quizzes and evaluate your knowledge</div>
+        </a>
 
-      <div class="sidebar-section-label">Learning</div>
-      <a href="assessments.html" class="sidebar-link" id="sb-assessment"><span class="s-icon">📝</span> Assessments</a>
-      <a href="result.html"      class="sidebar-link hidden" id="sb-results"><span class="s-icon">📊</span> My Results</a>
+        <!-- Button 3: Results -->
+        <a href="result.html" class="home-button-card">
+          <div class="home-button-icon">📊</div>
+          <div class="home-button-title">Results</div>
+          <div class="home-button-desc">Track your scores and performance history</div>
+        </a>
 
-      <div class="sidebar-section-label">Resources</div>
-      <a href="references.html"  class="sidebar-link"><span class="s-icon">📚</span> References</a>
+        <!-- Button 4: References -->
+        <a href="references.html" class="home-button-card">
+          <div class="home-button-icon">📖</div>
+          <div class="home-button-title">References</div>
+          <div class="home-button-desc">Access learning materials and resources</div>
+        </a>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-label">Account</div>
-      <a href="profile.html"     class="sidebar-link hidden" id="sb-profile"><span class="s-icon">👤</span> My Profile</a>
-      <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
-    </aside>
-
-    <!-- ── MAIN CONTENT ── -->
-    <main class="main-content" role="main">
-
-      <!-- ── 1. PAGE TITLE ROW ── -->
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
-        <div>
-          <h1 style="font-size:1.5rem; font-weight:800; color:var(--blue-deeper); line-height:1.2;">
-            Dashboard
-          </h1>
-          <p class="muted" style="font-size:.88rem; margin-top:3px;">
-            Human Anatomy &amp; Physiology Experiments — Learning Portal
-          </p>
-        </div>
-        <div style="font-size:.82rem; color:var(--muted); background:var(--chip-bg); border:1px solid var(--chip-bd); border-radius:var(--radius-sm); padding:6px 12px;" id="date-badge">
-          <!-- filled by JS -->
-        </div>
       </div>
 
-      <!-- ── 2. NOTIFICATIONS BANNER ── -->
-      <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
+      <div class="scroll-indicator">⬇️</div>
+    </div>
+  </section>
 
-      <!-- ── 3. KPI STATS ROW ── -->
-      <section aria-labelledby="kpi-heading" class="mb-24">
-        <h2 id="kpi-heading" class="hidden">Quick Statistics</h2>
-        <div class="kpi-grid">
+  <!-- ══════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>About Portal</h3>
+        <p>An interactive learning management system designed for Human Anatomy & Physiology studies.</p>
+      </div>
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="experiments.html">Experiments</a></li>
+          <li><a href="assessments.html">Assessments</a></li>
+          <li><a href="result.html">Results</a></li>
+          <li><a href="references.html">References</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Contact Admin</a></li>
+          <li><a href="#">Report Issue</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Feedback</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Human Anatomy & Physiology Portal. All rights reserved.</p>
+    </div>
+  </footer>
 
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#1565c0,#42a5f5);"></div>
-            <div class="kpi-card__icon" style="background:#e3f2fd;">🔬</div>
-            <div class="kpi-card__label">Experiments</div>
-            <div class="kpi-card__value">12</div>
-            <div class="kpi-card__sub">Available practicals</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#00897b,#4db6ac);"></div>
-            <div class="kpi-card__icon" style="background:#e0f2f1;">📝</div>
-            <div class="kpi-card__label">Assessments</div>
-            <div class="kpi-card__value" id="kpi-assessments">—</div>
-            <div class="kpi-card__sub">Released to you</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#7b1fa2,#ba68c8);"></div>
-            <div class="kpi-card__icon" style="background:#f3e5f5;">📊</div>
-            <div class="kpi-card__label">My Attempts</div>
-            <div class="kpi-card__value" id="kpi-attempts">—</div>
-            <div class="kpi-card__sub">Submissions recorded</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-card__accent" style="background:linear-gradient(90deg,#e65100,#ffa726);"></div>
-            <div class="kpi-card__icon" style="background:#fff3e0;">🔔</div>
-            <div class="kpi-card__label">Notifications</div>
-            <div class="kpi-card__value" id="kpi-notifs">—</div>
-            <div class="kpi-card__sub">Active announcements</div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ── 4. PROFILE DASHBOARD CARD ── -->
-      <section id="profile-dashboard-card" aria-label="Your profile" class="hidden mb-24">
-        <div class="section-heading">
-          <div class="section-heading__icon">👤</div>
-          <div class="section-heading__text">
-            <h2>My Profile</h2>
-            <p>Your account details and quick actions</p>
-          </div>
-        </div>
-        <hr class="section-divider" />
-
-        <div class="profile-card">
-          <!-- Card header band -->
-          <div class="profile-card__header">
-            <div class="profile-card__header-label">Logged in as</div>
-            <div class="profile-card__header-title" id="pc-header-role">Student</div>
-          </div>
-
-          <!-- Card body -->
-          <div class="profile-card__body">
-            <!-- Avatar + name row -->
-            <div class="profile-card__avatar-row">
-              <img id="pc-avatar" class="profile-card__avatar" alt="Profile avatar" />
-              <div class="profile-card__name-block">
-                <div class="profile-card__name" id="pc-name">Welcome</div>
-                <div class="profile-card__message muted" id="pc-message">Loading…</div>
-                <div class="meta-chips mt-8" id="pc-chips">
-                  <span id="pc-role" class="chip">Role</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Info grid (PRN / Batch) -->
-            <div class="profile-info-grid" id="pc-meta" style="display:none;">
-              <div>
-                <div class="info-item__label">PRN</div>
-                <div class="info-item__value" id="pc-prn">—</div>
-              </div>
-              <div>
-                <div class="info-item__label">Batch</div>
-                <div class="info-item__value" id="pc-batch">—</div>
-              </div>
-              <div>
-                <div class="info-item__label">Programme</div>
-                <div class="info-item__value">B.Sc. Nursing</div>
-              </div>
-              <div>
-                <div class="info-item__label">Portal</div>
-                <div class="info-item__value">Anatomy &amp; Physiology</div>
-              </div>
-            </div>
-
-            <!-- Action buttons -->
-            <div class="action-row">
-              <a href="profile.html"       class="btn btn--ghost"    id="pc-update-profile">✏️ Edit Profile</a>
-              <a href="assessments.html"   class="btn btn--primary"  id="pc-start-assessments">📝 Go to Assessments</a>
-              <a href="result.html"        class="btn btn--ghost"    id="pc-view-results">📊 View Results</a>
-              <a href="admin_portal.html"  class="btn btn--primary"  id="pc-admin-portal" style="display:none;">⚙️ Admin Portal</a>
-            </div>
-
-            <!-- Status note (approval / completion) -->
-            <div id="pc-note" class="status-note hidden">
-              <span class="status-note__icon">ℹ️</span>
-              <span id="pc-note-text"></span>
-            </div>
-
-            <!-- Student Chat -->
-            <div id="chat-section" class="chat-card hidden">
-              <div class="chat-head">
-                <div class="left">
-                  <span class="chat-title">💬 Messages</span>
-                  <select id="chat-room" class="room-select" aria-label="Select chat audience">
-                    <option value="global">Global (everyone)</option>
-                    <option value="dm">Admin (private)</option>
-                  </select>
-                </div>
-                <span id="chat-status" class="muted" style="font-size:.82rem;">—</span>
-              </div>
-              <div id="chat-box" class="chat-box" aria-live="polite"></div>
-              <div class="chat-input-row">
-                <input id="chat-input" class="chat-input" placeholder="Type a message…" />
-                <button id="chat-send" class="chat-send">Send</button>
-              </div>
-              <div id="chat-setup-hint" class="muted hidden" style="margin-top:6px; font-size:.82rem;">
-                Chat backend is not set up yet. Ask admin to run setup_portal.sql (portal_chat).
-              </div>
-            </div>
-
-          </div><!-- /.profile-card__body -->
-        </div><!-- /.profile-card -->
-      </section>
-
-      <!-- ── 5. PORTAL FEATURES ── -->
-      <section aria-labelledby="features-heading" class="mb-24">
-        <div class="section-heading">
-          <div class="section-heading__icon">🧭</div>
-          <div class="section-heading__text">
-            <h2 id="features-heading">Portal Features</h2>
-            <p>Everything available in your learning portal</p>
-          </div>
-        </div>
-        <hr class="section-divider" />
-
-        <div class="features-grid">
-
-          <div class="feature-card">
-            <div class="feature-card__icon">🔬</div>
-            <div class="feature-card__title">Experiments</div>
-            <div class="feature-card__desc">
-              Browse all anatomy &amp; physiology practicals. Each experiment includes objectives, procedure, and results.
-            </div>
-            <a href="experiments.html" class="feature-card__link">Open Experiments →</a>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-card__icon">📝</div>
-            <div class="feature-card__title">Assessments</div>
-            <div class="feature-card__desc">
-              Attempt experiment-specific quizzes and MCQs. Assessments are released by your admin within a time window.
-            </div>
-            <a href="assessments.html" class="feature-card__link" id="feat-assessment-link">Go to Assessments →</a>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-card__icon">📊</div>
-            <div class="feature-card__title">Results</div>
-            <div class="feature-card__desc">
-              Track your submission history, scores, and performance across all attempted assessments.
-            </div>
-            <a href="result.html" class="feature-card__link" id="feat-results-link">View Results →</a>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-card__icon">📚</div>
-            <div class="feature-card__title">References</div>
-            <div class="feature-card__desc">
-              Access recommended textbooks, journal articles, and curated websites for deeper learning.
-            </div>
-            <a href="references.html" class="feature-card__link">Browse References →</a>
-          </div>
-
-        </div>
-
-        <!-- Info tip -->
-        <div class="status-note mt-16" style="margin-top:16px;">
-          <span class="status-note__icon">💡</span>
-          <span>If an assessment is not visible, your admin may not have released it yet or it may be outside its scheduled time window.</span>
-        </div>
-      </section>
-
-    </main>
-  </div><!-- /.layout -->
-
-
-  <!-- ══════════��═══════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
        SCRIPTS
   ══════════════════════════════════════════════════════ -->
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function(){
+      const toggle = document.getElementById('nav-toggle');
+      const nav    = document.getElementById('site-nav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', () => nav.classList.toggle('site-nav--open'));
+        document.addEventListener('click', (e) => {
+          if (!nav.contains(e.target)) nav.classList.remove('site-nav--open');
+        });
+      }
+    })();
+  </script>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
-  <!-- ── Marquee / Notification renderer ── -->
-  <script>
-    (function () {
-      const MARQUEE_MODE       = 'repeat';
-      const MARQUEE_REPEAT_COUNT = 50;
-      const PX_PER_SEC         = 100;
-      const DURATION_MIN       = 12;
-      const DURATION_MAX       = 40;
-
-      const __measure = document.createElement('div');
-      __measure.style.cssText = 'position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:nowrap;';
-      document.addEventListener('DOMContentLoaded', () => {
-        if (!document.body.contains(__measure)) document.body.appendChild(__measure);
-      });
-
-      function escapeHtml(str) {
-        return String(str || '')
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-      }
-      function segmentHTML(color, sev, messageText) {
-        return `<strong style="color:${color};text-transform:uppercase;">${sev}</strong>
-                <span style="margin-left:.5rem;color:#123;">${messageText}</span>`;
-      }
-      function renderNotification(n) {
-        let color = '#1565c0';
-        const sev = (n.severity || 'info').toLowerCase();
-        if (sev === 'danger')  color = '#c62828';
-        else if (sev === 'warning') color = '#ffb300';
-        const messageText = escapeHtml(n.message || '');
-        const segment = segmentHTML(color, sev, messageText);
-
-        if (document.body && !document.body.contains(__measure)) {
-          try { document.body.appendChild(__measure); } catch (_) {}
-        }
-        __measure.innerHTML = `<div class="marquee-segment" style="font:inherit;">${segment}</div>`;
-        const segmentWidth = Math.max(__measure.firstChild?.scrollWidth || 0, 1);
-        const gapPx = 32;
-        const distance = segmentWidth + gapPx;
-        const duration = Math.min(DURATION_MAX, Math.max(DURATION_MIN, distance / PX_PER_SEC));
-
-        if (MARQUEE_MODE === 'repeat') {
-          const count = Math.max(2, Math.min(Number(MARQUEE_REPEAT_COUNT) || 2, 50));
-          let segmentsHTML = '';
-          for (let i = 0; i < count; i++)
-            segmentsHTML += `<div class="marquee-segment"${i ? ' aria-hidden="true"' : ''}>${segment}</div>`;
-          return `<div class="marquee-notification" style="border-left:5px solid ${color};">
-            <div class="marquee-track" style="--scroll-distance:${distance}px;animation-duration:${duration}s;">${segmentsHTML}</div>
-          </div>`;
-        }
-        return `<div class="marquee-notification" style="border-left:5px solid ${color};">
-          <div class="marquee-track" style="--scroll-distance:${distance}px;animation-duration:${duration}s;">
-            <div class="marquee-segment">${segment}</div>
-            <div class="marquee-segment" aria-hidden="true">${segment}</div>
-          </div>
-        </div>`;
-      }
-      function isWithinWindow(n, now) {
-        return (!n.starts_at || new Date(n.starts_at) <= now)
-            && (!n.ends_at   || new Date(n.ends_at)   >= now);
-      }
-      let __lastNotifHTML = '';
-      async function loadHomeNotifications(sb) {
-        const container = document.getElementById('home-notifications');
-        if (!container) return;
-        try {
-          const { data: { session } } = await sb.auth.getSession();
-          if (!session?.user) { container.innerHTML = ''; __lastNotifHTML = ''; return; }
-        } catch (_) {}
-        const now = new Date();
-        const { data, error } = await sb
-          .from('portal_notifications')
-          .select('id,message,severity,active,starts_at,ends_at,created_at')
-          .eq('active', true)
-          .order('created_at', { ascending: false })
-          .limit(25);
-        if (error) { console.warn('home_notifications load error:', error); return; }
-        const rows = (data || []).filter(n => isWithinWindow(n, now));
-        // Update KPI badge
-        const kpiNotifs = document.getElementById('kpi-notifs');
-        if (kpiNotifs) kpiNotifs.textContent = rows.length;
-        const html = rows.map(renderNotification).join('');
-        if (html !== __lastNotifHTML) { container.innerHTML = html; __lastNotifHTML = html; }
-      }
-      window.__loadHomeNotifications = loadHomeNotifications;
-    })();
-  </script>
-
   <!-- ── Main App Logic ── -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-
-      // ── Date badge ──
-      const dateBadge = document.getElementById('date-badge');
-      if (dateBadge) {
-        const now = new Date();
-        dateBadge.textContent = now.toLocaleDateString('en-IN', {
-          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
-      }
-
       if (!window.supabase) { console.error('Supabase SDK failed to load.'); return; }
       const sb = window.sb || (window.sb = window.supabase.createClient(
         'https://hunlistfklwvpivfjmbk.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktXyuUXmw5YWhqaw6Cx8Xc8Qs'
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bmxpc3Rma2x3dnBpdmZqbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzA1NDUsImV4cCI6MjA3MzQwNjU0NX0.e-o_qL1Uf5DpW4gX60ktX7B7pT_qR9s8mK-nL2oP3jQ'
       ));
 
-      const ENABLE_CHAT   = false;
       const AVATAR_BUCKET = 'Avatar';
 
       // ── DOM refs ──
       const loginBtn        = document.getElementById('login-btn');
       const logoutBtn       = document.getElementById('logout-btn');
       const profileTab      = document.getElementById('profile-tab');
-      const resultsTab      = document.getElementById('sb-results');
-      const sbProfile       = document.getElementById('sb-profile');
-      const sbAdmin         = document.getElementById('sb-admin');
       const adminPortalLink = document.getElementById('admin-portal-link');
-      const profileCard     = document.getElementById('profile-dashboard-card');
-      const pcAvatar        = document.getElementById('pc-avatar');
       const hdrAvatarImg    = document.getElementById('hdr-avatar-img');
       const hdrAvatarLink   = document.getElementById('hdr-avatar-link');
-      const pcName          = document.getElementById('pc-name');
-      const pcRole          = document.getElementById('pc-role');
-      const pcHeaderRole    = document.getElementById('pc-header-role');
-      const pcMessage       = document.getElementById('pc-message');
-      const pcMeta          = document.getElementById('pc-meta');
-      const pcPRN           = document.getElementById('pc-prn');
-      const pcBatch         = document.getElementById('pc-batch');
-      const pcAdminBtn      = document.getElementById('pc-admin-portal');
-      const pcNote          = document.getElementById('pc-note');
-      const pcNoteText      = document.getElementById('pc-note-text');
-      const chatSection     = document.getElementById('chat-section');
-      const chatRoomSel     = document.getElementById('chat-room');
-      const chatBox         = document.getElementById('chat-box');
-      const chatInput       = document.getElementById('chat-input');
-      const chatSend        = document.getElementById('chat-send');
-      const chatStatus      = document.getElementById('chat-status');
-      const chatSetupHint   = document.getElementById('chat-setup-hint');
-      const pcStartAssessments = document.getElementById('pc-start-assessments');
-      const pcViewResults   = document.getElementById('pc-view-results');
-      const sbAssessment    = document.getElementById('sb-assessment');
-      const kpiAssessments  = document.getElementById('kpi-assessments');
-      const kpiAttempts     = document.getElementById('kpi-attempts');
 
       let currentUser = null;
-      let currentRole = 'unknown';
-      let dmRoom = null;
-      let chatSubscription = null;
       let avatarRefreshTimerId = null;
 
       // ── Avatar helpers ──
@@ -1186,7 +329,6 @@
         try {
           const { data, error } = await sb.storage.from(AVATAR_BUCKET).createSignedUrl(path, 60);
           if (error) { console.warn('avatar signedUrl error', error); return; }
-          if (pcAvatar)    pcAvatar.src    = data.signedUrl;
           if (hdrAvatarImg) hdrAvatarImg.src = data.signedUrl;
         } catch (err) { console.warn('avatar error', err); }
       }
@@ -1202,23 +344,14 @@
           if (loginBtn)       loginBtn.classList.add('hidden');
           if (logoutBtn)      logoutBtn.classList.remove('hidden');
           if (profileTab)     profileTab.classList.remove('hidden');
-          if (sbProfile)      sbProfile.classList.remove('hidden');
-          if (resultsTab)     resultsTab.classList.remove('hidden');
           if (hdrAvatarLink)  hdrAvatarLink.classList.remove('hidden');
         } else {
           if (logoutBtn)      logoutBtn.classList.add('hidden');
           if (loginBtn)       { loginBtn.classList.remove('hidden'); loginBtn.href = 'login_Version4.html'; }
           if (profileTab)     profileTab.classList.add('hidden');
-          if (sbProfile)      sbProfile.classList.add('hidden');
-          if (resultsTab)     resultsTab.classList.add('hidden');
           if (adminPortalLink) adminPortalLink.classList.add('hidden');
-          if (sbAdmin)        sbAdmin.classList.add('hidden');
-          if (profileCard)    profileCard.classList.add('hidden');
-          if (chatSection)    chatSection.classList.add('hidden');
           if (hdrAvatarLink)  hdrAvatarLink.classList.add('hidden');
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
-          if (kpiAssessments) kpiAssessments.textContent = '—';
-          if (kpiAttempts)    kpiAttempts.textContent    = '—';
         }
       }
 
@@ -1228,128 +361,13 @@
         return (data?.role || 'unknown').toString().trim().toLowerCase();
       }
 
-      async function getApprovalStatus() {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session?.user) return { loggedIn: false };
-        const { data: p, error } = await sb
-          .from('profiles').select('role, approved, active').eq('id', session.user.id).maybeSingle();
-        if (error) console.warn('approval status fetch error', error);
-        return {
-          loggedIn: true,
-          role: (p?.role || '').toLowerCase(),
-          approved: !!p?.approved,
-          active:   !!p?.active
-        };
-      }
-
-      function protectLinkApproved(el, allowedRoles = ['student','admin']) {
-        if (!el) return;
-        el.addEventListener('click', async (e) => {
-          const st = await getApprovalStatus();
-          if (!st.loggedIn) { e.preventDefault(); window.location.href = 'login_Version4.html'; return; }
-          if (!allowedRoles.includes(st.role)) { e.preventDefault(); alert('You do not have permission to access this page.'); return; }
-          if (!st.active) { e.preventDefault(); alert('Your account is deactivated. Please contact admin.'); return; }
-          if (!st.approved && st.role !== 'admin') { e.preventDefault(); alert('Your account is awaiting admin approval.'); return; }
-        });
-      }
-
-      // ── KPI counters ──
-      async function loadKPIs(userId, role) {
-        // Assessments count
-        try {
-          const { count } = await sb.from('assessments')
-            .select('id', { count: 'exact', head: true })
-            .eq('released', true);
-          if (kpiAssessments) kpiAssessments.textContent = count ?? '—';
-        } catch (_) {}
-        // Attempts count
-        try {
-          const { count } = await sb.from('submissions')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', userId);
-          if (kpiAttempts) kpiAttempts.textContent = count ?? '—';
-        } catch (_) {}
-      }
-
-      // ── Chat ──
-      function renderMsg(m) {
-        const me   = m.sender_id === currentUser?.id;
-        const line = document.createElement('div');
-        line.className = 'chat-line ' + (me ? 'me' : 'them');
-        const bubble = document.createElement('div');
-        bubble.className = 'msg';
-        const who = m.sender_name || (me ? 'You' : (m.role === 'admin' ? 'Admin' : 'User'));
-        bubble.innerHTML = '<div style="font-size:12px;color:#0d47a1;font-weight:700;">' + who + '</div>'
-          + (m.message || '').replace(/</g, '&lt;')
-          + '<div class="meta">' + new Date(m.created_at).toLocaleString() + '</div>';
-        line.appendChild(bubble);
-        chatBox.appendChild(line);
-      }
-      async function loadChat(room) {
-        if (!ENABLE_CHAT) return;
-        chatBox.innerHTML = '';
-        chatStatus.textContent = 'Loading…';
-        try {
-          const { data, error } = await sb.from('portal_chat')
-            .select('id,room,sender_id,sender_name,role,message,created_at')
-            .eq('room', room).order('created_at', { ascending: true }).limit(200);
-          if (error) { chatSetupHint.classList.remove('hidden'); chatStatus.textContent = 'Unavailable'; return; }
-          chatSetupHint.classList.add('hidden');
-          (data || []).forEach(renderMsg);
-          chatBox.scrollTop = chatBox.scrollHeight;
-          chatStatus.textContent = 'Live';
-        } catch (e) { chatSetupHint.classList.remove('hidden'); chatStatus.textContent = 'Unavailable'; }
-      }
-      function subscribeChat(room) {
-        if (!ENABLE_CHAT) return null;
-        if (chatSubscription) { sb.removeChannel(chatSubscription); chatSubscription = null; }
-        chatSubscription = sb.channel('portal_chat_room_' + room)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'portal_chat', filter: 'room=eq.' + room }, payload => {
-            renderMsg(payload.new);
-            chatBox.scrollTop = chatBox.scrollHeight;
-          })
-          .subscribe(status => {
-            chatStatus.textContent = status === 'SUBSCRIBED' ? 'Live' : ('Status: ' + status);
-          });
-      }
-      async function sendChat() {
-        if (!ENABLE_CHAT) return;
-        const txt = (chatInput.value || '').trim();
-        if (!txt) return;
-        const roomSel = chatRoomSel.value;
-        const room = roomSel === 'dm' ? ('dm:' + currentUser.id) : 'global';
-        chatInput.value = '';
-        const { data: prof } = await sb.from('profiles').select('name,role').eq('id', currentUser.id).maybeSingle();
-        const senderName = prof?.name || currentUser.email || 'User';
-        const role = (prof?.role || '').toString().trim().toLowerCase() || 'student';
-        const { error } = await sb.from('portal_chat')
-          .insert([{ room, sender_id: currentUser.id, sender_name: senderName, role, message: txt }]);
-        if (error) { chatSetupHint.classList.remove('hidden'); alert('Send failed: ' + error.message); }
-      }
-      async function initChat() {
-        if (!ENABLE_CHAT) { if (chatSection) chatSection.classList.add('hidden'); return; }
-        if (!currentUser) { chatSection.classList.add('hidden'); return; }
-        dmRoom = 'dm:' + currentUser.id;
-        chatSection.classList.remove('hidden');
-        const room = chatRoomSel.value === 'dm' ? dmRoom : 'global';
-        await loadChat(room);
-        subscribeChat(room);
-        chatRoomSel.onchange = async () => {
-          const nextRoom = chatRoomSel.value === 'dm' ? dmRoom : 'global';
-          await loadChat(nextRoom); subscribeChat(nextRoom);
-        };
-        chatSend.onclick = sendChat;
-        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
-      }
-
       // ── Main UI refresh ──
       async function refreshUI() {
         try {
           const { data: { session } } = await sb.auth.getSession();
           if (!session?.user) {
-            currentUser = null; currentRole = 'unknown';
+            currentUser = null;
             setNav(false);
-            if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
             return;
           }
           setNav(true);
@@ -1357,103 +375,22 @@
 
           const { data: profile, error: profErr } = await sb
             .from('profiles')
-            .select('name, role, prn, batch, avatar_path, approved, active')
+            .select('name, role, avatar_path, approved, active')
             .eq('id', currentUser.id)
             .maybeSingle();
           if (profErr) console.warn('Profile fetch error:', profErr);
 
-          currentRole = (profile?.role || 'unknown').toString().trim().toLowerCase();
-          const approved = !!profile?.approved;
-          const active   = !!profile?.active;
-          const isAdmin  = currentRole === 'admin';
-          const isApprovedActive = (approved && active) || isAdmin;
-
-          // ── Admin UI ──
+          const isAdmin = (profile?.role || '').toString().trim().toLowerCase() === 'admin';
           if (isAdmin) {
             if (adminPortalLink) adminPortalLink.classList.remove('hidden');
-            if (sbAdmin)         sbAdmin.classList.remove('hidden');
-            if (pcAdminBtn)      pcAdminBtn.style.display = 'inline-flex';
           } else {
             if (adminPortalLink) adminPortalLink.classList.add('hidden');
-            if (sbAdmin)         sbAdmin.classList.add('hidden');
-            if (pcAdminBtn)      pcAdminBtn.style.display = 'none';
-          }
-
-          // ── Profile card ──
-          if (profileCard) profileCard.classList.remove('hidden');
-
-          const displayName = profile?.name ? profile.name : (currentUser.email || '');
-          pcName.textContent = ('Welcome, ' + displayName).trim();
-
-          const roleLabel = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Unknown Role');
-          pcRole.textContent = roleLabel;
-          pcRole.className   = 'chip ' + (isAdmin ? 'chip--admin' : 'chip--student');
-          if (pcHeaderRole) pcHeaderRole.textContent = roleLabel;
-
-          // Student meta
-          if (currentRole === 'student') {
-            const showPRN   = !!(profile?.prn   && profile.prn.trim());
-            const showBatch = !!(profile?.batch  && profile.batch.trim());
-            if (pcPRN)   pcPRN.textContent   = showPRN   ? profile.prn   : '—';
-            if (pcBatch) pcBatch.textContent  = showBatch ? profile.batch : '—';
-            if (pcMeta)  pcMeta.style.display = (showPRN || showBatch) ? 'grid' : 'none';
-          } else {
-            if (pcMeta) pcMeta.style.display = 'none';
-          }
-
-          // Message
-          if (isAdmin) {
-            pcMessage.textContent = 'Admin access. Manage releases, deadlines, notifications, and students from the Admin Portal.';
-          } else if (currentRole === 'student') {
-            pcMessage.textContent = 'Access your assessments and track your progress. Keep your profile up to date.';
-          } else {
-            pcMessage.textContent = 'Complete your profile to unlock all portal features.';
-          }
-
-          // Gated nav + buttons
-          const showGated = isApprovedActive;
-          if (sbAssessment)       sbAssessment.style.opacity     = showGated ? '1' : '0.5';
-          if (resultsTab)         resultsTab.style.opacity        = showGated ? '1' : '0.5';
-          if (pcStartAssessments) pcStartAssessments.style.display = showGated ? 'inline-flex' : 'none';
-          if (pcViewResults)      pcViewResults.style.display     = showGated ? 'inline-flex' : 'none';
-
-          // Status notes
-          if (!active && !isAdmin) {
-            pcNote.classList.remove('hidden');
-            pcNote.className = 'status-note status-note--error mt-16';
-            pcNoteText.textContent = 'Your account is deactivated. Please contact an administrator.';
-          } else if (!approved && !isAdmin) {
-            pcNote.classList.remove('hidden');
-            pcNote.className = 'status-note status-note--warn mt-16';
-            pcNoteText.textContent = 'Your account is pending admin approval. Some features are restricted.';
-          } else {
-            const baseComplete    = !!(profile?.name && profile?.role);
-            const studentComplete = baseComplete && !!(profile?.prn && profile?.batch);
-            const isComplete      = isAdmin ? baseComplete : (currentRole === 'student' ? studentComplete : baseComplete);
-            if (!isComplete) {
-              pcNote.classList.remove('hidden');
-              pcNote.className = 'status-note mt-16';
-              pcNoteText.textContent = currentRole === 'student'
-                ? 'Your profile is incomplete — please add your PRN and Batch for full access.'
-                : 'Please complete your profile details for a better experience.';
-            } else {
-              pcNote.classList.add('hidden');
-            }
           }
 
           // Avatar
           const avatarPath = profile?.avatar_path || null;
           await setSignedAvatar(avatarPath);
           startAvatarAutoRefresh(avatarPath);
-
-          // KPIs
-          await loadKPIs(currentUser.id, currentRole);
-
-          // Chat
-          await initChat();
-
-          // Notifications
-          if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
 
         } catch (e) {
           console.error('refreshUI error:', e);
@@ -1474,11 +411,6 @@
       }
 
       protectLink(adminPortalLink, true);
-      protectLink(document.getElementById('pc-admin-portal'), true);
-      protectLinkApproved(sbAssessment, ['student','admin']);
-      protectLinkApproved(resultsTab,   ['student','admin']);
-      protectLinkApproved(pcStartAssessments, ['student','admin']);
-      protectLinkApproved(pcViewResults,      ['student','admin']);
 
       // ── Logout ──
       if (logoutBtn) {
@@ -1491,15 +423,14 @@
             for (const k of Object.keys(sessionStorage)) { if (k.toLowerCase().includes('supabase') || k.startsWith('sb-')) sessionStorage.removeItem(k); }
           } catch (_) {}
           try { indexedDB.deleteDatabase('supabase-auth'); } catch (_) {}
-          window.location.replace('index.html');
+          window.location.replace('home.html');
         });
       }
 
       // ── Bootstrap ──
       refreshUI();
-      if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb);
-      sb.auth.onAuthStateChange(() => { refreshUI(); if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb); });
-      window.addEventListener('focus',   () => { refreshUI(); if (window.__loadHomeNotifications) window.__loadHomeNotifications(sb); });
+      sb.auth.onAuthStateChange(() => { refreshUI(); });
+      window.addEventListener('focus', () => { refreshUI(); });
     });
   </script>
 </body>
