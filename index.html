@@ -457,19 +457,31 @@
        SCRIPTS
   ══════════════════════════════════════════════════════ -->
 
-  <!-- Mobile nav toggle -->
+<!-- Mobile nav toggle -->
   <script>
-    (function(){
-      const toggle = document.getElementById('nav-toggle');
-      const nav    = document.getElementById('site-nav');
-      if (toggle && nav) {
-        toggle.addEventListener('click', () => nav.classList.toggle('site-nav--open'));
-        document.addEventListener('click', (e) => {
-          if (!nav.contains(e.target)) nav.classList.remove('site-nav--open');
-        });
-      }
-    })();
-  </script>
+(function(){
+  const toggle = document.getElementById('nav-toggle');
+  const nav = document.getElementById('site-nav');
+  const sidebar = document.querySelector('.sidebar');
+  const mainContent = document.querySelector('.main-content');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  if (!toggle) return;
+
+  toggle.addEventListener('click', () => {
+    nav.classList.toggle('site-nav--open'); // navbar
+    sidebar.classList.toggle('sidebar--open'); // sidebar
+    mainContent.classList.toggle('shifted');
+    overlay.classList.toggle('active');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('sidebar--open');
+    mainContent.classList.remove('shifted');
+    overlay.classList.remove('active');
+  });
+})();
+</script>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
