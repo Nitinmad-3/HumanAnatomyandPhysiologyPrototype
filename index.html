@@ -461,7 +461,7 @@
   
 <!-- Mobile nav toggle -->
   
- <script>
+<script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("nav-toggle");
   const sidebar = document.querySelector(".sidebar");
@@ -469,7 +469,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const overlay = document.getElementById("overlay");
 
   if (!btn || !sidebar) {
-    console.log("Sidebar elements not found");
+    console.log("Sidebar not found");
     return;
   }
 
@@ -486,7 +486,6 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 });
 </script>
-
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
