@@ -2999,3 +2999,24 @@ tbody tr:hover {
     padding: 18px;
   }
 }
+
+/* Make typed text visible in form fields */
+input,
+textarea,
+select {
+  color: #000000 !important;
+}
+
+/* Optional: make placeholder text visible too */
+input::placeholder,
+textarea::placeholder {
+  color: #666666;
+  opacity: 1;
+}
+
+/* If your site has dark backgrounds, keep inputs readable */
+input,
+textarea,
+select {
+  background-color: #ffffff;
+}
