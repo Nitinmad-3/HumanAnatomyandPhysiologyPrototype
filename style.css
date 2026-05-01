@@ -3021,25 +3021,3 @@ select {
   background-color: #ffffff;
 }
 
-/* Make experiment page text visible */
-.experiment-page,
-.experiment-page p,
-.experiment-page li,
-.experiment-page h1,
-.experiment-page h2,
-.experiment-page h3,
-.experiment-page h4,
-.experiment-page h5,
-.experiment-page h6,
-.experiment-page td,
-.experiment-page th,
-.experiment-page label,
-.experiment-page span,
-.experiment-page div {
-  color: #000000;
-}
-
-/* If your experiment pages use normal body text */
-body {
-  color: #000000;
-}
