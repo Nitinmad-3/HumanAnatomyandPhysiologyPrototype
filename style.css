@@ -2890,3 +2890,112 @@ tbody tr:hover {
     padding: 18px;
   }
 }
+
+/* Better adaptive styling for light/dark mode */
+.exp-list-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 150px;
+  padding: 20px;
+  border-radius: 18px;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background 0.2s ease, color 0.2s ease;
+}
+
+.exp-list-num {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+.exp-list-title {
+  font-size: 1.02rem;
+  line-height: 1.45;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.exp-list-arrow {
+  margin-top: auto;
+  font-size: 0.92rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  .exp-list-card {
+    background: #ffffff;
+    color: #1f2937;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .exp-list-card:hover {
+    background: #f8fafc;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+    border-color: rgba(15, 23, 42, 0.16);
+  }
+
+  .exp-list-num {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+  .exp-list-title {
+    color: #0f172a;
+  }
+
+  .exp-list-arrow {
+    color: #2563eb;
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .exp-list-card {
+    background: rgba(15, 23, 42, 0.72);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .exp-list-card:hover {
+    background: rgba(15, 23, 42, 0.88);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .exp-list-num {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f9fafb;
+  }
+
+  .exp-list-title {
+    color: #f3f4f6;
+  }
+
+  .exp-list-arrow {
+    color: #93c5fd;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .exp-list-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .exp-list-card {
+    min-height: auto;
+    padding: 18px;
+  }
+}
