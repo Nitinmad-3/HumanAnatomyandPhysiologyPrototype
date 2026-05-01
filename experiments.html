@@ -114,6 +114,7 @@
     </div>
   </div>
 
+
   <script>
     (function(){
       const t = document.getElementById('nav-toggle');
@@ -124,5 +125,29 @@
       }
     })();
   </script>
+
+  <style>
+  /* Force readable text in inputs */
+  input,
+  textarea,
+  select {
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
+    caret-color: #000 !important;
+    background: #fff !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #666 !important;
+    opacity: 1 !important;
+  }
+
+  /* Force readable text on experiment pages */
+  .experiment-page,
+  .experiment-page * {
+    color: #000 !important;
+  }
+</style>
 </body>
 </html>
