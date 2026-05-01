@@ -127,14 +127,22 @@
   </script>
 
   <style>
-  /* Force readable text in inputs */
+ <style>
+  html, body {
+    color: #000 !important;
+  }
+
+  body * {
+    color: #000 !important;
+  }
+
   input,
   textarea,
-  select {
+  select,
+  button {
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
     caret-color: #000 !important;
-    background: #fff !important;
   }
 
   input::placeholder,
@@ -143,11 +151,15 @@
     opacity: 1 !important;
   }
 
-  /* Force readable text on experiment pages */
+  a {
+    color: #000 !important;
+  }
+
   .experiment-page,
   .experiment-page * {
     color: #000 !important;
   }
+</style>
 </style>
 </body>
 </html>
