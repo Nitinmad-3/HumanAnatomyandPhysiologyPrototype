@@ -3019,5 +3019,27 @@ input,
 textarea,
 select {
   background-color: #ffffff;
+
+   /* Force readable black text in forms */
+input,
+textarea,
+select {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  caret-color: #000 !important;
+  background: #fff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #666 !important;
+  opacity: 1 !important;
+}
+
+/* Force readable black text on experiment pages */
+.experiment-page,
+.experiment-page * {
+  color: #000 !important;
+}
 }
 
