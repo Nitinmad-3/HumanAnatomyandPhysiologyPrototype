@@ -173,6 +173,35 @@
     .room-select { padding:5px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:#f5f8ff;font-size:.83rem;color:var(--ink);font-family:var(--font); }
     .meta { font-size:.7rem;color:#6b84c7;margin-top:3px; }
     
+    /* ── Welcome section ── */
+    .hero-section--welcome {
+      min-height: auto;
+      padding: 56px 24px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+    .hero-title--portal {
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+    }
+    .welcome-user-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .welcome-user-card__title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--blue-deeper);
+    }
+    .welcome-user-card__sub {
+      font-size: .88rem;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+
     @media (max-width:520px) {
       .profile-card__avatar-row { flex-direction:column;align-items:flex-start; }
       .action-row { flex-direction:column; }
@@ -279,6 +308,29 @@
     <!-- ── MAIN CONTENT ── -->
     <main class="main-content" role="main">
 
+      <!-- ── WELCOME SECTION (always present; content differs by auth state) ── -->
+
+      <!-- Visitor welcome: shown when NOT logged in -->
+      <section id="welcome-visitor" class="hero-section hero-section--welcome">
+        <div class="hero-content">
+          <h1 class="hero-title hero-title--portal">Welcome to the<br>Anatomy &amp; Physiology Portal</h1>
+          <div class="hero-subtitle">Your complete learning platform for Human Anatomy &amp; Physiology — explore practicals, attempt assessments, and track your results.</div>
+          <div class="hero-buttons">
+            <a href="login_Version4.html" class="btn-hero primary">🔐 Sign In to Get Started</a>
+            <a href="experiments.html" class="btn-hero secondary">🧪 Browse Experiments</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- User welcome: shown when logged in -->
+      <div id="welcome-user" class="welcome-user-card hidden">
+        <h2 class="welcome-user-card__title" id="welcome-user-name">Welcome!</h2>
+        <div class="welcome-user-card__sub">You&rsquo;re signed in to the Human Anatomy &amp; Physiology Portal.</div>
+      </div>
+
+      <!-- ── DASHBOARD SECTION (logged-in users only) ── -->
+      <div id="dashboard-section" class="hidden">
+
       <!-- ── 1. PAGE TITLE ROW ── -->
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
         <div>
@@ -336,6 +388,8 @@
 
         </div>
       </section>
+
+      </div><!-- /#dashboard-section -->
 
       <!-- ── 4. PORTAL FEATURES ── -->
       <section aria-labelledby="features-heading" class="mb-24">
@@ -671,6 +725,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const sbAssessment    = document.getElementById('sb-assessment');
       const kpiAssessments  = document.getElementById('kpi-assessments');
       const kpiAttempts     = document.getElementById('kpi-attempts');
+      const welcomeVisitor  = document.getElementById('welcome-visitor');
+      const welcomeUser     = document.getElementById('welcome-user');
+      const dashboardSection = document.getElementById('dashboard-section');
+      const welcomeUserNameEl = document.getElementById('welcome-user-name');
 
       let currentUser = null;
       let currentRole = 'unknown';
@@ -697,26 +755,32 @@ document.addEventListener("DOMContentLoaded", function () {
       // ── Nav state ──
       function setNav(loggedIn) {
         if (loggedIn) {
-          if (loginBtn)       loginBtn.classList.add('hidden');
-          if (logoutBtn)      logoutBtn.classList.remove('hidden');
-          if (profileTab)     profileTab.classList.remove('hidden');
-          if (sbProfile)      sbProfile.classList.remove('hidden');
-          if (resultsTab)     resultsTab.classList.remove('hidden');
-          if (hdrAvatarLink)  hdrAvatarLink.classList.remove('hidden');
+          if (loginBtn)        loginBtn.classList.add('hidden');
+          if (logoutBtn)       logoutBtn.classList.remove('hidden');
+          if (profileTab)      profileTab.classList.remove('hidden');
+          if (sbProfile)       sbProfile.classList.remove('hidden');
+          if (resultsTab)      resultsTab.classList.remove('hidden');
+          if (hdrAvatarLink)   hdrAvatarLink.classList.remove('hidden');
+          if (welcomeVisitor)  welcomeVisitor.classList.add('hidden');
+          if (welcomeUser)     welcomeUser.classList.remove('hidden');
+          if (dashboardSection) dashboardSection.classList.remove('hidden');
         } else {
-          if (logoutBtn)      logoutBtn.classList.add('hidden');
-          if (loginBtn)       { loginBtn.classList.remove('hidden'); loginBtn.href = 'login_Version4.html'; }
-          if (profileTab)     profileTab.classList.add('hidden');
-          if (sbProfile)      sbProfile.classList.add('hidden');
-          if (resultsTab)     resultsTab.classList.add('hidden');
+          if (logoutBtn)       logoutBtn.classList.add('hidden');
+          if (loginBtn)        { loginBtn.classList.remove('hidden'); loginBtn.href = 'login_Version4.html'; }
+          if (profileTab)      profileTab.classList.add('hidden');
+          if (sbProfile)       sbProfile.classList.add('hidden');
+          if (resultsTab)      resultsTab.classList.add('hidden');
           if (adminPortalLink) adminPortalLink.classList.add('hidden');
-          if (sbAdmin)        sbAdmin.classList.add('hidden');
-          if (profileCard)    profileCard.classList.add('hidden');
-          if (chatSection)    chatSection.classList.add('hidden');
-          if (hdrAvatarLink)  hdrAvatarLink.classList.add('hidden');
+          if (sbAdmin)         sbAdmin.classList.add('hidden');
+          if (profileCard)     profileCard.classList.add('hidden');
+          if (chatSection)     chatSection.classList.add('hidden');
+          if (hdrAvatarLink)   hdrAvatarLink.classList.add('hidden');
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
-          if (kpiAssessments) kpiAssessments.textContent = '—';
-          if (kpiAttempts)    kpiAttempts.textContent    = '—';
+          if (kpiAssessments)  kpiAssessments.textContent = '—';
+          if (kpiAttempts)     kpiAttempts.textContent    = '—';
+          if (welcomeVisitor)  welcomeVisitor.classList.remove('hidden');
+          if (welcomeUser)     welcomeUser.classList.add('hidden');
+          if (dashboardSection) dashboardSection.classList.add('hidden');
         }
       }
 
@@ -881,7 +945,9 @@ document.addEventListener("DOMContentLoaded", function () {
           if (profileCard) profileCard.classList.remove('hidden');
 
           const displayName = profile?.name ? profile.name : (currentUser.email || '');
-          pcName.textContent = ('Welcome, ' + displayName).trim();
+          const welcomeMsg = 'Welcome, ' + displayName;
+          pcName.textContent = welcomeMsg.trim();
+          if (welcomeUserNameEl) welcomeUserNameEl.textContent = welcomeMsg + '!';
 
           const roleLabel = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Unknown Role');
           pcRole.textContent = roleLabel;
