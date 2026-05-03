@@ -214,7 +214,7 @@
   <div class="layout">
 
     <!-- ── SIDEBAR ── -->
-    <aside class="sidebar" role="navigation" aria-label="Site navigation">
+    <aside class="sidebar" id="main-sidebar" role="navigation" aria-label="Site navigation">
 
       <div class="sidebar-section-label">Main</div>
       <a href="index.html"       class="sidebar-link active"><span class="s-icon">🏠</span> Dashboard</a>
@@ -232,49 +232,6 @@
       <a href="profile.html"     class="sidebar-link hidden" id="sb-profile"><span class="s-icon">👤</span> My Profile</a>
       <a href="admin_portal.html" class="sidebar-link hidden" id="sb-admin"><span class="s-icon">⚙️</span> Admin Portal</a>
     </aside>
-
-    <aside class="sidebar" role="navigation" aria-label="Site navigation">
-  <div class="sidebar-section-label">Main</div>
-  <a href="index.html" class="sidebar-link active"><span class="s-icon">🏠</span> Dashboard</a>
-  <a href="experiments.html" class="sidebar-link"><span class="s-icon">🧪</span> Experiments</a>
-  <a href="assessments.html" class="sidebar-link"><span class="s-icon">📝</span> Assessments</a>
-  <a href="references.html" class="sidebar-link"><span class="s-icon">📚</span> References</a>
-</aside>
-    
-    <script>
-  (function () {
-    const toggleBtn = document.getElementById('nav-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const layout = document.querySelector('.layout');
-    const overlay = document.getElementById('sidebar-overlay');
-
-    if (!toggleBtn || !sidebar || !overlay) return;
-
-    function openSidebar() {
-      sidebar.classList.add('sidebar--open');
-      layout.classList.add('shifted');
-      overlay.classList.add('active');
-    }
-
-    function closeSidebar() {
-      sidebar.classList.remove('sidebar--open');
-      layout.classList.remove('shifted');
-      overlay.classList.remove('active');
-    }
-
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.contains('sidebar--open') ? closeSidebar() : openSidebar();
-    });
-
-    overlay.addEventListener('click', closeSidebar);
-
-    sidebar.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        closeSidebar();
-      });
-    });
-  })();
-</script>
 
     <!-- ── MAIN CONTENT ── -->
     <main class="main-content" role="main">
@@ -296,6 +253,9 @@
 
       <!-- ── 2. NOTIFICATIONS BANNER ── -->
       <div id="home-notifications" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- ── 2b. WELCOME GREETING ── -->
+      <div id="welcome-greeting" style="margin-bottom:20px;"></div>
 
       <!-- ── 3. KPI STATS ROW ── -->
       <section aria-labelledby="kpi-heading" class="mb-24">
@@ -495,35 +455,7 @@
        SCRIPTS
   ══════════════════════════════════════════════════════ -->
 <div id="sidebar-overlay" class="sidebar-overlay"></div>
-  <div id="overlay"></div>
-  
-<!-- Mobile nav toggle -->
-  
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const btn = document.getElementById("nav-toggle");
-  const sidebar = document.querySelector(".sidebar");
-  const main = document.querySelector(".main-content");
-  const overlay = document.getElementById("overlay");
 
-  if (!btn || !sidebar) {
-    console.log("Sidebar not found");
-    return;
-  }
-
-  btn.onclick = function () {
-    sidebar.classList.toggle("open");
-    main.classList.toggle("move");
-    overlay.classList.toggle("show");
-  };
-
-  overlay.onclick = function () {
-    sidebar.classList.remove("open");
-    main.classList.remove("move");
-    overlay.classList.remove("show");
-  };
-});
-</script>
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
@@ -619,6 +551,11 @@ document.addEventListener("DOMContentLoaded", function () {
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
+      // ── HTML escape helper ──
+      function esc(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
       // ── Date badge ──
       const dateBadge = document.getElementById('date-badge');
       if (dateBadge) {
@@ -646,6 +583,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const sbAdmin         = document.getElementById('sb-admin');
       const adminPortalLink = document.getElementById('admin-portal-link');
       const profileCard     = document.getElementById('profile-dashboard-card');
+      const welcomeGreeting = document.getElementById('welcome-greeting');
       const pcAvatar        = document.getElementById('pc-avatar');
       const hdrAvatarImg    = document.getElementById('hdr-avatar-img');
       const hdrAvatarLink   = document.getElementById('hdr-avatar-link');
@@ -717,6 +655,12 @@ document.addEventListener("DOMContentLoaded", function () {
           if (avatarRefreshTimerId) { clearInterval(avatarRefreshTimerId); avatarRefreshTimerId = null; }
           if (kpiAssessments) kpiAssessments.textContent = '—';
           if (kpiAttempts)    kpiAttempts.textContent    = '—';
+          if (welcomeGreeting) welcomeGreeting.innerHTML =
+            `<div class="status-note" style="background:#e3f2fd;border-left:4px solid #1565c0;padding:14px 18px;border-radius:var(--radius);margin-bottom:0;">
+              <span class="status-note__icon">👋</span>
+              <span><strong>Welcome to the Human Anatomy &amp; Physiology Portal!</strong>
+              Please <a href="login_Version4.html" style="color:#1565c0;font-weight:700;">sign in</a> to access your assessments, experiments, and more.</span>
+            </div>`;
         }
       }
 
@@ -883,6 +827,26 @@ document.addEventListener("DOMContentLoaded", function () {
           const displayName = profile?.name ? profile.name : (currentUser.email || '');
           pcName.textContent = ('Welcome, ' + displayName).trim();
 
+          // ── Welcome greeting (top of page) ──
+          if (welcomeGreeting) {
+            if (isAdmin) {
+              welcomeGreeting.innerHTML =
+                `<div class="status-note" style="background:#e8f5e9;border-left:4px solid #2e7d32;padding:14px 18px;border-radius:var(--radius);margin-bottom:0;">
+                  <span class="status-note__icon">👋</span>
+                  <span><strong>Welcome, ${esc(displayName)}!</strong>
+                  You have admin access — manage releases, students, and notifications from the
+                  <a href="admin_portal.html" style="color:#2e7d32;font-weight:700;">Admin Portal</a>.</span>
+                </div>`;
+            } else {
+              welcomeGreeting.innerHTML =
+                `<div class="status-note" style="background:#e3f2fd;border-left:4px solid #1565c0;padding:14px 18px;border-radius:var(--radius);margin-bottom:0;">
+                  <span class="status-note__icon">👋</span>
+                  <span><strong>Welcome back, ${esc(displayName)}!</strong>
+                  Access your assessments, track your progress, and keep your profile up to date.</span>
+                </div>`;
+            }
+          }
+
           const roleLabel = isAdmin ? 'Admin' : (currentRole === 'student' ? 'Student' : 'Unknown Role');
           pcRole.textContent = roleLabel;
           pcRole.className   = 'chip ' + (isAdmin ? 'chip--admin' : 'chip--student');
@@ -1003,23 +967,32 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
   (function(){
     const toggleBtn = document.getElementById('nav-toggle');
-    const sidebar = document.querySelector('.sidebar');
+    const sidebar = document.getElementById('main-sidebar');
     const layout = document.querySelector('.layout');
     const overlay = document.getElementById('sidebar-overlay');
 
-    if (!toggleBtn || !sidebar) return;
+    if (!toggleBtn || !sidebar || !layout || !overlay) return;
 
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('sidebar--open');
-      layout.classList.toggle('shifted');
-      overlay.classList.toggle('active');
-    });
+    function openSidebar() {
+      sidebar.classList.add('sidebar--open');
+      layout.classList.add('shifted');
+      overlay.classList.add('active');
+    }
 
-    // Close when clicking outside
-    overlay.addEventListener('click', () => {
+    function closeSidebar() {
       sidebar.classList.remove('sidebar--open');
       layout.classList.remove('shifted');
       overlay.classList.remove('active');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.contains('sidebar--open') ? closeSidebar() : openSidebar();
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    sidebar.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeSidebar);
     });
   })();
 </script>
